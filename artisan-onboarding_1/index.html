@@ -1,0 +1,1465 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Artisan Barber — Onboarding</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F4F3EF; --card:#FFFFFF; --bar:#FBFAF8; --text:#1B1C1E; --muted:#6E6A61;
+  --line:#E4E1D8; --chip:#ECEAE2;
+  --brass:#9A7736; --brass-ink:#7A5D28; --brass-bg:#F1E9D6;
+  --blue:#2C5F8D; --blue-bg:#E2EDF5;
+  --btn-bg:#1B1C1E; --btn-fg:#F7F6F2;
+  --danger:#8C3B2E;
+}
+body.admin{
+  --bg:#151619; --card:#1F2124; --bar:#191A1D; --text:#EFEDE7; --muted:#9B968B;
+  --line:#33363B; --chip:#2A2C31;
+  --brass:#C29A4B; --brass-ink:#D8B978; --brass-bg:#39311F;
+  --blue:#8FB8DC; --blue-bg:#24384A;
+  --btn-bg:#EFEDE7; --btn-fg:#17181A;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Archivo',system-ui,sans-serif; background:var(--bg); color:var(--text);
+  font-size:15px; line-height:1.55; transition:background .35s, color .35s;
+}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input,textarea,select{font:inherit;color:inherit}
+a{color:inherit}
+
+/* ---------- top bar ---------- */
+.topbar{
+  position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:16px;
+  padding:12px 20px;background:var(--bar);border-bottom:1px solid var(--line);
+  transition:background .35s,border-color .35s;
+}
+.brand{display:flex;flex-direction:column;line-height:1.15;min-width:0}
+.wordmark{font-family:'Marcellus',serif;font-size:19px;letter-spacing:.22em;text-transform:uppercase;white-space:nowrap}
+.brand-sub{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.16em;color:var(--muted);text-transform:uppercase}
+.mode{
+  margin-left:auto;display:flex;border:1px solid var(--line);border-radius:999px;
+  background:var(--chip);padding:3px;flex:none;
+}
+.mode button{
+  padding:6px 16px;border-radius:999px;font-size:13px;font-weight:600;color:var(--muted);
+  transition:background .2s,color .2s;
+}
+.mode button.on{background:var(--btn-bg);color:var(--btn-fg)}
+.who{display:flex;align-items:center;gap:10px;flex:none}
+.avatar{
+  width:34px;height:34px;border-radius:50%;background:var(--brass-bg);color:var(--brass-ink);
+  display:grid;place-items:center;font-family:'Marcellus',serif;font-size:14px;border:1px solid var(--brass);
+}
+.who-name{font-size:12.5px;font-weight:600;line-height:1.2}
+.who-role{font-size:11px;color:var(--muted)}
+
+/* ---------- layout ---------- */
+.layout{display:grid;grid-template-columns:228px minmax(0,1fr);min-height:calc(100vh - 61px)}
+.sidenav{
+  border-right:1px solid var(--line);padding:20px 12px;position:sticky;top:61px;
+  height:calc(100vh - 61px);overflow:auto;
+}
+.nav-label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:var(--muted);text-transform:uppercase;padding:0 12px;margin:14px 0 6px}
+.navbtn{
+  display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+  padding:9px 12px;border-radius:9px;font-size:14px;font-weight:500;color:var(--muted);
+  border-left:2px solid transparent;
+}
+.navbtn:hover{background:var(--chip);color:var(--text)}
+.navbtn.active{background:var(--chip);color:var(--text);border-left-color:var(--brass)}
+.main{padding:34px clamp(18px,4vw,48px) 90px;max-width:960px;width:100%}
+
+/* ---------- shared ---------- */
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.display{font-family:'Marcellus',serif;font-weight:400;font-size:clamp(26px,4vw,36px);line-height:1.15;letter-spacing:.01em}
+.lede{color:var(--muted);margin-top:10px;max-width:56ch}
+.card{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:20px;transition:background .35s,border-color .35s}
+.card + .card{margin-top:14px}
+.card h3{font-size:15px;font-weight:600;margin-bottom:6px}
+.card .sub{font-size:13px;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.hr{border:none;border-top:1px solid var(--line);margin:18px 0}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:999px;
+  background:var(--btn-bg);color:var(--btn-fg);font-weight:600;font-size:13.5px;
+  transition:transform .15s, opacity .15s;
+}
+.btn:hover{opacity:.9}
+.btn:active{transform:scale(.98)}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+.btn.small{padding:7px 14px;font-size:12.5px}
+.chip{
+  display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;
+  font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+  border:1px solid var(--line);color:var(--muted);white-space:nowrap;
+}
+.chip.scheduled{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
+.chip.complete{border-color:var(--brass);color:var(--brass-ink);background:var(--brass-bg)}
+.chip.role{border-color:var(--brass);color:var(--brass-ink)}
+.chip.na{opacity:.55}
+.note{
+  font-size:12.5px;color:var(--muted);background:var(--chip);border:1px dashed var(--line);
+  border-radius:10px;padding:10px 14px;margin-top:14px;
+}
+.note strong{color:var(--text)}
+:focus-visible{outline:2px solid var(--brass);outline-offset:2px;border-radius:6px}
+
+/* ---------- screens ---------- */
+.screen{display:none}
+.screen.active{display:block;animation:fadeUp .3s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ---------- home ---------- */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:center;margin-bottom:26px}
+.ring{width:104px;height:104px;position:relative;flex:none}
+.ring svg{transform:rotate(-90deg)}
+.ring .pct{
+  position:absolute;inset:0;display:grid;place-items:center;
+  font-family:'Marcellus',serif;font-size:22px;
+}
+.ring .pct small{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.14em;color:var(--muted);display:block;text-align:center}
+.upnext{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.upnext .numeral{flex:none}
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:16px}
+.stat b{font-family:'Marcellus',serif;font-size:24px;font-weight:400;display:block}
+.stat span{font-size:12px;color:var(--muted)}
+
+/* ---------- team (own page) ---------- */
+.team-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin-top:18px}
+.member{background:var(--card);border:1px solid var(--line);border-radius:13px;overflow:hidden;transition:border-color .2s,transform .2s}
+.member:hover{border-color:var(--brass);transform:translateY(-2px)}
+.member .photo{
+  aspect-ratio:4/3;background:linear-gradient(155deg,var(--brass-bg),var(--chip));
+  display:grid;place-items:center;border-bottom:1px solid var(--line);position:relative;overflow:hidden;
+}
+.member .photo img{width:100%;height:100%;object-fit:cover;display:block}
+.member .photo .mono{font-family:'Marcellus',serif;font-size:44px;color:var(--brass-ink);opacity:.9;letter-spacing:.02em}
+.member .photo .tag-cam{
+  position:absolute;bottom:9px;right:10px;font-family:'IBM Plex Mono',monospace;font-size:8.5px;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--brass-ink);opacity:.6;
+}
+.member .body{padding:15px 17px 17px}
+.member h3{font-size:15.5px;font-weight:600}
+.member .mrole{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--brass-ink);margin-top:3px}
+.member p{font-size:13px;color:var(--muted);margin-top:9px;line-height:1.55}
+.member .tags{margin-top:12px;display:flex;gap:6px;flex-wrap:wrap}
+.member{cursor:pointer}
+.member .body .more{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:12px}
+
+/* ---------- member detail ---------- */
+.member-detail{display:grid;grid-template-columns:288px minmax(0,1fr);gap:26px;margin-top:10px;align-items:start}
+.md-photo{aspect-ratio:1/1;border-radius:16px;overflow:hidden;background:linear-gradient(155deg,var(--brass-bg),var(--chip));display:grid;place-items:center;border:1px solid var(--line)}
+.md-photo img{width:100%;height:100%;object-fit:cover}
+.md-photo .mono{font-family:'Marcellus',serif;font-size:82px;color:var(--brass-ink);opacity:.9}
+.md-body h1{margin-bottom:3px}
+.md-body .mrole{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--brass-ink)}
+.md-body p{color:var(--muted);margin-top:14px;max-width:60ch}
+.md-body .tags{margin-top:16px;display:flex;gap:7px;flex-wrap:wrap}
+.md-hosts{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}
+@media(max-width:720px){.member-detail{grid-template-columns:1fr}.md-photo{max-width:230px}}
+
+/* ---------- journey rail (signature) ---------- */
+.rail{position:relative;margin-top:8px}
+.rail::before{
+  content:"";position:absolute;left:23px;top:26px;bottom:26px;width:1px;
+  background:linear-gradient(var(--brass) 0 0) ;opacity:.45;
+}
+.step{
+  position:relative;display:grid;grid-template-columns:48px minmax(0,1fr);gap:16px;
+  padding:16px 0;
+}
+.numeral{
+  width:46px;height:46px;border-radius:50%;border:1px solid var(--brass);
+  display:grid;place-items:center;font-family:'Marcellus',serif;font-size:17px;
+  color:var(--brass-ink);background:var(--bg);z-index:1;transition:background .3s,color .3s;
+}
+.step.complete .numeral{background:var(--brass);color:#FBF8F1;border-color:var(--brass)}
+.step-card{
+  background:var(--card);border:1px solid var(--line);border-radius:13px;padding:16px 18px;
+  display:flex;gap:14px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;
+  cursor:pointer;transition:border-color .2s;
+}
+.step-card:hover{border-color:var(--brass)}
+.step-card h3{font-size:15px;font-weight:600}
+.step-card .meta{font-size:12.5px;color:var(--muted);margin-top:3px}
+.step-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.arrow{font-family:'Marcellus',serif;color:var(--muted)}
+
+/* ---------- meeting detail ---------- */
+.back{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;display:inline-flex;gap:8px}
+.back:hover{color:var(--text)}
+.detail-head{display:flex;gap:18px;align-items:center;margin-bottom:18px;flex-wrap:wrap}
+.topic-list{list-style:none;margin-top:8px}
+.topic-list li{padding:8px 0;border-bottom:1px solid var(--line);font-size:14px;display:flex;gap:10px}
+.topic-list li:last-child{border-bottom:none}
+.topic-list li::before{content:"—";color:var(--brass);flex:none}
+.slots{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.slot{
+  border:1px solid var(--line);border-radius:9px;padding:8px 13px;font-size:13px;font-weight:500;
+  background:var(--card);
+}
+.slot:hover{border-color:var(--brass)}
+
+/* ---------- checklist ---------- */
+.check-group{margin-bottom:22px}
+.check-group h2{font-family:'Marcellus',serif;font-weight:400;font-size:19px;margin-bottom:4px}
+.check-group .gsub{font-size:12.5px;color:var(--muted);margin-bottom:10px}
+.check-item{
+  display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);
+  padding:12px 16px;font-size:14px;
+}
+.check-item:first-of-type{border-radius:12px 12px 0 0}
+.check-item:last-of-type{border-radius:0 0 12px 12px}
+.check-item + .check-item{border-top:none}
+.check-item input{accent-color:var(--brass);width:17px;height:17px;flex:none}
+.check-item.done label{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--brass)}
+.check-item .auto{margin-left:auto}
+.progressbar{height:6px;border-radius:999px;background:var(--chip);overflow:hidden;margin:14px 0 26px}
+.progressbar i{display:block;height:100%;background:var(--brass);border-radius:999px;transition:width .4s ease}
+
+/* ---------- training ---------- */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+.split .card ul{list-style:none;margin-top:8px}
+.split .card li{font-size:13.5px;padding:5px 0;color:var(--muted);display:flex;gap:8px}
+.split .card li::before{content:"·";color:var(--brass);font-weight:700}
+.keycard{border-left:3px solid var(--brass)}
+
+/* ---------- FAQ ---------- */
+details{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin-bottom:10px}
+details summary{cursor:pointer;font-weight:600;font-size:14px;list-style:none;display:flex;justify-content:space-between;gap:10px}
+details summary::after{content:"+";font-family:'Marcellus',serif;color:var(--brass)}
+details[open] summary::after{content:"–"}
+details p{margin-top:10px;font-size:13.5px;color:var(--muted)}
+
+/* ---------- admin ---------- */
+.roster{width:100%;border-collapse:collapse;margin-top:8px}
+.roster th{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);font-weight:500;
+}
+.roster td{padding:13px 12px;border-bottom:1px solid var(--line);font-size:14px;vertical-align:middle}
+.roster tr.row{cursor:pointer}
+.roster tr.row:hover td{background:var(--chip)}
+.mini-bar{width:110px;height:5px;border-radius:99px;background:var(--chip);overflow:hidden;display:inline-block;vertical-align:middle;margin-right:8px}
+.mini-bar i{display:block;height:100%;background:var(--brass)}
+.emp-meet{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  padding:13px 0;border-bottom:1px solid var(--line);
+}
+.emp-meet:last-child{border-bottom:none}
+.emp-meet .nm{display:flex;align-items:center;gap:12px}
+.emp-meet .numeral{width:34px;height:34px;font-size:13px}
+textarea.notes{
+  width:100%;min-height:88px;background:var(--bg);border:1px solid var(--line);border-radius:10px;
+  padding:12px;font-size:13.5px;resize:vertical;
+}
+input.field, select.field{
+  width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;
+  padding:10px 12px;font-size:13.5px;
+}
+.field-label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:block;margin:14px 0 6px}
+.content-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.content-tile{
+  background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;
+  display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13.5px;font-weight:500;
+}
+.content-tile span{color:var(--muted);font-family:'Marcellus',serif}
+.switch{display:inline-flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;user-select:none}
+.switch .track{width:38px;height:21px;border-radius:99px;background:var(--chip);border:1px solid var(--line);position:relative;transition:background .2s}
+.switch .track::after{content:"";position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:var(--muted);transition:left .2s,background .2s}
+.switch.on .track{background:var(--brass-bg);border-color:var(--brass)}
+.switch.on .track::after{left:19px;background:var(--brass)}
+.later{opacity:.85}
+.later li{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:13.5px;list-style:none}
+.later li:last-child{border-bottom:none}
+
+/* ---------- admin team / headshots ---------- */
+.tm-row{display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--line)}
+.tm-row:last-child{border-bottom:none}
+.tm-thumb{
+  width:58px;height:58px;border-radius:11px;overflow:hidden;flex:none;
+  background:linear-gradient(155deg,var(--brass-bg),var(--chip));
+  display:grid;place-items:center;border:1px solid var(--line);
+}
+.tm-thumb img{width:100%;height:100%;object-fit:cover}
+.tm-thumb .mono{font-family:'Marcellus',serif;font-size:21px;color:var(--brass-ink);opacity:.9}
+.tm-info{flex:1;min-width:0}
+.tm-info strong{font-size:14px}
+.tm-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+
+/* ---------- toast ---------- */
+#toast{
+  position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);opacity:0;z-index:99;
+  background:var(--btn-bg);color:var(--btn-fg);padding:11px 20px;border-radius:999px;
+  font-size:13.5px;font-weight:600;pointer-events:none;transition:all .3s ease;max-width:90vw;text-align:center;
+}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- responsive ---------- */
+@media(max-width:880px){
+  .layout{grid-template-columns:1fr}
+  .sidenav{
+    position:sticky;top:61px;height:auto;display:flex;gap:6px;overflow-x:auto;
+    padding:10px 14px;border-right:none;border-bottom:1px solid var(--line);background:var(--bar);
+    z-index:30;
+  }
+  .nav-label{display:none}
+  .navbtn{width:auto;white-space:nowrap;border-left:none;border-bottom:2px solid transparent;border-radius:8px}
+  .navbtn.active{border-left:none;border-bottom-color:var(--brass)}
+  .grid2,.split,.content-grid,.stat-row{grid-template-columns:1fr}
+  .hero{grid-template-columns:1fr}
+  .who-txt{display:none}
+  .roster .hide-m{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+
+/* ---------- black banner + logo (overrides) ---------- */
+.topbar{background:#0b0b0b;border-bottom:1px solid rgba(255,255,255,.10)}
+.topbar .logo{height:27px;width:auto;display:block;flex:none;align-self:flex-start;object-fit:contain}
+.topbar .brand-sub{color:rgba(255,255,255,.52);margin-top:3px}
+.topbar .mode{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18)}
+.topbar .mode button{color:rgba(255,255,255,.62)}
+.topbar .mode button.on{background:#fff;color:#111}
+.topbar .who-name{color:#F3F1EB}
+.topbar .who-role{color:rgba(255,255,255,.52)}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <img class="logo" src="data:image/png;base64,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" alt="Artisan">
+    <div class="brand-sub" id="modeSub">Onboarding · Front of house</div>
+  </div>
+  <div class="mode" role="tablist" aria-label="View">
+    <button id="btnEmp" class="on" onclick="setMode('employee')">Employee</button>
+    <button id="btnAdm" onclick="setMode('admin')">Admin</button>
+  </div>
+  <div class="who">
+    <div class="who-txt" style="text-align:right">
+      <div class="who-name" id="whoName">Jordan Rivera</div>
+      <div class="who-role" id="whoRole">Assistant Stylist · Day 4</div>
+    </div>
+    <div class="avatar" id="whoAv">JR</div>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="sidenav" id="nav" aria-label="Sections"></nav>
+
+  <main class="main" id="main">
+
+    <!-- ============ EMPLOYEE · HOME ============ -->
+    <section class="screen" id="s-home">
+      <div class="hero">
+        <div>
+          <div class="eyebrow">Artisan Barber · 331 E 81st St · New hire</div>
+          <h1 class="display">Welcome to the shop, Jordan.</h1>
+          <p class="lede">This space gets you ready for the floor — paperwork, your four introduction meetings, and access to the Artisan training site. Work through it at your pace before your first full week.</p>
+        </div>
+        <div class="ring" aria-label="Onboarding progress">
+          <svg width="104" height="104" viewBox="0 0 104 104">
+            <circle cx="52" cy="52" r="46" fill="none" stroke="var(--chip)" stroke-width="7"/>
+            <circle id="ringFill" cx="52" cy="52" r="46" fill="none" stroke="var(--brass)" stroke-width="7"
+              stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="289"/>
+          </svg>
+          <div class="pct"><div><span id="ringPct">0%</span><small>Complete</small></div></div>
+        </div>
+      </div>
+
+      <div class="card upnext" id="upNext"></div>
+
+      <div class="stat-row">
+        <div class="stat"><b id="statMeet">0 / 4</b><span>Meetings complete</span></div>
+        <div class="stat"><b id="statCheck">0 / 0</b><span>Checklist items done</span></div>
+        <div class="stat"><b id="statTrain">Not yet</b><span>Training site access</span></div>
+      </div>
+
+      <div class="note"><strong>Where training lives:</strong> full courses, modules, and assessments happen on the separate Artisan training site — not here. This platform introduces you, points the way, and confirms you're set up.</div>
+    </section>
+
+    <!-- ============ EMPLOYEE · TEAM ============ -->
+    <section class="screen" id="s-team">
+      <div class="eyebrow">The people</div>
+      <h1 class="display">Meet the shop.</h1>
+      <p class="lede"><span id="teamCount">Five</span> artisans, one standard. Tap anyone to see their craft, experience, and where they show up in your onboarding.</p>
+      <div class="team-grid" id="teamGrid"></div>
+      <div class="note"><strong>Your headshot joins this wall.</strong> Scheduling it is already on your checklist under Shop setup.</div>
+    </section>
+
+    <!-- ============ EMPLOYEE · MEMBER DETAIL (dynamic) ============ -->
+    <section class="screen" id="s-member"></section>
+
+    <!-- ============ EMPLOYEE · CHECKLIST ============ -->
+    <section class="screen" id="s-checklist">
+      <div class="eyebrow">Your checklist</div>
+      <h1 class="display">Everything before the chair.</h1>
+      <div class="progressbar"><i id="checkBar" style="width:0%"></i></div>
+      <div id="checkGroups"></div>
+      <div class="note"><strong>Training access is orientation, not completion.</strong> The last group only confirms you can get into the training site — module progress is tracked there, not here.</div>
+    </section>
+
+    <!-- ============ EMPLOYEE · MEETINGS ============ -->
+    <section class="screen" id="s-meetings">
+      <div class="eyebrow">The four-step journey</div>
+      <h1 class="display">Your introduction meetings.</h1>
+      <p class="lede">Four sit-downs that walk you into the shop — the handbook, the front desk standard, your program, and where training continues. Tap a step to see details or pick a time.</p>
+      <div class="rail" id="rail"></div>
+    </section>
+
+    <!-- ============ EMPLOYEE · MEETING DETAIL (dynamic) ============ -->
+    <section class="screen" id="s-meeting"></section>
+
+    <!-- ============ EMPLOYEE · TRAINING ============ -->
+    <section class="screen" id="s-training">
+      <div class="eyebrow">Artisan Continued Development</div>
+      <h1 class="display">Training continues off this platform.</h1>
+      <p class="lede">Ongoing education is part of the shop culture. Courses, videos, and assessments live on the Artisan training site — here's how to get in and what applies to you.</p>
+
+      <div class="card keycard" style="margin-top:18px">
+        <h3>Your training account</h3>
+        <p class="sub">Access is issued after your Step IV introduction. Use your shop email to sign in the first time.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
+          <button class="btn" onclick="openTraining()">Open training platform ↗</button>
+          <button class="btn ghost" id="loginBtn" onclick="confirmLogin()">Confirm my login works</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <h3>Which program applies to you</h3>
+        <p class="sub">Based on your role — Assistant Stylist.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+          <span class="chip role">Assistant Stylist track</span>
+          <span class="chip">Shop standards modules</span>
+          <span class="chip">Guest hospitality basics</span>
+        </div>
+      </div>
+
+      <div class="split">
+        <div class="card">
+          <h3>This platform</h3>
+          <ul>
+            <li>Explains what the training programs are</li>
+            <li>Introduces you to the learning platform</li>
+            <li>Links you to the external training area</li>
+            <li>Shows you how to access your account</li>
+            <li>Identifies which program applies to your role</li>
+            <li>Confirms your introduction meeting happened</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>The training site</h3>
+          <ul>
+            <li>Hosts the courses and videos</li>
+            <li>Tracks individual lessons</li>
+            <li>Delivers quizzes and assessments</li>
+            <li>Manages certifications</li>
+            <li>Holds continued-development materials</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="note"><strong>Need help getting in?</strong> Charlie handles training support — ask at the desk or message through the shop channel.</div>
+    </section>
+
+    <!-- ============ EMPLOYEE · HELP ============ -->
+    <section class="screen" id="s-help">
+      <div class="eyebrow">Questions</div>
+      <h1 class="display">Asked at every onboarding.</h1>
+      <div style="margin-top:18px">
+        <details><summary>Who do I contact for training support?</summary><p>Charlie is your contact for anything on the training site — access problems, which modules apply to you, or future development opportunities.</p></details>
+        <details><summary>Where do I find the handbook?</summary><p>A link is attached to your Step I Handbook Meeting on the Meetings screen. You'll acknowledge it there once you've reviewed it.</p></details>
+        <details><summary>Do I have to attend all four meetings?</summary><p>Steps I, II, and IV apply to everyone. Step III — the Assistant Stylist Program introduction — is assigned only when it's relevant to your role.</p></details>
+        <details><summary>Is the training tracked here?</summary><p>No. This platform confirms your introduction and your access. Lesson-by-lesson progress lives on the separate training site.</p></details>
+        <details><summary>What should I bring on day one?</summary><p>A valid ID for your I-9, your banking details for direct deposit, and any license or certification your role requires.</p></details>
+      </div>
+    </section>
+
+    <!-- ============ ADMIN · OVERVIEW ============ -->
+    <section class="screen" id="a-overview">
+      <div class="eyebrow">Back of house</div>
+      <h1 class="display">Onboarding at a glance.</h1>
+      <div class="stat-row">
+        <div class="stat"><b>4</b><span>Currently onboarding</span></div>
+        <div class="stat"><b>3</b><span>Meetings this week</span></div>
+        <div class="stat"><b id="statAccess">2</b><span>Awaiting training access</span></div>
+      </div>
+      <div class="card" style="margin-top:16px;padding:8px 16px 4px;overflow-x:auto">
+        <table class="roster">
+          <thead><tr><th>Employee</th><th class="hide-m">Role</th><th>Progress</th><th class="hide-m">Next step</th><th>Training access</th></tr></thead>
+          <tbody id="rosterBody"></tbody>
+        </table>
+      </div>
+      <div class="note"><strong>Scope:</strong> individual training modules are not managed from this panel in the initial release — only meetings, checklists, notes, and access confirmation.</div>
+    </section>
+
+    <!-- ============ ADMIN · EMPLOYEE DETAIL (dynamic) ============ -->
+    <section class="screen" id="a-employee"></section>
+
+    <!-- ============ ADMIN · TEAM & PHOTOS ============ -->
+    <section class="screen" id="a-team">
+      <div class="eyebrow">The people</div>
+      <h1 class="display">Team &amp; headshots.</h1>
+      <p class="lede">Manage who appears on the new-hire "Meet the shop" page — add artisans, edit their details, and upload headshots.</p>
+
+      <div style="margin-top:16px"><button class="btn small" onclick="openAddMember()">+ Add team member</button></div>
+
+      <div class="card" id="memberForm" style="display:none;margin-top:14px">
+        <h3 id="memberFormTitle">Add team member</h3>
+        <label class="field-label" for="mfName">Name</label>
+        <input class="field" id="mfName" placeholder="First Last">
+        <label class="field-label" for="mfRole">Role</label>
+        <input class="field" id="mfRole" placeholder="e.g. Senior Stylist">
+        <label class="field-label" for="mfSince">Experience <span style="text-transform:none;letter-spacing:0">(optional)</span></label>
+        <input class="field" id="mfSince" placeholder="e.g. 10+ yrs experience">
+        <label class="field-label" for="mfTags">Specialties <span style="text-transform:none;letter-spacing:0">(comma-separated)</span></label>
+        <input class="field" id="mfTags" placeholder="e.g. Fades, Beard work">
+        <label class="field-label" for="mfBio">Short bio</label>
+        <textarea class="notes" id="mfBio" placeholder="A sentence or two about their craft…"></textarea>
+        <div id="mfPhotoRow" style="display:none;margin-top:12px"></div>
+        <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+          <button class="btn small" onclick="saveMember()">Save</button>
+          <button class="btn ghost small" onclick="cancelMember()">Cancel</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <h3>Shop roster</h3>
+        <p class="sub">Upload a headshot, edit details, or remove a member. Square images crop best.</p>
+        <div id="teamAdmin" style="margin-top:8px"></div>
+      </div>
+      <div class="note"><strong>Held for this session.</strong> In the full build, headshots save to each profile. New hires' photos are scheduled during Shop setup — add them here once taken.</div>
+    </section>
+
+    <!-- ============ ADMIN · MEETING TIMES ============ -->
+    <section class="screen" id="a-slots">
+      <div class="eyebrow">Scheduling</div>
+      <h1 class="display">Meeting times &amp; hosts.</h1>
+      <p class="lede">Create the available sit-down times new hires can pick from, and assign who hosts each one.</p>
+      <div id="slotCards" style="margin-top:16px"></div>
+    </section>
+
+    <!-- ============ ADMIN · CONTENT ============ -->
+    <section class="screen" id="a-content">
+      <div class="eyebrow">Content</div>
+      <h1 class="display">What new hires read here.</h1>
+      <p class="lede">Onboarding-specific content only — full training content stays managed on the training site.</p>
+
+      <div class="card" style="margin-top:16px">
+        <h3>Welcome message</h3>
+        <textarea class="notes" id="welcomeTxt">Welcome to Artisan. Your signature look begins here — and so does your craft. This space walks you through your first weeks: the paperwork, the people, and the standard we hold on the floor.</textarea>
+        <div style="margin-top:10px"><button class="btn small" onclick="saveWelcome()">Save changes</button></div>
+      </div>
+
+      <div class="card">
+        <h3>External training platform link</h3>
+        <p class="sub">Shown to employees on the Training screen and after Step IV.</p>
+        <label class="field-label" for="trainUrl">URL</label>
+        <input class="field" id="trainUrl" value="https://training.artisanbarber.com">
+        <div style="margin-top:10px"><button class="btn small" onclick="saveTrainingLink()">Save link</button></div>
+      </div>
+
+      <div class="content-grid">
+        <button class="content-tile" onclick="toast('Editor opens in full build')">Team member profiles <span>›</span></button>
+        <button class="content-tile" onclick="toast('Editor opens in full build')">Handbook link <span>›</span></button>
+        <button class="content-tile" onclick="toast('Editor opens in full build')">Meeting descriptions <span>›</span></button>
+        <button class="content-tile" onclick="toast('Editor opens in full build')">Meeting prep instructions <span>›</span></button>
+        <button class="content-tile" onclick="toast('Editor opens in full build')">Front desk &amp; concierge overview <span>›</span></button>
+        <button class="content-tile" onclick="toast('Editor opens in full build')">Assistant Stylist Program overview <span>›</span></button>
+        <button class="content-tile" onclick="toast('Editor opens in full build')">Artisan Continued Development overview <span>›</span></button>
+        <button class="content-tile" onclick="toast('Editor opens in full build')">Onboarding FAQ <span>›</span></button>
+      </div>
+
+      <div class="card later" style="margin-top:16px">
+        <h3>Later phase — training-site integration</h3>
+        <p class="sub">Outside the initial MVP unless the training platform already supports it.</p>
+        <ul style="margin-top:10px">
+          <li>Auto-create the employee's training account <span class="chip na">Not in MVP</span></li>
+          <li>Single sign-on between platforms <span class="chip na">Not in MVP</span></li>
+          <li>Show a summary of external training progress <span class="chip na">Not in MVP</span></li>
+          <li>Confirm required introductory modules <span class="chip na">Not in MVP</span></li>
+          <li>Notify managers at training milestones <span class="chip na">Not in MVP</span></li>
+        </ul>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<input type="file" id="headshotInput" accept="image/*" style="display:none" onchange="onHeadshot(event)">
+<div id="toast" role="status"></div>
+
+<script>
+/* ==========================================================================
+   Artisan Barber — Onboarding
+   BACKEND-READY FRONTEND
+
+   Architecture
+   ------------
+   1. DB            — seed data shaped exactly like the relational tables in
+                      schema.sql. Every row has a stable string id (never an
+                      array index). This block is the ONLY place seed data lives
+                      and is what a real backend/DB replaces.
+   2. Store         — the single data-access layer (the "backend seam"). Every
+                      read/write the UI performs goes through Store. In this
+                      prototype each method resolves against DB in memory; each
+                      is annotated with the REST endpoint it maps to. To go live,
+                      replace each body with the fetch() shown — the UI does not
+                      change. See API.md for the full contract.
+   3. state + UI    — the UI never touches DB directly. It reads from `state`,
+                      which is populated by refresh() (one async boundary), and
+                      writes via Store.* then re-fetches. Render functions are
+                      synchronous and read only from `state`.
+   ========================================================================== */
+
+/* ===================== 1. DB (mirrors the SQL schema) ===================== */
+const DB = {
+  /* content: single-row settings table */
+  content: {
+    id: 'singleton',
+    welcomeMessage: 'Welcome to Artisan. Your signature look begins here — and so does your craft. This space walks you through your first weeks: the paperwork, the people, and the standard we hold on the floor.',
+    trainingUrl: 'https://training.artisanbarber.com'
+  },
+
+  /* meetings: the onboarding step templates (table: meetings) */
+  meetings: [
+    { id:'mtg_handbook', step:1, roman:'I', title:'Handbook Meeting', shortTitle:'Handbook Meeting',
+      durationMin:45, roleOnly:false, requiresAck:true, defaultHost:'Charlie · Owner', sortOrder:1,
+      purpose:'Review the employee handbook, workplace expectations, policies, culture, and important procedures.',
+      topicsLabel:'This platform provides',
+      topics:['Meeting scheduling','A link to the handbook','Required acknowledgment','Meeting status','Internal admin notes','Completion confirmation'],
+      prep:['A valid photo ID for your I-9','Your banking details for direct deposit','Any license or certification your role requires'],
+      boundary:null },
+    { id:'mtg_frontdesk', step:2, roman:'II', title:'Front Desk & Concierge Standards', shortTitle:'Front Desk & Concierge',
+      durationMin:45, roleOnly:false, requiresAck:false, defaultHost:'Bobby · Manager', sortOrder:2,
+      purpose:'Introduce you to the shop\u2019s guest-service and hospitality expectations.',
+      topicsLabel:'What the conversation covers',
+      topics:['Greeting guests','Phone and appointment standards','Guest check-in and checkout','Communication between the front desk and service providers','Hospitality expectations','Product and service recommendations','Handling guest concerns'],
+      prep:['Come ready to observe the front desk in action','Jot down any guest-service questions beforehand'],
+      boundary:'This is an introductory meeting, not a complete training course.' },
+    { id:'mtg_assistant', step:3, roman:'III', title:'Assistant Stylist Program', shortTitle:'Assistant Stylist Program',
+      durationMin:45, roleOnly:true, requiresAck:false, defaultHost:'Juan · Senior Stylist', sortOrder:3,
+      purpose:'Introduce eligible employees to the structure and expectations of the Assistant Stylist Program.',
+      topicsLabel:'What the conversation covers',
+      topics:['Program purpose','Employee responsibilities','Mentorship','Development milestones','Shadowing expectations','Performance expectations','Career progression'],
+      prep:['Think about your development goals for the next few months','Bring questions about mentorship and shadowing'],
+      boundary:'Detailed training for this program takes place on the separate training site. Assigned only to relevant roles.' },
+    { id:'mtg_acd', step:4, roman:'IV', title:'Artisan Continued Development', shortTitle:'Continued Development intro',
+      durationMin:30, roleOnly:false, requiresAck:false, defaultHost:'Charlie · Owner', sortOrder:4,
+      purpose:'Introduce the shop\u2019s ongoing education system and show you how to access the separate training platform.',
+      topicsLabel:'What the conversation covers',
+      topics:['What Artisan Continued Development is','Why continued education is part of the shop culture','How to access the training website','How the training modules are organized','Which modules apply to you','General expectations for completing development activities','Who to contact for training support','Future education and career-development opportunities'],
+      prep:['Your shop email — you\u2019ll use it to sign into the training site','Any questions about ongoing education and career growth'],
+      boundary:'The onboarding platform only records that this introduction was completed. Module progress stays within the training system.' }
+  ],
+
+  /* team: shop artisans shown on "Meet the shop" (table: team_members) */
+  team: [
+    { id:'tm_charlie', sortOrder:1, name:'Charlie', initials:'C', role:'Founder & Owner', experience:'Est. 2017', photoUrl:null,
+      bio:'Opened the shop in 2017 and still sets its standard — creative energy, community first, precise grooming. Your contact for Artisan Continued Development and training support.',
+      specialties:['Shop culture','Training support'], hostsMeetingIds:['mtg_handbook','mtg_acd'] },
+    { id:'tm_bobby', sortOrder:2, name:'Bobby', initials:'B', role:'Master Stylist · Manager', experience:'~20 yrs experience', photoUrl:null,
+      bio:'Almost twenty years behind the chair. Bold, classic scissor work — and the shop\u2019s specialist for curly and wavy hair. He also holds the front-of-house standard.',
+      specialties:['Curly & wavy','Front desk standard'], hostsMeetingIds:['mtg_frontdesk'] },
+    { id:'tm_juan', sortOrder:3, name:'Juan Hernandez', initials:'JH', role:'Senior Stylist', experience:'', photoUrl:null,
+      bio:'Sharp clipper work, clean fades, and a patient eye for detail. Juan runs shadow weeks and mentors new stylists through the Assistant Stylist Program.',
+      specialties:['Mentorship','Precision fades'], hostsMeetingIds:['mtg_assistant'] },
+    { id:'tm_kris', sortOrder:4, name:'Kris', initials:'K', role:'Barber', experience:'20+ yrs experience', photoUrl:null,
+      bio:'Queens-raised with two decades of experience. Every cut is a tailored scissor cut — and every guest leaves feeling like a regular.',
+      specialties:['Tailored cuts','Guest rapport'], hostsMeetingIds:[] },
+    { id:'tm_cathy', sortOrder:5, name:'Cathy', initials:'CT', role:'Kids Specialist', experience:'', photoUrl:null,
+      bio:'The shop\u2019s specialist for younger guests. Early-morning appointments built for kids — and the reason they come back smiling.',
+      specialties:['Children\u2019s cuts'], hostsMeetingIds:[] }
+  ],
+
+  /* slots: available meeting times (table: meeting_slots, FK meetingId) */
+  slots: [
+    { id:'slot_1',  meetingId:'mtg_handbook',  when:'Thu Jul 16 · 10:00 AM', host:'Charlie · Owner' },
+    { id:'slot_2',  meetingId:'mtg_handbook',  when:'Fri Jul 17 · 9:00 AM',  host:'Charlie · Owner' },
+    { id:'slot_3',  meetingId:'mtg_frontdesk', when:'Wed Jul 15 · 9:30 AM',  host:'Bobby · Manager' },
+    { id:'slot_4',  meetingId:'mtg_frontdesk', when:'Thu Jul 16 · 2:00 PM',  host:'Bobby · Manager' },
+    { id:'slot_5',  meetingId:'mtg_frontdesk', when:'Mon Jul 20 · 11:00 AM', host:'Bobby · Manager' },
+    { id:'slot_6',  meetingId:'mtg_assistant', when:'Thu Jul 16 · 3:30 PM',  host:'Juan · Senior Stylist' },
+    { id:'slot_7',  meetingId:'mtg_assistant', when:'Fri Jul 17 · 10:00 AM', host:'Juan · Senior Stylist' },
+    { id:'slot_8',  meetingId:'mtg_assistant', when:'Tue Jul 21 · 1:00 PM',  host:'Juan · Senior Stylist' },
+    { id:'slot_9',  meetingId:'mtg_acd',       when:'Fri Jul 17 · 4:00 PM',  host:'Charlie · Owner' },
+    { id:'slot_10', meetingId:'mtg_acd',       when:'Mon Jul 20 · 9:00 AM',  host:'Charlie · Owner' },
+    { id:'slot_11', meetingId:'mtg_acd',       when:'Wed Jul 22 · 2:30 PM',  host:'Charlie · Owner' }
+  ],
+
+  /* employees: everyone onboarding; one is the current user (table: employees) */
+  employees: [
+    { id:'emp_jordan', name:'Jordan Rivera', initials:'JR', role:'Assistant Stylist', dayLabel:'Day 4',
+      eligibleForAsp:true,  trainingAccess:false, progress:45, isCurrentUser:true,
+      adminNotes:'Handbook acknowledged 7/6. Pair with Juan for first shadow week.' },
+    { id:'emp_maya', name:'Maya Chen', initials:'MC', role:'Front Desk Concierge', dayLabel:'Day 11',
+      eligibleForAsp:false, trainingAccess:true,  progress:80, isCurrentUser:false,
+      adminNotes:'Strong on the phones already. ACD intro set for Friday.' },
+    { id:'emp_leo', name:'Leo Martinez', initials:'LM', role:'Barber', dayLabel:'Day 30',
+      eligibleForAsp:false, trainingAccess:true,  progress:100, isCurrentUser:false,
+      adminNotes:'Onboarding complete. Fully on the books.' },
+    { id:'emp_sam', name:'Sam Okafor', initials:'SO', role:'Assistant Stylist', dayLabel:'Day 1',
+      eligibleForAsp:true,  trainingAccess:false, progress:10, isCurrentUser:false,
+      adminNotes:'' }
+  ],
+
+  /* employeeMeetings: one row per employee per applicable meeting
+     (table: employee_meetings, FKs employeeId + meetingId, status enum) */
+  employeeMeetings: [
+    { id:'em_1',  employeeId:'emp_jordan', meetingId:'mtg_handbook',  status:'complete',  when:'Mon Jul 6 · 10:00 AM', host:'Charlie · Owner', acknowledgedAt:'2026-07-06T10:45:00Z' },
+    { id:'em_2',  employeeId:'emp_jordan', meetingId:'mtg_frontdesk', status:'scheduled', when:'Wed Jul 15 · 9:30 AM',  host:'Bobby · Manager',  acknowledgedAt:null },
+    { id:'em_3',  employeeId:'emp_jordan', meetingId:'mtg_assistant', status:'pending',   when:null, host:'Juan · Senior Stylist', acknowledgedAt:null },
+    { id:'em_4',  employeeId:'emp_jordan', meetingId:'mtg_acd',       status:'pending',   when:null, host:'Charlie · Owner', acknowledgedAt:null },
+    { id:'em_5',  employeeId:'emp_maya',   meetingId:'mtg_handbook',  status:'complete',  when:'Mon Jun 30 · 10:00 AM', host:'Charlie · Owner', acknowledgedAt:'2026-06-30T10:40:00Z' },
+    { id:'em_6',  employeeId:'emp_maya',   meetingId:'mtg_frontdesk', status:'complete',  when:'Tue Jul 1 · 9:30 AM',  host:'Bobby · Manager',  acknowledgedAt:null },
+    { id:'em_7',  employeeId:'emp_maya',   meetingId:'mtg_acd',       status:'scheduled', when:'Fri Jul 17 · 4:00 PM',  host:'Charlie · Owner', acknowledgedAt:null },
+    { id:'em_8',  employeeId:'emp_leo',    meetingId:'mtg_handbook',  status:'complete',  when:'Mon Jun 16 · 10:00 AM', host:'Charlie · Owner', acknowledgedAt:'2026-06-16T10:35:00Z' },
+    { id:'em_9',  employeeId:'emp_leo',    meetingId:'mtg_frontdesk', status:'complete',  when:'Tue Jun 17 · 9:30 AM',  host:'Bobby · Manager',  acknowledgedAt:null },
+    { id:'em_10', employeeId:'emp_leo',    meetingId:'mtg_acd',       status:'complete',  when:'Wed Jun 18 · 2:30 PM',  host:'Charlie · Owner', acknowledgedAt:null },
+    { id:'em_11', employeeId:'emp_sam',    meetingId:'mtg_handbook',  status:'scheduled', when:'Thu Jul 16 · 10:00 AM', host:'Charlie · Owner', acknowledgedAt:null },
+    { id:'em_12', employeeId:'emp_sam',    meetingId:'mtg_frontdesk', status:'pending',   when:null, host:'Bobby · Manager',  acknowledgedAt:null },
+    { id:'em_13', employeeId:'emp_sam',    meetingId:'mtg_assistant', status:'pending',   when:null, host:'Juan · Senior Stylist', acknowledgedAt:null },
+    { id:'em_14', employeeId:'emp_sam',    meetingId:'mtg_acd',       status:'pending',   when:null, host:'Charlie · Owner', acknowledgedAt:null }
+  ],
+
+  /* checklistGroups + checklistItems: the template (tables: checklist_groups, checklist_items)
+     kind: 'manual' = employee/admin toggles it; 'auto' = derived from employee_meetings */
+  checklistGroups: [
+    { id:'grp_employment', sortOrder:1, kind:'manual', title:'Employment requirements', subtitle:'Paperwork first — the shop can\u2019t schedule you without it.' },
+    { id:'grp_setup',      sortOrder:2, kind:'manual', title:'Shop setup', subtitle:'Getting you visible, reachable, and on the schedule.' },
+    { id:'grp_meetings',   sortOrder:3, kind:'auto',   title:'Required meetings', subtitle:'Tracked automatically from your meeting journey.' },
+    { id:'grp_training',   sortOrder:4, kind:'manual', title:'External training access', subtitle:'Access and orientation — not training completion.' }
+  ],
+  checklistItems: [
+    { id:'itm_i9',        groupId:'grp_employment', sortOrder:1, label:'Form I-9 process' },
+    { id:'itm_tax',       groupId:'grp_employment', sortOrder:2, label:'Federal and state tax documentation' },
+    { id:'itm_dd',        groupId:'grp_employment', sortOrder:3, label:'Direct deposit setup' },
+    { id:'itm_ec',        groupId:'grp_employment', sortOrder:4, label:'Emergency contact information' },
+    { id:'itm_ack',       groupId:'grp_employment', sortOrder:5, label:'Required employment acknowledgments' },
+    { id:'itm_lic',       groupId:'grp_employment', sortOrder:6, label:'License or certification verification (where applicable)' },
+    { id:'itm_profile',   groupId:'grp_setup', sortOrder:1, label:'Complete your employee profile' },
+    { id:'itm_headshot',  groupId:'grp_setup', sortOrder:2, label:'Upload or schedule a professional headshot' },
+    { id:'itm_contact',   groupId:'grp_setup', sortOrder:3, label:'Confirm contact information' },
+    { id:'itm_avail',     groupId:'grp_setup', sortOrder:4, label:'Confirm work availability' },
+    { id:'itm_dress',     groupId:'grp_setup', sortOrder:5, label:'Review dress and appearance standards' },
+    { id:'itm_sched',     groupId:'grp_setup', sortOrder:6, label:'Receive scheduling-system access' },
+    { id:'itm_sysaccess', groupId:'grp_setup', sortOrder:7, label:'Receive required communication or system access' },
+    { id:'itm_taccess',   groupId:'grp_training', sortOrder:1, label:'Receive training-platform access' },
+    { id:'itm_login',     groupId:'grp_training', sortOrder:2, label:'Confirm your login works' },
+    { id:'itm_open',      groupId:'grp_training', sortOrder:3, label:'Open the training platform' },
+    { id:'itm_ackfuture', groupId:'grp_training', sortOrder:4, label:'Acknowledge where future training will take place' }
+  ],
+  /* checklistState: per-employee completion (table: checklist_state, PK employeeId+itemId).
+     Only the current user is seeded here; others default to not-done. */
+  checklistState: [
+    { employeeId:'emp_jordan', itemId:'itm_i9', done:true },
+    { employeeId:'emp_jordan', itemId:'itm_tax', done:true },
+    { employeeId:'emp_jordan', itemId:'itm_dd', done:true },
+    { employeeId:'emp_jordan', itemId:'itm_profile', done:true },
+    { employeeId:'emp_jordan', itemId:'itm_contact', done:true }
+  ]
+};
+
+/* ===================== 2. Store (the backend seam) ======================= */
+/* Prototype helpers — none of this survives the swap to a real backend. */
+const clone = o => (o == null ? o : JSON.parse(JSON.stringify(o)));
+let _seq = 1000;
+const newId = prefix => prefix + '_' + (++_seq);
+const _delay = () => Promise.resolve();               // stand-in for network latency
+const byOrder = (a, b) => (a.sortOrder || 0) - (b.sortOrder || 0);
+
+function _applicableMeetings(emp) {
+  return DB.meetings.filter(m => !m.roleOnly || emp.eligibleForAsp).slice().sort(byOrder);
+}
+function _instances(empId) { return DB.employeeMeetings.filter(x => x.employeeId === empId); }
+function _bumpProgress(emp) {
+  const appl = _applicableMeetings(emp);
+  const done = _instances(emp.id).filter(i => i.status === 'complete').length;
+  const computed = Math.round(20 + (appl.length ? done / appl.length : 0) * 80);
+  emp.progress = Math.max(emp.progress || 0, computed);
+}
+function _nextStep(emp) {
+  for (const m of _applicableMeetings(emp)) {
+    const inst = _instances(emp.id).find(i => i.meetingId === m.id);
+    if (!inst || inst.status !== 'complete') return 'Step ' + m.roman + ' · ' + m.shortTitle;
+  }
+  return 'Complete';
+}
+function _meetingSummary(m, inst, applicable) {
+  return {
+    meetingId: m.id, step: m.step, roman: m.roman, title: m.title, shortTitle: m.shortTitle,
+    roleOnly: m.roleOnly, requiresAck: m.requiresAck, durationMin: m.durationMin,
+    purpose: m.purpose, topicsLabel: m.topicsLabel, topics: m.topics, prep: m.prep, boundary: m.boundary,
+    status: inst ? inst.status : (applicable ? 'pending' : 'na'),
+    when: inst ? inst.when : null,
+    host: (inst && inst.host) || m.defaultHost,
+    acknowledgedAt: inst ? inst.acknowledgedAt : null,
+    hasInstance: !!inst, applicable: !!applicable
+  };
+}
+
+const Store = {
+  /* ---- reads ---- */
+  async getContent()            { await _delay(); return clone(DB.content); },                                   // GET  /content
+  async listTeam()              { await _delay(); return clone(DB.team.slice().sort(byOrder)); },                 // GET  /team
+  async listMeetings()          { await _delay(); return clone(DB.meetings.slice().sort(byOrder)); },             // GET  /meetings
+  async listSlots(meetingId)    { await _delay(); return clone(DB.slots.filter(s => s.meetingId === meetingId)); },// GET  /meetings/:id/slots
+  async listEmployees() {                                                                                          // GET  /employees  (list summary)
+    await _delay();
+    return clone(DB.employees.map(e => ({ ...e, nextStep: _nextStep(e) })));
+  },
+  async getEmployee(id)         { await _delay(); const e = DB.employees.find(x => x.id === id); return e ? clone({ ...e, nextStep: _nextStep(e) }) : null; }, // GET /employees/:id
+  async listEmployeeMeetings(empId, includeAll = false) {                                                          // GET /employees/:id/meetings[?include=all]
+    await _delay();
+    const emp = DB.employees.find(e => e.id === empId); if (!emp) return [];
+    const source = includeAll ? DB.meetings.slice().sort(byOrder) : _applicableMeetings(emp);
+    return clone(source.map(m => {
+      const inst = _instances(empId).find(i => i.meetingId === m.id) || null;
+      const applicable = !m.roleOnly || emp.eligibleForAsp;
+      return _meetingSummary(m, inst, applicable);
+    }));
+  },
+  async getChecklist(empId) {                                                                                      // GET /employees/:id/checklist
+    await _delay();
+    const emp = DB.employees.find(e => e.id === empId); if (!emp) return [];
+    return clone(DB.checklistGroups.slice().sort(byOrder).map(g => {
+      if (g.kind === 'auto') {
+        const items = _applicableMeetings(emp).map(m => {
+          const inst = _instances(empId).find(i => i.meetingId === m.id);
+          const st = inst ? inst.status : 'pending';
+          return { id: 'meeting:' + m.id, label: 'Attend ' + m.title + (m.roleOnly ? ' (your role)' : ''), done: st === 'complete', locked: true, status: st };
+        });
+        return { id: g.id, title: g.title, subtitle: g.subtitle, kind: g.kind, items };
+      }
+      const items = DB.checklistItems.filter(it => it.groupId === g.id).sort(byOrder).map(it => {
+        const s = DB.checklistState.find(x => x.employeeId === empId && x.itemId === it.id);
+        return { id: it.id, label: it.label, done: !!(s && s.done), locked: false };
+      });
+      return { id: g.id, title: g.title, subtitle: g.subtitle, kind: g.kind, items };
+    }));
+  },
+
+  /* ---- team mutations ---- */
+  async addTeamMember(data) {                                                                                     // POST   /team
+    await _delay();
+    const max = DB.team.reduce((n, t) => Math.max(n, t.sortOrder || 0), 0);
+    const row = {
+      id: newId('tm'), sortOrder: max + 1, name: data.name, initials: initialsOf(data.name),
+      role: data.role, experience: data.experience || '', photoUrl: null,
+      bio: data.bio || 'Part of the Artisan team.', specialties: data.specialties || [], hostsMeetingIds: []
+    };
+    DB.team.push(row); return clone(row);
+  },
+  async updateTeamMember(id, patch) {                                                                             // PATCH  /team/:id
+    await _delay();
+    const t = DB.team.find(x => x.id === id); if (!t) throw new Error('team member not found');
+    if (patch.name !== undefined) { t.name = patch.name; t.initials = initialsOf(patch.name); }
+    if (patch.role !== undefined) t.role = patch.role;
+    if (patch.experience !== undefined) t.experience = patch.experience;
+    if (patch.bio !== undefined) t.bio = patch.bio;
+    if (patch.specialties !== undefined) t.specialties = patch.specialties;
+    return clone(t);
+  },
+  async deleteTeamMember(id) {                                                                                    // DELETE /team/:id
+    await _delay();
+    const i = DB.team.findIndex(x => x.id === id); if (i >= 0) DB.team.splice(i, 1); return { id, deleted: true };
+  },
+  async setTeamPhoto(id, dataUrl) {                                                                               // PUT/DELETE /team/:id/photo
+    await _delay();
+    const t = DB.team.find(x => x.id === id); if (!t) throw new Error('team member not found');
+    t.photoUrl = dataUrl || null; return clone(t);
+  },
+
+  /* ---- slot / meeting mutations ---- */
+  async addSlot(meetingId, slot) {                                                                               // POST  /meetings/:id/slots
+    await _delay();
+    const row = { id: newId('slot'), meetingId, when: slot.when, host: slot.host };
+    DB.slots.push(row); return clone(row);
+  },
+  async updateMeeting(meetingId, patch) {                                                                        // PATCH /meetings/:id
+    await _delay();
+    const m = DB.meetings.find(x => x.id === meetingId); if (!m) throw new Error('meeting not found');
+    if (patch.defaultHost !== undefined) m.defaultHost = patch.defaultHost;
+    return clone(m);
+  },
+
+  /* ---- employee meeting mutations ---- */
+  async scheduleEmployeeMeeting(empId, meetingId, when) {                                                        // POST /employees/:id/meetings/:mid/schedule
+    await _delay();
+    const inst = _ensureInstance(empId, meetingId);
+    const slot = DB.slots.find(s => s.meetingId === meetingId && s.when === when);
+    const m = DB.meetings.find(x => x.id === meetingId);
+    inst.status = 'scheduled'; inst.when = when; inst.host = slot ? slot.host : (m ? m.defaultHost : inst.host);
+    return clone(inst);
+  },
+  async completeEmployeeMeeting(empId, meetingId) {                                                              // POST /employees/:id/meetings/:mid/complete
+    await _delay();
+    const inst = _ensureInstance(empId, meetingId);
+    inst.status = 'complete';
+    _bumpProgress(DB.employees.find(e => e.id === empId));
+    return clone(inst);
+  },
+  async acknowledgeEmployeeMeeting(empId, meetingId) {                                                           // POST /employees/:id/meetings/:mid/acknowledge
+    await _delay();
+    const inst = _ensureInstance(empId, meetingId);
+    inst.acknowledgedAt = new Date().toISOString();
+    return clone(inst);
+  },
+  async assignProgram(empId) {                                                                                    // POST /employees/:id/assign-program (Assistant Stylist)
+    await _delay();
+    const emp = DB.employees.find(e => e.id === empId); if (!emp) throw new Error('employee not found');
+    emp.eligibleForAsp = true;
+    _ensureInstance(empId, 'mtg_assistant');
+    return clone(emp);
+  },
+
+  /* ---- employee field mutations ---- */
+  async setTrainingAccess(empId, value) {                                                                         // PATCH /employees/:id { trainingAccess }
+    await _delay();
+    const e = DB.employees.find(x => x.id === empId); if (!e) throw new Error('employee not found');
+    e.trainingAccess = !!value; return clone(e);
+  },
+  async setEmployeeNotes(empId, text) {                                                                           // PATCH /employees/:id { adminNotes }
+    await _delay();
+    const e = DB.employees.find(x => x.id === empId); if (!e) throw new Error('employee not found');
+    e.adminNotes = text; return clone(e);
+  },
+  async setChecklistItem(empId, itemId, done) {                                                                   // PUT /employees/:id/checklist/:itemId { done }
+    await _delay();
+    let s = DB.checklistState.find(x => x.employeeId === empId && x.itemId === itemId);
+    if (!s) { s = { employeeId: empId, itemId, done: !!done }; DB.checklistState.push(s); }
+    else s.done = !!done;
+    return clone(s);
+  },
+
+  /* ---- content ---- */
+  async updateContent(patch) {                                                                                    // PATCH /content
+    await _delay();
+    if (patch.welcomeMessage !== undefined) DB.content.welcomeMessage = patch.welcomeMessage;
+    if (patch.trainingUrl !== undefined) DB.content.trainingUrl = patch.trainingUrl;
+    return clone(DB.content);
+  }
+};
+/* creates an employee_meetings row if missing (used by schedule/complete/ack/assign) */
+function _ensureInstance(empId, meetingId) {
+  let inst = DB.employeeMeetings.find(x => x.employeeId === empId && x.meetingId === meetingId);
+  if (!inst) {
+    const m = DB.meetings.find(x => x.id === meetingId);
+    inst = { id: newId('em'), employeeId: empId, meetingId, status: 'pending', when: null, host: m ? m.defaultHost : null, acknowledgedAt: null };
+    DB.employeeMeetings.push(inst);
+  }
+  return inst;
+}
+
+/* ===================== 3. State + UI ==================================== */
+const CURRENT_USER = 'emp_jordan';                 // the signed-in employee (would come from auth)
+const state = { content: {}, team: [], meetings: [], slots: {}, employees: [], me: { employee: null, meetings: [], checklist: [] } };
+let mode = 'employee', current = 's-home', rescheduleId = null, editId = null, uploadTargetId = null;
+
+const $ = s => document.querySelector(s);
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._x); t._x=setTimeout(()=>t.classList.remove('show'),2400); }
+function statusChip(s){
+  if(s==='complete')return '<span class="chip complete">Complete</span>';
+  if(s==='scheduled')return '<span class="chip scheduled">Scheduled</span>';
+  if(s==='na')return '<span class="chip na">Not required</span>';
+  return '<span class="chip">Not scheduled</span>';
+}
+const meetingTpl = id => state.meetings.find(m => m.id === id);
+
+/* one async boundary: pull everything the UI needs, then render synchronously */
+async function refresh(){
+  state.content   = await Store.getContent();
+  state.team      = await Store.listTeam();
+  state.meetings  = await Store.listMeetings();
+  state.employees = await Store.listEmployees();
+  state.slots     = {};
+  for(const m of state.meetings){ state.slots[m.id] = await Store.listSlots(m.id); }
+  state.me.employee  = await Store.getEmployee(CURRENT_USER);
+  state.me.meetings  = await Store.listEmployeeMeetings(CURRENT_USER);
+  state.me.checklist = await Store.getChecklist(CURRENT_USER);
+  renderAll();
+}
+function renderAll(){ syncIdentity(); renderRail(); renderChecklist(); renderHome(); renderTeam(); renderAdminTeam(); renderRoster(); renderSlots(); renderContentForm(); renderNav(); }
+
+/* ---- navigation ---- */
+const NAV = {
+  employee:[{label:'Onboarding',header:true},{id:'s-home',label:'Home'},{id:'s-team',label:'Meet the shop'},{id:'s-checklist',label:'My checklist'},{id:'s-meetings',label:'Meetings'},{id:'s-training',label:'Training access'},{id:'s-help',label:'Questions'}],
+  admin:[{label:'Manage',header:true},{id:'a-overview',label:'Overview'},{id:'a-team',label:'Team & photos'},{id:'a-slots',label:'Meeting times'},{id:'a-content',label:'Content'}]
+};
+function renderNav(){
+  $('#nav').innerHTML = NAV[mode].map(n=> n.header
+    ? `<div class="nav-label">${n.label}</div>`
+    : `<button class="navbtn ${n.id===current?'active':''}" onclick="go('${n.id}')">${n.label}</button>`).join('');
+}
+function go(id){
+  current=id;
+  document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active', s.id===id));
+  renderNav();
+  window.scrollTo({top:0,behavior:'auto'});
+}
+function syncIdentity(){
+  const me = state.me.employee || { name:'Jordan Rivera', role:'Assistant Stylist', dayLabel:'Day 4', initials:'JR' };
+  $('#whoName').textContent = mode==='admin' ? 'Charlie' : me.name;
+  $('#whoRole').textContent = mode==='admin' ? 'Owner · Admin' : `${me.role} · ${me.dayLabel}`;
+  $('#whoAv').textContent   = mode==='admin' ? 'C' : me.initials;
+  $('#modeSub').textContent = mode==='admin' ? 'Onboarding · Back of house' : 'Onboarding · Front of house';
+}
+function setMode(m){
+  mode=m;
+  document.body.classList.toggle('admin', m==='admin');
+  $('#btnEmp').classList.toggle('on', m==='employee');
+  $('#btnAdm').classList.toggle('on', m==='admin');
+  syncIdentity();
+  go(m==='admin' ? 'a-overview' : 's-home');
+}
+
+/* ---- employee: meetings ---- */
+function renderRail(){
+  $('#rail').innerHTML = state.me.meetings.slice().sort((a,b)=>a.step-b.step).map(m=>`
+    <div class="step ${m.status}">
+      <div class="numeral">${m.roman}</div>
+      <div class="step-card" role="button" tabindex="0" onclick="openMeeting('${m.meetingId}')" onkeydown="if(event.key==='Enter')openMeeting('${m.meetingId}')">
+        <div>
+          <h3>${m.title}${m.roleOnly?' <span class="chip role" style="margin-left:6px">Your role</span>':''}</h3>
+          <div class="meta">${m.host}${m.when?` · ${m.when}`:''}</div>
+        </div>
+        <div class="step-right">${statusChip(m.status)}<span class="arrow">→</span></div>
+      </div>
+    </div>`).join('');
+}
+function openMeeting(meetingId){
+  const m = state.me.meetings.find(x=>x.meetingId===meetingId);
+  if(!m){ toast('That meeting isn\u2019t part of your onboarding'); return; }
+  const slots = state.slots[meetingId] || [];
+  const picking = m.status==='pending' || rescheduleId===meetingId;
+  let action='';
+  if(picking){
+    action = `<hr class="hr"><h3>${rescheduleId===meetingId?'Choose a new time':'Pick a time'}</h3><p class="sub">Hosted by ${m.host} · about ${m.durationMin} min.</p>
+      <div class="slots">${slots.map(s=>`<button class="slot" onclick="schedule('${meetingId}','${s.when}')">${s.when}</button>`).join('') || '<span class="sub">No times available yet — check back soon.</span>'}</div>
+      ${rescheduleId===meetingId?`<div style="margin-top:10px"><button class="btn ghost small" onclick="cancelReschedule('${meetingId}')">Keep ${m.when}</button></div>`:''}`;
+  } else if(m.status==='scheduled'){
+    action = `<hr class="hr"><h3>You're booked</h3><p class="sub">${m.when} with ${m.host} · about ${m.durationMin} min.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+        <button class="btn small" onclick="addToCalendar('${meetingId}')">Add to calendar ↓</button>
+        <button class="btn ghost small" onclick="reschedule('${meetingId}')">Reschedule</button>
+      </div>`;
+  } else {
+    action = `<hr class="hr"><h3>Done and noted</h3><p class="sub">Completed ${m.when||''}. Completion is recorded on your checklist.</p>
+      <div style="margin-top:12px"><button class="btn ghost small" onclick="addToCalendar('${meetingId}')">Add to calendar ↓</button></div>`;
+  }
+  let ack='';
+  if(m.requiresAck){
+    const done=!!m.acknowledgedAt;
+    ack = `<hr class="hr"><h3>Handbook acknowledgment</h3>
+      <p class="sub">Confirm you've reviewed the employee handbook.</p>
+      <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+        <button class="btn ghost small" onclick="toast('Handbook opens in a new tab in the full build')">Open the handbook ↗</button>
+        <button class="btn small" id="ackBtn" onclick="ackHandbook('${meetingId}')" ${done?'disabled style="opacity:.55;cursor:default"':''}>${done?'✓ Acknowledged':'Acknowledge handbook'}</button>
+      </div>`;
+  }
+  const prep = m.prep ? `<hr class="hr"><h3>Prepare for this meeting</h3>
+      <ul class="topic-list">${m.prep.map(p=>`<li>${p}</li>`).join('')}</ul>` : '';
+  $('#s-meeting').innerHTML = `
+    <button class="back" onclick="go('s-meetings')">← All meetings</button>
+    <div class="detail-head">
+      <div class="numeral" style="width:56px;height:56px;font-size:20px">${m.roman}</div>
+      <div>
+        <div class="eyebrow" style="margin-bottom:4px">Step ${m.roman} of IV · about ${m.durationMin} min</div>
+        <h1 class="display" style="font-size:clamp(22px,3.4vw,30px)">${m.title}</h1>
+      </div>
+      <div style="margin-left:auto">${statusChip(m.status)}</div>
+    </div>
+    <div class="card">
+      <h3>Purpose</h3><p class="sub">${m.purpose}</p>
+      <hr class="hr">
+      <h3>${m.topicsLabel}</h3>
+      <ul class="topic-list">${m.topics.map(t=>`<li>${t}</li>`).join('')}</ul>
+      ${prep}${ack}${action}
+    </div>
+    ${m.boundary?`<div class="note"><strong>Scope:</strong> ${m.boundary}</div>`:''}`;
+  go('s-meeting');
+}
+async function schedule(meetingId, when){
+  await Store.scheduleEmployeeMeeting(CURRENT_USER, meetingId, when);
+  rescheduleId=null;
+  toast(`Scheduled — ${meetingTpl(meetingId).title}, ${when}`);
+  await refresh(); openMeeting(meetingId);
+}
+function reschedule(id){ rescheduleId=id; openMeeting(id); }
+function cancelReschedule(id){ rescheduleId=null; openMeeting(id); }
+async function ackHandbook(meetingId){
+  await Store.acknowledgeEmployeeMeeting(CURRENT_USER, meetingId);
+  toast('Handbook acknowledged');
+  await refresh(); openMeeting(meetingId);
+}
+/* calendar (.ics) export — client generates the file for the user */
+function pad2(n){return String(n).padStart(2,'0')}
+function parseWhen(w){
+  const parts=w.split('\u00b7').map(s=>s.trim());
+  const mo={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+  const dm=parts[0].split(/\s+/);
+  const tm=parts[1].match(/(\d+):(\d+)\s*(AM|PM)/i);
+  let hh=parseInt(tm[1],10); const mm=parseInt(tm[2],10);
+  if(/pm/i.test(tm[3])&&hh!==12) hh+=12; if(/am/i.test(tm[3])&&hh===12) hh=0;
+  return new Date(2026, mo[dm[1]], parseInt(dm[2],10), hh, mm);
+}
+function fmtICS(d){return ''+d.getFullYear()+pad2(d.getMonth()+1)+pad2(d.getDate())+'T'+pad2(d.getHours())+pad2(d.getMinutes())+'00'}
+function addToCalendar(meetingId){
+  const m = state.me.meetings.find(x=>x.meetingId===meetingId);
+  if(!m||!m.when){ toast('Pick a time first'); return; }
+  const start=parseWhen(m.when), end=new Date(start.getTime()+(m.durationMin||45)*60000);
+  const ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Artisan Barber//Onboarding//EN','BEGIN:VEVENT',
+    'UID:'+meetingId+'-'+start.getTime()+'@artisanbarber','DTSTAMP:'+fmtICS(new Date()),
+    'DTSTART:'+fmtICS(start),'DTEND:'+fmtICS(end),
+    'SUMMARY:Artisan Onboarding \u2014 '+m.title,'DESCRIPTION:Hosted by '+m.host,
+    'LOCATION:Artisan Barber\\, 331 E 81st St','END:VEVENT','END:VCALENDAR'].join('\r\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([ics],{type:'text/calendar'}));
+  a.download='artisan-'+meetingId+'.ics'; document.body.appendChild(a); a.click();
+  URL.revokeObjectURL(a.href); a.remove(); toast('Calendar file downloaded');
+}
+
+/* ---- employee: checklist ---- */
+function renderChecklist(){
+  $('#checkGroups').innerHTML = state.me.checklist.map(g=>`
+    <div class="check-group">
+      <h2>${g.title}</h2><div class="gsub">${g.subtitle}</div>
+      ${g.items.map(it=>{
+        if(it.locked){
+          return `<div class="check-item ${it.done?'done':''}">
+            <input type="checkbox" ${it.done?'checked':''} disabled aria-label="${it.label}">
+            <label>${it.label}</label><span class="auto">${statusChip(it.status)}</span></div>`;
+        }
+        return `<div class="check-item ${it.done?'done':''}">
+          <input type="checkbox" id="ck_${it.id}" ${it.done?'checked':''} onchange="tick('${it.id}',this.checked)">
+          <label for="ck_${it.id}">${it.label}</label></div>`;
+      }).join('')}
+    </div>`).join('');
+  updateProgress();
+}
+async function tick(itemId, val){
+  await Store.setChecklistItem(CURRENT_USER, itemId, val);
+  await refresh();
+  if(val) toast('Checked off');
+}
+function progressCounts(){
+  let done=0, total=0;
+  state.me.checklist.forEach(g=>g.items.forEach(it=>{ total++; if(it.done) done++; }));
+  return {done,total};
+}
+function updateProgress(){
+  const {done,total}=progressCounts();
+  $('#checkBar').style.width=(total?Math.round(done/total*100):0)+'%';
+}
+
+/* ---- employee: home ---- */
+function renderHome(){
+  const {done,total}=progressCounts();
+  const pct= total?Math.round(done/total*100):0;
+  $('#ringPct').textContent=pct+'%';
+  $('#ringFill').style.strokeDashoffset = 289 - (289*pct/100);
+  const meets = state.me.meetings;
+  const mDone = meets.filter(m=>m.status==='complete').length;
+  $('#statMeet').textContent = `${mDone} / ${meets.length}`;
+  $('#statCheck').textContent = `${done} / ${total}`;
+  const login = findItem('itm_login');
+  $('#statTrain').textContent = (login&&login.done) ? 'Confirmed' : 'Not yet';
+  const next = meets.slice().sort((a,b)=>a.step-b.step).find(m=>m.status!=='complete');
+  $('#upNext').innerHTML = next ? `
+    <div class="numeral">${next.roman}</div>
+    <div style="flex:1;min-width:180px">
+      <div class="eyebrow" style="margin-bottom:2px">Up next</div>
+      <h3>${next.title}</h3>
+      <div class="sub">${next.status==='scheduled' ? next.when+' · '+next.host : 'Not scheduled yet · '+next.host}</div>
+    </div>
+    <button class="btn small" onclick="openMeeting('${next.meetingId}')">${next.status==='scheduled'?'View details':'Pick a time'}</button>`
+    : `<div style="flex:1"><h3>All ${meets.length} meetings complete.</h3><div class="sub">Finish your checklist and confirm training access — then you're fully on the floor.</div></div>`;
+}
+function findItem(itemId){
+  for(const g of state.me.checklist){ const it=g.items.find(x=>x.id===itemId); if(it) return it; }
+  return null;
+}
+
+/* ---- employee: training ---- */
+async function openTraining(){
+  await Store.setChecklistItem(CURRENT_USER, 'itm_open', true);
+  await refresh();
+  toast('Opens the external training site in the full build');
+}
+async function confirmLogin(){
+  await Store.setChecklistItem(CURRENT_USER, 'itm_login', true);
+  await refresh();
+  const b=$('#loginBtn'); if(b) b.textContent='✓ Login confirmed';
+  toast('Login confirmed — nice, you\u2019re in');
+}
+
+/* ---- employee: team ---- */
+function renderTeam(){
+  $('#teamGrid').innerHTML = state.team.map(t=>`
+    <div class="member" role="button" tabindex="0" onclick="openMember('${t.id}')" onkeydown="if(event.key==='Enter')openMember('${t.id}')">
+      <div class="photo">
+        ${t.photoUrl?`<img src="${t.photoUrl}" alt="${t.name}">`:`<span class="mono">${t.initials}</span><span class="tag-cam">Headshot</span>`}
+      </div>
+      <div class="body">
+        <h3>${t.name}</h3>
+        <div class="mrole">${t.role}</div>
+        <p>${t.bio}</p>
+        <div class="tags">${t.specialties.map(x=>`<span class="chip">${x}</span>`).join('')}</div>
+        <div class="more">View profile →</div>
+      </div>
+    </div>`).join('');
+  const words=['Zero','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten'];
+  const el=document.getElementById('teamCount'); if(el) el.textContent = words[state.team.length]||state.team.length;
+}
+function openMember(id){
+  const t = state.team.find(x=>x.id===id); if(!t){ go('s-team'); return; }
+  const first = t.name.split(' ')[0];
+  const hosts = (t.hostsMeetingIds||[]).map(mid=>meetingTpl(mid)).filter(Boolean);
+  const hostBlock = hosts.length ? `
+    <hr class="hr">
+    <h3>In your onboarding</h3>
+    <p class="sub">${first} hosts ${hosts.length>1?'these meetings':'this meeting'}:</p>
+    <div class="md-hosts">${hosts.map(m=>`<button class="btn ghost small" onclick="openMember_toMeeting('${m.id}')">Step ${m.roman} · ${m.title} →</button>`).join('')}</div>` : '';
+  $('#s-member').innerHTML = `
+    <button class="back" onclick="go('s-team')">← Meet the shop</button>
+    <div class="member-detail">
+      <div class="md-photo">${t.photoUrl?`<img src="${t.photoUrl}" alt="${t.name}">`:`<span class="mono">${t.initials}</span>`}</div>
+      <div class="md-body">
+        <div class="eyebrow" style="margin-bottom:6px">Artisan Barber</div>
+        <h1 class="display">${t.name}</h1>
+        <div class="mrole">${t.role}${t.experience?` · ${t.experience}`:''}</div>
+        <p>${t.bio}</p>
+        <div class="tags">${t.specialties.map(x=>`<span class="chip">${x}</span>`).join('')}</div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:20px">
+      <h3>Specialties</h3>
+      <p class="sub">What ${first} is known for on the floor.</p>
+      <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:10px">${t.specialties.map(x=>`<span class="chip role">${x}</span>`).join('')}</div>
+      ${hostBlock}
+    </div>`;
+  go('s-member');
+}
+/* jump from a profile to a meeting the person hosts (only if it's in the user's journey) */
+function openMember_toMeeting(meetingId){
+  if(state.me.meetings.some(m=>m.meetingId===meetingId)) openMeeting(meetingId);
+  else toast('That meeting isn\u2019t part of your onboarding');
+}
+
+/* ---- admin: roster ---- */
+function renderRoster(){
+  $('#rosterBody').innerHTML = state.employees.map(e=>`
+    <tr class="row" tabindex="0" onclick="openEmp('${e.id}')" onkeydown="if(event.key==='Enter')openEmp('${e.id}')">
+      <td><strong>${e.name}</strong><div class="who-role">${e.dayLabel}</div></td>
+      <td class="hide-m">${e.role}</td>
+      <td><span class="mini-bar"><i style="width:${e.progress}%"></i></span>${e.progress}%</td>
+      <td class="hide-m">${e.nextStep}</td>
+      <td>${e.trainingAccess?'<span class="chip complete">Confirmed</span>':'<span class="chip">Pending</span>'}</td>
+    </tr>`).join('');
+  $('#statAccess').textContent = state.employees.filter(e=>!e.trainingAccess).length;
+}
+async function openEmp(empId){
+  const e = await Store.getEmployee(empId);
+  const meets = await Store.listEmployeeMeetings(empId, true);   // include all (so admin can assign role-only steps)
+  const rows = meets.map(m=>{
+    let btns='';
+    if(!m.applicable && m.roleOnly && !m.hasInstance){
+      btns = `<button class="btn ghost small" onclick="assignProgram('${empId}')">Assign to this role</button>`;
+    } else if(m.status!=='complete'){
+      btns = `<button class="btn small" onclick="adminComplete('${empId}','${m.meetingId}')">Mark complete</button>`;
+      if(m.status==='pending' || m.status==='na') btns = `<button class="btn ghost small" onclick="adminAssignTime('${empId}','${m.meetingId}')">Assign time</button> ` + btns;
+    }
+    return `<div class="emp-meet">
+      <div class="nm"><div class="numeral">${m.roman}</div><div><strong style="font-size:14px">${m.shortTitle}</strong><div class="who-role">${m.roleOnly?'Role-based step':'Required for all'}</div></div></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${statusChip(m.status)}${btns}</div>
+    </div>`;
+  }).join('');
+  $('#a-employee').innerHTML = `
+    <button class="back" onclick="go('a-overview')">← All employees</button>
+    <div class="detail-head">
+      <div class="avatar" style="width:52px;height:52px;font-size:19px">${e.initials}</div>
+      <div>
+        <h1 class="display" style="font-size:clamp(22px,3.4vw,30px)">${e.name}</h1>
+        <div class="sub">${e.role} · ${e.dayLabel} · ${e.progress}% onboarded</div>
+      </div>
+    </div>
+    <div class="card"><h3>Meeting journey</h3>${rows}</div>
+    <div class="card">
+      <h3>Training-platform access</h3>
+      <p class="sub">Confirm access was issued and the employee got into the training site.</p>
+      <div style="display:flex;gap:20px;margin-top:14px;flex-wrap:wrap">
+        <span class="switch ${e.trainingAccess?'on':''}" role="switch" aria-checked="${e.trainingAccess}" tabindex="0"
+          onclick="toggleAccess('${empId}')" onkeydown="if(event.key==='Enter')toggleAccess('${empId}')">
+          <span class="track"></span> Access confirmed</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Internal notes</h3>
+      <p class="sub">Visible to admins only.</p>
+      <textarea class="notes" id="noteBox" style="margin-top:10px" placeholder="Add a note about ${e.name.split(' ')[0]}\u2026">${e.adminNotes||''}</textarea>
+      <div style="margin-top:10px"><button class="btn small" onclick="saveNote('${empId}')">Save note</button></div>
+    </div>`;
+  go('a-employee');
+}
+async function adminComplete(empId, meetingId){ await Store.completeEmployeeMeeting(empId, meetingId); toast('Marked complete'); await refresh(); openEmp(empId); }
+async function adminAssignTime(empId, meetingId){
+  const slots = state.slots[meetingId] || [];
+  const when = slots.length ? slots[0].when : 'Time TBD';
+  await Store.scheduleEmployeeMeeting(empId, meetingId, when);
+  toast(slots.length ? `Time assigned — ${when}` : 'Marked as scheduled');
+  await refresh(); openEmp(empId);
+}
+async function assignProgram(empId){ await Store.assignProgram(empId); toast('Assistant Stylist introduction assigned'); await refresh(); openEmp(empId); }
+async function toggleAccess(empId){
+  const e = state.employees.find(x=>x.id===empId);
+  await Store.setTrainingAccess(empId, !(e&&e.trainingAccess));
+  const nowOn = !(e&&e.trainingAccess);
+  toast(nowOn?'Training access confirmed':'Access marked pending');
+  await refresh(); openEmp(empId);
+}
+async function saveNote(empId){ await Store.setEmployeeNotes(empId, $('#noteBox').value); toast('Note saved'); await refresh(); }
+
+/* ---- admin: meeting times ---- */
+const SLOT_POOL=['Thu Jul 16 · 4:30 PM','Fri Jul 17 · 11:30 AM','Mon Jul 20 · 3:00 PM','Tue Jul 21 · 10:30 AM','Wed Jul 22 · 9:00 AM'];
+function renderSlots(){
+  $('#slotCards').innerHTML = state.meetings.map(m=>{
+    const slots = state.slots[m.id] || [];
+    const hostOpts = ['Charlie · Owner','Bobby · Manager','Juan · Senior Stylist','Kris · Barber']
+      .map(h=>`<option ${m.defaultHost===h?'selected':''}>${h}</option>`).join('');
+    return `<div class="card">
+      <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
+        <div class="nm" style="display:flex;gap:12px;align-items:center">
+          <div class="numeral" style="width:38px;height:38px;font-size:14px">${m.roman}</div>
+          <div><h3>${m.title}</h3><div class="sub">${m.roleOnly?'Assigned to relevant roles only':'Required for all new hires'}</div></div>
+        </div>
+        <div style="min-width:180px">
+          <label class="field-label" style="margin-top:0" for="host_${m.id}">Host</label>
+          <select class="field" id="host_${m.id}" onchange="setMeetingHost('${m.id}',this.value)">${hostOpts}</select>
+        </div>
+      </div>
+      <label class="field-label">Available times</label>
+      <div class="slots" style="margin-top:4px">
+        ${slots.map(s=>`<span class="slot" style="cursor:default">${s.when}</span>`).join('') || '<span class="sub">No times yet.</span>'}
+      </div>
+      <div style="margin-top:12px"><button class="btn ghost small" onclick="addSlot('${m.id}')">+ Add a time</button></div>
+    </div>`;
+  }).join('');
+}
+async function addSlot(meetingId){
+  const count = (state.slots[meetingId]||[]).length;
+  const when = SLOT_POOL[count % SLOT_POOL.length];
+  const m = meetingTpl(meetingId);
+  await Store.addSlot(meetingId, { when, host:m.defaultHost });
+  toast(`Time added — ${when}`);
+  await refresh();
+}
+async function setMeetingHost(meetingId, host){ await Store.updateMeeting(meetingId, { defaultHost:host }); toast('Host updated'); await refresh(); }
+
+/* ---- admin: team management ---- */
+function renderAdminTeam(){
+  $('#teamAdmin').innerHTML = state.team.map(t=>`
+    <div class="tm-row">
+      <div class="tm-thumb">${t.photoUrl?`<img src="${t.photoUrl}" alt="${t.name}">`:`<span class="mono">${t.initials}</span>`}</div>
+      <div class="tm-info"><strong>${t.name}</strong><div class="who-role">${t.role}${t.experience?' · '+t.experience:''} · ${t.photoUrl?'Photo set':'No photo yet'}</div></div>
+      <div class="tm-actions">
+        <button class="btn small" onclick="pickHeadshot('${t.id}')">${t.photoUrl?'Replace photo':'Upload headshot'}</button>
+        <button class="btn ghost small" onclick="openEditMember('${t.id}')">Edit</button>
+        <button class="btn ghost small" onclick="removeMember('${t.id}')">Remove</button>
+      </div>
+    </div>`).join('');
+}
+function initialsOf(name){
+  const p=(name||'').trim().split(/\s+/).filter(Boolean);
+  if(!p.length) return '?';
+  return (p.length>1 ? p[0][0]+p[1][0] : p[0].slice(0,2)).toUpperCase();
+}
+function openAddMember(){
+  editId=null;
+  $('#memberFormTitle').textContent='Add team member';
+  $('#mfName').value=''; $('#mfRole').value=''; $('#mfSince').value=''; $('#mfTags').value=''; $('#mfBio').value='';
+  $('#mfPhotoRow').style.display='none'; $('#mfPhotoRow').innerHTML='';
+  $('#memberForm').style.display='block';
+  $('#memberForm').scrollIntoView({behavior:'smooth',block:'center'}); $('#mfName').focus();
+}
+function openEditMember(id){
+  const t=state.team.find(x=>x.id===id); if(!t) return;
+  editId=id;
+  $('#memberFormTitle').textContent='Edit '+t.name;
+  $('#mfName').value=t.name; $('#mfRole').value=t.role; $('#mfSince').value=t.experience||'';
+  $('#mfTags').value=(t.specialties||[]).join(', '); $('#mfBio').value=t.bio||'';
+  const pr=$('#mfPhotoRow');
+  if(t.photoUrl){ pr.style.display='block'; pr.innerHTML=`<button class="btn ghost small" onclick="removeHeadshot('${id}')">Remove current photo</button>`; }
+  else { pr.style.display='none'; pr.innerHTML=''; }
+  $('#memberForm').style.display='block';
+  $('#memberForm').scrollIntoView({behavior:'smooth',block:'center'}); $('#mfName').focus();
+}
+async function saveMember(){
+  const name=$('#mfName').value.trim(), role=$('#mfRole').value.trim();
+  if(!name){ toast('Add a name'); $('#mfName').focus(); return; }
+  if(!role){ toast('Add a role'); $('#mfRole').focus(); return; }
+  const payload = {
+    name, role, experience:$('#mfSince').value.trim(),
+    specialties:$('#mfTags').value.split(',').map(s=>s.trim()).filter(Boolean),
+    bio:$('#mfBio').value.trim() || 'Part of the Artisan team.'
+  };
+  if(editId){ await Store.updateTeamMember(editId, payload); toast(name.split(' ')[0]+'\u2019s profile updated'); }
+  else { await Store.addTeamMember(payload); toast(name.split(' ')[0]+' added to the shop'); }
+  $('#memberForm').style.display='none'; editId=null;
+  await refresh();
+}
+function cancelMember(){ $('#memberForm').style.display='none'; editId=null; }
+async function removeMember(id){
+  const t=state.team.find(x=>x.id===id); if(!t) return;
+  if(!confirm(`Remove ${t.name} from the team? This also removes them from "Meet the shop".`)) return;
+  await Store.deleteTeamMember(id);
+  if(editId===id){ $('#memberForm').style.display='none'; editId=null; }
+  toast(t.name.split(' ')[0]+' removed');
+  await refresh();
+}
+function pickHeadshot(id){ uploadTargetId=id; document.getElementById('headshotInput').click(); }
+function onHeadshot(e){
+  const file=e.target.files[0];
+  if(!file||!uploadTargetId){ e.target.value=''; return; }
+  if(!file.type.startsWith('image/')){ toast('Choose an image file'); e.target.value=''; return; }
+  const reader=new FileReader();
+  reader.onload=async ev=>{
+    const id=uploadTargetId; uploadTargetId=null;
+    await Store.setTeamPhoto(id, ev.target.result);
+    const t=state.team.find(x=>x.id===id);
+    toast((t?t.name.split(' ')[0]:'Photo')+'\u2019s headshot updated');
+    await refresh();
+    if(editId===id){ const pr=$('#mfPhotoRow'); pr.style.display='block';
+      pr.innerHTML=`<button class="btn ghost small" onclick="removeHeadshot('${id}')">Remove current photo</button>`; }
+  };
+  reader.onerror=()=>{ toast('That image couldn\u2019t be read'); uploadTargetId=null; };
+  reader.readAsDataURL(file);
+  e.target.value='';
+}
+async function removeHeadshot(id){
+  await Store.setTeamPhoto(id, null); toast('Headshot removed'); await refresh();
+  if(editId===id){ const pr=$('#mfPhotoRow'); pr.style.display='none'; pr.innerHTML=''; }
+}
+
+/* ---- admin: content ---- */
+function renderContentForm(){
+  const w=$('#welcomeTxt'); if(w) w.value=state.content.welcomeMessage||'';
+  const u=$('#trainUrl'); if(u) u.value=state.content.trainingUrl||'';
+}
+async function saveWelcome(){ await Store.updateContent({ welcomeMessage:$('#welcomeTxt').value }); toast('Welcome message saved'); await refresh(); }
+async function saveTrainingLink(){ await Store.updateContent({ trainingUrl:$('#trainUrl').value }); toast('Training link updated'); await refresh(); }
+
+/* ===================== init ==================================== */
+refresh().then(()=>go('s-home'));
+
+</script>
+</body>
+</html>
