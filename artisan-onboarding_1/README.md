@@ -8,6 +8,11 @@ The platform is a **guided entry point into the shop**, not a learning-managemen
 system. Full training courses, videos, and assessments live on a separate training
 site; this platform introduces new hires, points the way, and confirms they're set up.
 
+The **Resources** section keeps that boundary explicit with one test: *if anyone would
+ever need to answer "who completed this, when, and did they pass?", it is training and
+belongs on the training site.* Resources is read-at-your-own-pace reference material —
+no sequence, no assessment, no completion state.
+
 ---
 
 ## Two views
@@ -23,6 +28,9 @@ Use the **Employee / Admin** toggle in the top-right to switch between them.
   topics, acknowledge the handbook, or pick a time.
 - **Training access** — where ongoing education lives, how to get into the training site,
   and which program applies to the employee's role.
+- **Resources** — mini-tabs of reference material the shop uploads. Includes
+  **1099 Resources — New York**: first-principles material on tracking income, tracking
+  expenses, and filing taxes. Optional reading; nothing here is assigned or tracked.
 - **Questions** — common onboarding FAQ.
 
 ### Admin (back of house)
@@ -35,6 +43,9 @@ Use the **Employee / Admin** toggle in the top-right to switch between them.
 - **Content** — edit onboarding-specific content (welcome message, external training
   link, and more). Includes the "later phase" training-site integration items, marked
   as out of scope for the initial release.
+- **Resources** — create the mini-tabs employees see, upload documents into them, edit
+  the page text, and publish. New tabs and new uploads always start as drafts, and
+  drafts are invisible to employees rather than greyed out.
 
 ---
 
@@ -48,6 +59,14 @@ Use the **Employee / Admin** toggle in the top-right to switch between them.
 
 ## Running it
 Open `index.html` in any modern browser. That's it.
+
+## Testing it
+```
+open index.html?selftest=1     # results render in an overlay panel
+node run-tests.mjs             # headless, exits non-zero on failure
+```
+No install, no dependencies — the runner drives a Chromium already on the machine.
+See **`TESTING.md`**.
 
 ## Deploying with GitHub Pages
 Because the app is a single `index.html`, GitHub Pages can serve it directly:
@@ -79,13 +98,18 @@ database can be dropped in without rewriting the UI:
 - **`state` + render layer** — the UI reads only from an in-memory `state` cache
   populated by a single `refresh()`, and re-fetches after every mutation.
 
-Two companion files describe the target backend:
+Companion files:
 
 - **`schema.sql`** — PostgreSQL DDL for every table (content, meetings,
   meeting_slots, team_members + hosts, employees, employee_meetings, checklist
-  groups/items/state), with keys, foreign keys, enums, and implementation notes.
+  groups/items/state, resource categories/sections/documents/figures), with keys,
+  foreign keys, enums, and implementation notes.
 - **`API.md`** — the REST contract: one endpoint per `Store` method, with request
   and response shapes.
+- **`RESOURCES-SCOPE.md`** — the Resources feature scope: what was decided, what was
+  deliberately left out, and why. Where two designs were reasonable, the one not taken
+  is named so it doesn't get re-litigated.
+- **`TESTING.md`** — how to run the self-test harness and how to add a suite.
 
 Derived values (onboarding progress, "next step," the auto-tracked meetings
 checklist group) are computed rather than stored ad hoc, so the backend owns them.

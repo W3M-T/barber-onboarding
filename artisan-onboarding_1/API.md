@@ -183,6 +183,118 @@ Only valid for items in `manual` groups; `meeting:*` items are not writable.
 
 ---
 
+## Resources
+
+Mini-tabs of reference material. Admins upload documents; employees read them.
+
+**Visibility cascades.** A published document inside a `draft` or `admins` category
+must not be reachable — including by direct id. Resolve the parent category on every
+document read; otherwise a document is exposed the moment someone learns its id.
+
+**Role comes from the session.** `?include=all` is a *request*, honored only when the
+caller is an admin and silently downgraded otherwise. Do not return `403` — a 403
+confirms drafts exist.
+
+### `GET /resources/categories[?include=all]`
+The mini-tabs, ordered by `sort_order`. → `Store.listResourceCategories(includeAll)`
+```json
+[ { "id":"rc_1099ny","name":"1099 Resources — New York","shortName":"1099 · NY",
+    "blurb":"First principles for tracking income…","status":"published",
+    "visibility":"everyone","taxYear":2026,"reviewedOn":"2026-08-01",
+    "audienceNote":"For anyone paid as an independent contractor…","sortOrder":2 } ]
+```
+
+### `POST /resources/categories`
+Create a tab. Always created as `draft`. → `Store.addResourceCategory(data)`
+Body: `{ "name":string, "shortName"?:string, "blurb"?:string }` → the created category.
+
+### `PATCH /resources/categories/:categoryId`
+→ `Store.updateResourceCategory(id, patch)`
+Body: any of `{ name, shortName, blurb, status, visibility, audienceNote, taxYear, reviewedOn }`
+
+### `PUT /resources/categories/order`
+Rewrite `sort_order` from a full ordered list. → `Store.reorderResourceCategories(ids)`
+Body: `{ "ids": string[] }` → the reordered categories.
+
+### `DELETE /resources/categories/:categoryId`
+Cascades to sections, documents and figures. → `Store.deleteResourceCategory(id)`
+→ `{ "id":"rc_x","deleted":true }`
+
+### `GET /resources/categories/:categoryId/sections[?include=all]`
+Authored prose for the tab. → `Store.listResourceSections(categoryId, includeAll)`
+```json
+[ { "id":"sec_income","categoryId":"rc_1099ny","heading":"Tracking income",
+    "body":["…"],"bullets":["…"],"body2":["…"],"sortOrder":4 } ]
+```
+
+### `PUT /resources/categories/:categoryId/sections`
+Replace the whole set for one category. → `Store.saveResourceSections(categoryId, sections)`
+Body: `{ "sections":[{ "id"?:string,"heading":string,"body":string[],"bullets":string[] }] }`
+
+### `GET /resources/categories/:categoryId/figures[?include=all]`
+Year-stamped values referenced from prose as `{{token}}`.
+→ `Store.listResourceFigures(categoryId, includeAll)`
+```json
+[ { "id":"fig_mile","categoryId":"rc_1099ny","token":"mileage","taxYear":2026,
+    "value":"72.5¢/mile through 30 June, 76¢/mile from 1 July",
+    "label":"Standard business mileage rate","sourceUrl":"https://www.irs.gov/…" } ]
+```
+
+### `PATCH /resources/figures/:figureId`
+Correct a figure without a code change — the point of the table.
+→ `Store.updateResourceFigure(id, patch)`
+Body: any of `{ value, label, sourceUrl, taxYear }`
+
+### `GET /resources/categories/:categoryId/documents[?include=all]`
+→ `Store.listResourceDocuments(categoryId, includeAll)`
+
+**This response never carries file bytes.** A base64 PDF inside a list response is the
+difference between a page that opens and one that stalls.
+```json
+[ { "id":"doc_setaside","categoryId":"rc_1099ny","kind":"file","status":"published",
+    "title":"Quarterly set-aside worksheet","description":"Print it, fill it in…",
+    "fileName":"set-aside-worksheet.pdf","downloadName":"set-aside-worksheet.pdf",
+    "mimeType":"application/pdf","byteSize":2826,"version":1,"openCount":3,
+    "updatedOn":"2026-08-01","url":null,"hasFile":true,"sortOrder":1 } ]
+```
+
+### `POST /resources/categories/:categoryId/documents`
+Create a document. Always created as `draft`. → `Store.addResourceDocument(categoryId, data)`
+
+Prototype sends `{ dataUrl }`. In production this is `multipart/form-data` with field
+`file`; the server **sniffs magic bytes**, requires the sniffed type to match the
+declared one against the allowlist (`application/pdf`, `image/png`, `image/jpeg`,
+`image/webp` — **never `image/svg+xml`**), scans the file, stores it in object storage,
+and derives `downloadName` from the basename. `413` over the size cap, `415` off the
+allowlist.
+
+### `PATCH /resources/documents/:documentId`
+→ `Store.updateResourceDocument(id, patch)`
+Body: any of `{ title, description, status, sortOrder, url, updatedOn }`
+
+### `PUT /resources/documents/:documentId/file`
+Swap the bytes, keeping id, title, description and order; bumps `version`.
+→ `Store.replaceResourceDocumentFile(id, file)`
+
+### `DELETE /resources/documents/:documentId`
+→ `Store.deleteResourceDocument(id)` → `{ "id":"doc_x","deleted":true }`
+
+### `GET /resources/documents/:documentId/file`
+The bytes, fetched only on view or download. → `Store.getResourceDocFile(id, includeAll)`
+
+Prototype returns `{ dataUrl }`. In production return a **short-lived signed URL** and
+load it straight into the viewer — do not copy it into a blob, and do not cache it.
+Serve from a separate origin with `Content-Disposition` and a restrictive CSP.
+`404` (not `403`) when the document or its category is not visible to the caller.
+
+### `POST /resources/documents/:documentId/open`
+Increment the aggregate open counter. → `Store.openResourceDocument(id, includeAll)`
+
+Aggregate only. There is deliberately **no per-employee read receipt** — see
+`RESOURCES-SCOPE.md` §7.
+
+---
+
 ## Notes for implementers
 
 - **Auth & scope.** Employee-facing screens act on the authenticated user; admin

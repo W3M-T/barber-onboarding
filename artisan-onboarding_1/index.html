@@ -294,6 +294,80 @@ input.field, select.field{
 .tm-info strong{font-size:14px}
 .tm-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 
+/* ---------- resources: mini-tab strip ---------- */
+/* Never sticky, at any width. The sidenav is already a sticky horizontal
+   scroller at <=880px; a second sticky strip under it eats a phone viewport. */
+.tabstrip{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0 6px;padding-bottom:2px}
+.tabstrip button{
+  display:inline-flex;align-items:center;gap:8px;padding:8px 15px;border-radius:999px;
+  border:1px solid var(--line);background:var(--card);color:var(--muted);
+  font-size:13.5px;font-weight:600;white-space:nowrap;max-width:26ch;
+  overflow:hidden;text-overflow:ellipsis;transition:background .2s,color .2s,border-color .2s;
+}
+.tabstrip button:hover{border-color:var(--brass);color:var(--text)}
+.tabstrip button[aria-selected="true"]{background:var(--brass);border-color:var(--brass);color:#FBF8F1}
+.tabstrip .n{font-family:'IBM Plex Mono',monospace;font-size:10px;opacity:.75}
+.tabstrip button[aria-selected="true"] .n{opacity:.85}
+.tabstrip .draftdot{width:6px;height:6px;border-radius:50%;background:var(--muted);flex:none}
+@media(max-width:880px){
+  .tabstrip{flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+  .tabstrip button{scroll-snap-align:start;flex:none}
+}
+
+/* ---------- resources: article ---------- */
+.article{max-width:66ch;margin-top:6px}
+.article h2{font-family:'Marcellus',serif;font-weight:400;font-size:21px;margin:26px 0 8px;scroll-margin-top:80px}
+.article h2:first-child{margin-top:14px}
+.article p{font-size:15px;line-height:1.7;color:var(--text);margin-top:10px}
+.article .fig{
+  font-family:'IBM Plex Mono',monospace;font-size:.92em;background:var(--brass-bg);color:var(--brass-ink);
+  border-bottom:1px solid var(--brass);padding:1px 5px;border-radius:4px;white-space:nowrap;
+}
+.article .fig sup{font-size:.7em;opacity:.8;margin-left:3px}
+.toc{margin-top:18px}
+.toc summary{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase}
+.toc ol{margin:10px 0 0 0;padding:0;list-style:none;counter-reset:toc}
+.toc li{counter-increment:toc;padding:3px 0}
+.toc button{font-size:13.5px;color:var(--muted);text-align:left}
+.toc button:hover{color:var(--brass-ink);text-decoration:underline}
+.toc button::before{content:counter(toc) ".";font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--brass);margin-right:8px}
+
+/* ---------- resources: document rows ---------- */
+.doc-row{display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--line)}
+.doc-row:last-child{border-bottom:none}
+.doc-ext{
+  width:46px;height:46px;border-radius:10px;flex:none;display:grid;place-items:center;
+  background:var(--chip);border:1px solid var(--line);
+  font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.06em;color:var(--brass-ink);text-transform:uppercase;
+}
+.doc-info{flex:1;min-width:0}
+.doc-info strong{font-size:14px;display:block}
+.doc-info .meta{font-size:12px;color:var(--muted);margin-top:2px}
+.doc-info p{font-size:13px;color:var(--muted);margin-top:4px}
+.doc-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;flex:none}
+.chip.draft{border-color:var(--muted);color:var(--muted)}
+.empty{
+  border:1px dashed var(--line);border-radius:12px;padding:22px;text-align:center;
+  color:var(--muted);font-size:13.5px;background:var(--bar);
+}
+.res-admin-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.res-admin-row:last-child{border-bottom:none}
+.btn.danger{border-color:var(--danger);color:var(--danger)}
+body.admin .btn.danger{border-color:#D4796A;color:#D4796A}
+
+/* ---------- resources: viewer overlay ---------- */
+#viewer{position:fixed;inset:0;z-index:80;background:rgba(12,12,13,.82);display:none;flex-direction:column}
+#viewer.open{display:flex}
+#viewer .vhead{
+  display:flex;align-items:center;gap:14px;padding:12px 18px;background:#0b0b0b;color:#F3F1EB;flex:none;
+  border-bottom:1px solid rgba(255,255,255,.12);
+}
+#viewer .vhead strong{font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#viewer .vhead .vmeta{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:rgba(255,255,255,.55)}
+#viewer .vbody{flex:1;min-height:0;background:#2A2C31}
+#viewer iframe,#viewer img{width:100%;height:100%;border:none;display:block}
+#viewer img{object-fit:contain;background:#1A1B1D}
+
 /* ---------- toast ---------- */
 #toast{
   position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);opacity:0;z-index:99;
@@ -364,7 +438,7 @@ input.field, select.field{
         <div>
           <div class="eyebrow">Artisan Barber · 331 E 81st St · New hire</div>
           <h1 class="display">Welcome to the shop, Jordan.</h1>
-          <p class="lede">This space gets you ready for the floor — paperwork, your four introduction meetings, and access to the Artisan training site. Work through it at your pace before your first full week.</p>
+          <p class="lede" id="homeWelcome">This space gets you ready for the floor — paperwork, your four introduction meetings, and access to the Artisan training site. Work through it at your pace before your first full week.</p>
         </div>
         <div class="ring" aria-label="Onboarding progress">
           <svg width="104" height="104" viewBox="0 0 104 104">
@@ -428,6 +502,7 @@ input.field, select.field{
       <div class="card keycard" style="margin-top:18px">
         <h3>Your training account</h3>
         <p class="sub">Access is issued after your Step IV introduction. Use your shop email to sign in the first time.</p>
+        <p class="sub" style="margin-top:8px">Training site: <span id="trainingLink"></span></p>
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
           <button class="btn" onclick="openTraining()">Open training platform ↗</button>
           <button class="btn ghost" id="loginBtn" onclick="confirmLogin()">Confirm my login works</button>
@@ -471,6 +546,15 @@ input.field, select.field{
       <div class="note"><strong>Need help getting in?</strong> Charlie handles training support — ask at the desk or message through the shop channel.</div>
     </section>
 
+    <!-- ============ EMPLOYEE · RESOURCES ============ -->
+    <section class="screen" id="s-resources">
+      <div class="eyebrow">Reference</div>
+      <h1 class="display">Resources.</h1>
+      <p class="lede">Documents and reference material the shop keeps on hand. Read anything here at your own pace — nothing in this section is tracked or required.</p>
+      <div class="tabstrip" id="resTabs" role="tablist" aria-label="Resource categories"></div>
+      <div id="resPanel" role="tabpanel" tabindex="0"></div>
+    </section>
+
     <!-- ============ EMPLOYEE · HELP ============ -->
     <section class="screen" id="s-help">
       <div class="eyebrow">Questions</div>
@@ -489,8 +573,8 @@ input.field, select.field{
       <div class="eyebrow">Back of house</div>
       <h1 class="display">Onboarding at a glance.</h1>
       <div class="stat-row">
-        <div class="stat"><b>4</b><span>Currently onboarding</span></div>
-        <div class="stat"><b>3</b><span>Meetings this week</span></div>
+        <div class="stat"><b id="statOnboarding">0</b><span>Currently onboarding</span></div>
+        <div class="stat"><b id="statWeek">0</b><span>Meetings scheduled</span></div>
         <div class="stat"><b id="statAccess">2</b><span>Awaiting training access</span></div>
       </div>
       <div class="card" style="margin-top:16px;padding:8px 16px 4px;overflow-x:auto">
@@ -592,10 +676,56 @@ input.field, select.field{
       </div>
     </section>
 
+    <!-- ============ ADMIN · RESOURCES ============ -->
+    <section class="screen" id="a-resources">
+      <div class="eyebrow">Reference</div>
+      <h1 class="display">Resources &amp; documents.</h1>
+      <p class="lede">Create the mini-tabs new hires see under Resources, upload documents into them, and publish when they are ready.</p>
+
+      <div class="note" style="margin-top:16px"><strong>Where the line is:</strong> if anyone would ever need to answer <em>“who completed this, when, and did they pass?”</em>, it is training — it belongs on the training site, not here. Resources is read-at-your-own-pace reference material.</div>
+
+      <div style="margin-top:16px"><button class="btn small" onclick="openAddCategory()">+ Add a tab</button></div>
+
+      <div class="card" id="catForm" style="display:none;margin-top:14px">
+        <h3 id="catFormTitle">Add a tab</h3>
+        <label class="field-label" for="cfName">Tab name</label>
+        <input class="field" id="cfName" placeholder="e.g. Health &amp; sanitation">
+        <label class="field-label" for="cfShort">Short label <span style="text-transform:none;letter-spacing:0">(shown on the pill)</span></label>
+        <input class="field" id="cfShort" placeholder="e.g. Health">
+        <label class="field-label" for="cfBlurb">One-line description</label>
+        <input class="field" id="cfBlurb" placeholder="What a new hire will find in here">
+        <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+          <button class="btn small" onclick="saveCategory()">Save</button>
+          <button class="btn ghost small" onclick="cancelCategory()">Cancel</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <h3>Tabs</h3>
+        <p class="sub">Drafts are invisible to employees — they are not greyed out, they are absent.</p>
+        <div id="catAdmin" style="margin-top:8px"></div>
+      </div>
+
+      <div class="tabstrip" id="resTabsAdmin" role="tablist" aria-label="Resource categories"></div>
+      <div id="resPanelAdmin" role="tabpanel" tabindex="0"></div>
+    </section>
+
   </main>
 </div>
 
 <input type="file" id="headshotInput" accept="image/*" style="display:none" onchange="onHeadshot(event)">
+<input type="file" id="docInput" accept="application/pdf,image/png,image/jpeg,image/webp" style="display:none" onchange="onDocFile(event)">
+<div id="viewer" role="dialog" aria-modal="true" aria-label="Document viewer">
+  <div class="vhead">
+    <strong id="vTitle"></strong>
+    <span class="vmeta" id="vMeta"></span>
+    <span style="margin-left:auto;display:flex;gap:8px">
+      <button class="btn ghost small" id="vDownload" onclick="downloadOpenDoc()">Download ↓</button>
+      <button class="btn small" onclick="closeViewer()">Close ✕</button>
+    </span>
+  </div>
+  <div class="vbody" id="vBody"></div>
+</div>
 <div id="toast" role="status"></div>
 
 <script>
@@ -634,6 +764,7 @@ const DB = {
   meetings: [
     { id:'mtg_handbook', step:1, roman:'I', title:'Handbook Meeting', shortTitle:'Handbook Meeting',
       durationMin:45, roleOnly:false, requiresAck:true, defaultHost:'Charlie · Owner', sortOrder:1,
+      resourceDocumentId:'doc_handbook',
       purpose:'Review the employee handbook, workplace expectations, policies, culture, and important procedures.',
       topicsLabel:'This platform provides',
       topics:['Meeting scheduling','A link to the handbook','Required acknowledgment','Meeting status','Internal admin notes','Completion confirmation'],
@@ -664,19 +795,19 @@ const DB = {
 
   /* team: shop artisans shown on "Meet the shop" (table: team_members) */
   team: [
-    { id:'tm_charlie', sortOrder:1, name:'Charlie', initials:'C', role:'Founder & Owner', experience:'Est. 2017', photoUrl:null,
+    { id:'tm_charlie', sortOrder:1, name:'Charlie', initials:'CH', role:'Founder & Owner', experience:'Est. 2017', photoUrl:null,
       bio:'Opened the shop in 2017 and still sets its standard — creative energy, community first, precise grooming. Your contact for Artisan Continued Development and training support.',
       specialties:['Shop culture','Training support'], hostsMeetingIds:['mtg_handbook','mtg_acd'] },
-    { id:'tm_bobby', sortOrder:2, name:'Bobby', initials:'B', role:'Master Stylist · Manager', experience:'~20 yrs experience', photoUrl:null,
+    { id:'tm_bobby', sortOrder:2, name:'Bobby', initials:'BO', role:'Master Stylist · Manager', experience:'~20 yrs experience', photoUrl:null,
       bio:'Almost twenty years behind the chair. Bold, classic scissor work — and the shop\u2019s specialist for curly and wavy hair. He also holds the front-of-house standard.',
       specialties:['Curly & wavy','Front desk standard'], hostsMeetingIds:['mtg_frontdesk'] },
     { id:'tm_juan', sortOrder:3, name:'Juan Hernandez', initials:'JH', role:'Senior Stylist', experience:'', photoUrl:null,
       bio:'Sharp clipper work, clean fades, and a patient eye for detail. Juan runs shadow weeks and mentors new stylists through the Assistant Stylist Program.',
       specialties:['Mentorship','Precision fades'], hostsMeetingIds:['mtg_assistant'] },
-    { id:'tm_kris', sortOrder:4, name:'Kris', initials:'K', role:'Barber', experience:'20+ yrs experience', photoUrl:null,
+    { id:'tm_kris', sortOrder:4, name:'Kris', initials:'KR', role:'Barber', experience:'20+ yrs experience', photoUrl:null,
       bio:'Queens-raised with two decades of experience. Every cut is a tailored scissor cut — and every guest leaves feeling like a regular.',
       specialties:['Tailored cuts','Guest rapport'], hostsMeetingIds:[] },
-    { id:'tm_cathy', sortOrder:5, name:'Cathy', initials:'CT', role:'Kids Specialist', experience:'', photoUrl:null,
+    { id:'tm_cathy', sortOrder:5, name:'Cathy', initials:'CA', role:'Kids Specialist', experience:'', photoUrl:null,
       bio:'The shop\u2019s specialist for younger guests. Early-morning appointments built for kids — and the reason they come back smiling.',
       specialties:['Children\u2019s cuts'], hostsMeetingIds:[] }
   ],
@@ -708,7 +839,7 @@ const DB = {
       eligibleForAsp:false, trainingAccess:true,  progress:100, isCurrentUser:false,
       adminNotes:'Onboarding complete. Fully on the books.' },
     { id:'emp_sam', name:'Sam Okafor', initials:'SO', role:'Assistant Stylist', dayLabel:'Day 1',
-      eligibleForAsp:true,  trainingAccess:false, progress:10, isCurrentUser:false,
+      eligibleForAsp:true,  trainingAccess:false, progress:20, isCurrentUser:false,
       adminNotes:'' }
   ],
 
@@ -719,12 +850,12 @@ const DB = {
     { id:'em_2',  employeeId:'emp_jordan', meetingId:'mtg_frontdesk', status:'scheduled', when:'Wed Jul 15 · 9:30 AM',  host:'Bobby · Manager',  acknowledgedAt:null },
     { id:'em_3',  employeeId:'emp_jordan', meetingId:'mtg_assistant', status:'pending',   when:null, host:'Juan · Senior Stylist', acknowledgedAt:null },
     { id:'em_4',  employeeId:'emp_jordan', meetingId:'mtg_acd',       status:'pending',   when:null, host:'Charlie · Owner', acknowledgedAt:null },
-    { id:'em_5',  employeeId:'emp_maya',   meetingId:'mtg_handbook',  status:'complete',  when:'Mon Jun 30 · 10:00 AM', host:'Charlie · Owner', acknowledgedAt:'2026-06-30T10:40:00Z' },
-    { id:'em_6',  employeeId:'emp_maya',   meetingId:'mtg_frontdesk', status:'complete',  when:'Tue Jul 1 · 9:30 AM',  host:'Bobby · Manager',  acknowledgedAt:null },
+    { id:'em_5',  employeeId:'emp_maya',   meetingId:'mtg_handbook',  status:'complete',  when:'Tue Jun 30 · 10:00 AM', host:'Charlie · Owner', acknowledgedAt:'2026-06-30T10:40:00Z' },
+    { id:'em_6',  employeeId:'emp_maya',   meetingId:'mtg_frontdesk', status:'complete',  when:'Wed Jul 1 · 9:30 AM',  host:'Bobby · Manager',  acknowledgedAt:null },
     { id:'em_7',  employeeId:'emp_maya',   meetingId:'mtg_acd',       status:'scheduled', when:'Fri Jul 17 · 4:00 PM',  host:'Charlie · Owner', acknowledgedAt:null },
-    { id:'em_8',  employeeId:'emp_leo',    meetingId:'mtg_handbook',  status:'complete',  when:'Mon Jun 16 · 10:00 AM', host:'Charlie · Owner', acknowledgedAt:'2026-06-16T10:35:00Z' },
-    { id:'em_9',  employeeId:'emp_leo',    meetingId:'mtg_frontdesk', status:'complete',  when:'Tue Jun 17 · 9:30 AM',  host:'Bobby · Manager',  acknowledgedAt:null },
-    { id:'em_10', employeeId:'emp_leo',    meetingId:'mtg_acd',       status:'complete',  when:'Wed Jun 18 · 2:30 PM',  host:'Charlie · Owner', acknowledgedAt:null },
+    { id:'em_8',  employeeId:'emp_leo',    meetingId:'mtg_handbook',  status:'complete',  when:'Tue Jun 16 · 10:00 AM', host:'Charlie · Owner', acknowledgedAt:'2026-06-16T10:35:00Z' },
+    { id:'em_9',  employeeId:'emp_leo',    meetingId:'mtg_frontdesk', status:'complete',  when:'Wed Jun 17 · 9:30 AM',  host:'Bobby · Manager',  acknowledgedAt:null },
+    { id:'em_10', employeeId:'emp_leo',    meetingId:'mtg_acd',       status:'complete',  when:'Thu Jun 18 · 2:30 PM',  host:'Charlie · Owner', acknowledgedAt:null },
     { id:'em_11', employeeId:'emp_sam',    meetingId:'mtg_handbook',  status:'scheduled', when:'Thu Jul 16 · 10:00 AM', host:'Charlie · Owner', acknowledgedAt:null },
     { id:'em_12', employeeId:'emp_sam',    meetingId:'mtg_frontdesk', status:'pending',   when:null, host:'Bobby · Manager',  acknowledgedAt:null },
     { id:'em_13', employeeId:'emp_sam',    meetingId:'mtg_assistant', status:'pending',   when:null, host:'Juan · Senior Stylist', acknowledgedAt:null },
@@ -753,6 +884,7 @@ const DB = {
     { id:'itm_dress',     groupId:'grp_setup', sortOrder:5, label:'Review dress and appearance standards' },
     { id:'itm_sched',     groupId:'grp_setup', sortOrder:6, label:'Receive scheduling-system access' },
     { id:'itm_sysaccess', groupId:'grp_setup', sortOrder:7, label:'Receive required communication or system access' },
+    { id:'itm_resources',  groupId:'grp_setup', sortOrder:8, label:'Know where shop resources and reference documents live' },
     { id:'itm_taccess',   groupId:'grp_training', sortOrder:1, label:'Receive training-platform access' },
     { id:'itm_login',     groupId:'grp_training', sortOrder:2, label:'Confirm your login works' },
     { id:'itm_open',      groupId:'grp_training', sortOrder:3, label:'Open the training platform' },
@@ -766,6 +898,254 @@ const DB = {
     { employeeId:'emp_jordan', itemId:'itm_dd', done:true },
     { employeeId:'emp_jordan', itemId:'itm_profile', done:true },
     { employeeId:'emp_jordan', itemId:'itm_contact', done:true }
+  ],
+  /* ==== Resources =========================================================
+     Mini-tabs of reference material (tables: resource_categories,
+     resource_sections, resource_documents, resource_figures).
+
+     THE BOUNDARY, and it is load-bearing: if anyone would ever need to answer
+     "who completed this, when, and did they pass?", it is training and belongs
+     on the separate training site — not here. Resources is read-at-your-own-
+     pace reference. See RESOURCES-SCOPE.md.
+
+     Sections hang off the CATEGORY, not off a document, so a mini-tab can be
+     both a readable page and a folder of files without a kind flag on the
+     container. */
+  resourceCategories: [
+    { id:'rc_shop', sortOrder:1, name:'Shop documents', shortName:'Shop', status:'published', visibility:'everyone',
+      blurb:'Policies, standards and forms you can read any time.', taxYear:null, reviewedOn:null, audienceNote:'' },
+    { id:'rc_1099ny', sortOrder:2, name:'1099 Resources — New York', shortName:'1099 · NY', status:'published', visibility:'everyone',
+      blurb:'First principles for tracking income, tracking expenses, and filing taxes as a 1099 worker in New York.',
+      taxYear:2026, reviewedOn:'2026-08-01',
+      audienceNote:'For anyone paid as an independent contractor rather than as an employee on a W-2. Optional reading — nothing here is assigned, tracked, or required.' },
+    { id:'rc_health', sortOrder:3, name:'Health & sanitation', shortName:'Health', status:'published', visibility:'everyone',
+      blurb:'Sanitation standards and the state’s own guidance.', taxYear:null, reviewedOn:null, audienceNote:'' },
+    { id:'rc_pay', sortOrder:4, name:'Pay & payroll', shortName:'Pay', status:'draft', visibility:'everyone',
+      blurb:'Pay schedule, direct deposit and payroll contacts.', taxYear:null, reviewedOn:null, audienceNote:'' }
+  ],
+
+  /* Year-stamped values referenced from prose as {{token}}. An admin corrects a
+     figure without touching code — which is the whole point, because a hardcoded
+     2026 rate is wrong in 2027 and fails silently. */
+  resourceFigures: [
+    { id:'fig_nec', categoryId:'rc_1099ny', token:'nec_threshold', taxYear:2026, value:'$2,000',
+      label:'Form 1099-NEC reporting threshold, tax years beginning after 2025', sourceUrl:'https://www.irs.gov/instructions/i1099mec' },
+    { id:'fig_nec25', categoryId:'rc_1099ny', token:'nec_threshold_prior', taxYear:2026, value:'$600',
+      label:'Form 1099-NEC reporting threshold for 2025', sourceUrl:'https://www.irs.gov/instructions/i1099mec' },
+    { id:'fig_k', categoryId:'rc_1099ny', token:'k_threshold', taxYear:2026, value:'$20,000 and more than 200 transactions',
+      label:'Form 1099-K threshold for payment apps and marketplaces', sourceUrl:'https://www.irs.gov/businesses/understanding-your-form-1099-k' },
+    { id:'fig_bw', categoryId:'rc_1099ny', token:'backup_withholding', taxYear:2026, value:'24%',
+      label:'Backup withholding rate when a payer has no correct taxpayer ID', sourceUrl:'https://www.irs.gov/businesses/small-businesses-self-employed/backup-withholding' },
+    { id:'fig_se', categoryId:'rc_1099ny', token:'se_rate', taxYear:2026, value:'15.3%',
+      label:'Self-employment tax rate on net earnings', sourceUrl:'https://www.irs.gov/businesses/small-businesses-self-employed/self-employment-tax-social-security-and-medicare-taxes' },
+    { id:'fig_mile', categoryId:'rc_1099ny', token:'mileage', taxYear:2026, value:'72.5¢/mile through 30 June, 76¢/mile from 1 July',
+      label:'Standard business mileage rate — 2026 is a mid-year split', sourceUrl:'https://www.irs.gov/tax-professionals/standard-mileage-rates' },
+    { id:'fig_est', categoryId:'rc_1099ny', token:'est_dates', taxYear:2026, value:'15 April, 15 June, 15 September, 15 January',
+      label:'Estimated tax due dates', sourceUrl:'https://www.irs.gov/businesses/small-businesses-self-employed/estimated-taxes' },
+    { id:'fig_nycsvc', categoryId:'rc_1099ny', token:'nyc_service_rate', taxYear:2026, value:'4½%',
+      label:'NYC local sales tax on barbering services — this rate only', sourceUrl:'https://www.tax.ny.gov/pubs_and_bulls/tg_bulletins/st/beauty_salons_barber_shops_and_hair_restoration_services.htm' },
+    { id:'fig_nycprod', categoryId:'rc_1099ny', token:'nyc_product_rate', taxYear:2026, value:'8⅞%',
+      label:'Combined state and NYC rate on retail product sales', sourceUrl:'https://www.tax.ny.gov/pubs_and_bulls/tg_bulletins/st/beauty_salons_barber_shops_and_hair_restoration_services.htm' },
+    { id:'fig_mctmt', categoryId:'rc_1099ny', token:'mctmt', taxYear:2026, value:'$150,000',
+      label:'MCTMT self-employment threshold, tax years beginning on or after 1 Jan 2026', sourceUrl:'https://www.tax.ny.gov/forms/current_forms/it/it2105i.htm' },
+    { id:'fig_ubt', categoryId:'rc_1099ny', token:'ubt_zero', taxYear:2026, value:'$85,000',
+      label:'NYC UBT taxable income at or below which the credit eliminates the tax', sourceUrl:'https://www.nyc.gov/site/finance/business/business-tax-forms.page' },
+    { id:'fig_fifa', categoryId:'rc_1099ny', token:'fifa_threshold', taxYear:2026, value:'$800',
+      label:'Freelance Isn’t Free Act written-contract threshold, aggregated over 120 days', sourceUrl:'https://dol.ny.gov/freelance-isnt-free-act' }
+  ],
+
+  /* Authored prose. body = paragraphs, bullets = list items. Both may carry
+     {{token}} references resolved against resourceFigures. */
+  resourceSections: [
+    { id:'sec_start', categoryId:'rc_1099ny', sortOrder:1, heading:'Start here',
+      body:[
+        'This is reference material for anyone at the shop who is paid as an independent contractor — a 1099 worker — rather than as an employee on a W-2.',
+        'It explains how the tax system works. It does not tell you how to run your business, and nothing in it is a shop rule, a task, or a requirement. Reading it is entirely optional.',
+        'It is not tax or legal advice. Figures change every year and rules change with them. Every number below is stamped with the year it applies to and links to the agency that publishes it — check there, or with a tax professional, before you act on anything.'
+      ], bullets:[] },
+
+    { id:'sec_principle', categoryId:'rc_1099ny', sortOrder:2, heading:'The one idea everything else rests on',
+      body:[
+        'You are taxed on income, not on paperwork.',
+        'A 1099 is a copy of a report someone else sent to the IRS about money they paid you. It is evidence about your income. It is not the source of the obligation, and it is not where your return starts — your own records are.',
+        'Two consequences follow, and they are the two places people get into trouble.'
+      ],
+      bullets:[
+        'If no form arrives, the income still counts. Cash walk-ins, tips, a client who sends money through an app — all of it is reportable whether or not anyone reports it for you.',
+        'If a form arrives that overstates what you actually received, you report the correct figure and keep the records that show why. You do not copy a wrong number onto your return because a wrong number is what you were sent.',
+        'The Form 1099-NEC threshold rises to {{nec_threshold}} for tax years beginning after 2025, up from {{nec_threshold_prior}}. More of your income will arrive with no form at all — which makes your own books more important, not less.'
+      ] },
+
+    { id:'sec_which', categoryId:'rc_1099ny', sortOrder:3, heading:'Employee or contractor — and who decides',
+      body:[
+        'Whether you are an employee or an independent contractor is decided by law and by the actual facts of the working arrangement. It is not decided by your job title, by what a contract calls you, or by which licence you hold.',
+        'New York applies a common-law right-of-control test: broadly, the more control a business has over how, when and where the work gets done, the more the arrangement looks like employment. Agencies apply it independently — of each other and of the IRS — so it is possible to be treated one way for one purpose and another way for another.',
+        'Two specifics are worth knowing, because both are commonly misunderstood.'
+      ],
+      bullets:[
+        'A New York Area Renter licence is a licensing classification issued by the Department of State. It does not establish independent-contractor status and no agency treats it as settling the question.',
+        'The Workers’ Compensation Board publishes a worked example of a booth-renting barber who works the shop owner’s hours, and concludes that the barber is generally considered an employee.',
+        'New York’s Department of Labor runs a misclassification line on 866-435-1499, and a Joint Enforcement Task Force spanning six state and city agencies.'
+      ] },
+
+    { id:'sec_income', categoryId:'rc_1099ny', sortOrder:4, heading:'Tracking income',
+      body:[
+        'Money reaches a barber through several channels, and they behave differently on paper. Knowing which is which is most of the work.'
+      ],
+      bullets:[
+        'Card payments — your processor files a Form 1099-K with no minimum at all. It reports the gross amount settled, before its fees, refunds and chargebacks, so that figure will be higher than what reached your bank. The difference is a deductible expense, not a reason to report less.',
+        'Payment apps and marketplaces — reported on Form 1099-K only above {{k_threshold}}. Below that you get nothing, and the income still counts.',
+        'Cash — no form exists anywhere. Write it down the day you take it or it is gone.',
+        'Tips — ordinary income in every form, cash or card, whoever hands them to you.'
+      ],
+      body2:[
+        'Open a separate business checking account and run every business dollar through it. Commingling business and personal money is the single most common bookkeeping failure, and it is the one that turns an otherwise defensible return into something you cannot reconstruct.',
+        'Give a correct Form W-9 to anyone who pays you. Without a correct taxpayer identification number the payer is required to take {{backup_withholding}} off the top of every payment and send it to the IRS.'
+      ] },
+
+    { id:'sec_expenses', categoryId:'rc_1099ny', sortOrder:5, heading:'Tracking expenses',
+      body:[
+        'An expense is deductible when it is ordinary and necessary for your trade — common in the business and helpful to it. The record has to exist at the time. A reconstruction in April is not substantiation.',
+        'A recorded expense is worth more than most people assume. Net profit is taxed as income and is also the base for self-employment tax, so an expense you fail to record costs you your income-tax rate plus roughly {{se_rate}} on top of it.'
+      ],
+      bullets:[
+        'Booth or chair rent.',
+        'Product and supplies you use on clients.',
+        'Tools and equipment — clippers, shears, chairs. Larger purchases may be expensed immediately or depreciated; the choice has consequences worth asking about.',
+        'Licence fees, liability insurance, and continuing education.',
+        'Payment-processing fees, booking software, and the business share of your phone and internet.',
+        'Business mileage at {{mileage}}, substantiated by a log you keep as you drive.'
+      ],
+      body2:[
+        'What is commonly claimed and is not deductible: commuting between home and your regular place of work; ordinary clothing, even if you only ever wear it at work and even if it is branded; a home office when you actually work at the shop; the whole phone bill when the phone is also personal.',
+        'Keep receipts, digitally is fine. Keep them for as long as the return can be examined — generally at least three years from filing, longer in some circumstances.'
+      ] },
+
+    { id:'sec_setaside', categoryId:'rc_1099ny', sortOrder:6, heading:'Setting money aside',
+      body:[
+        'Nobody withholds for you. In cash-flow terms that is the whole difference, and it is what ends more contracting careers than any other single thing.',
+        'Two taxes stack. Self-employment tax at {{se_rate}} of net earnings covers Social Security and Medicare — both halves, because there is no employer paying the other one. Half of it is then deductible against your income tax. On top of that sits income tax, federal and New York, at whatever your bracket turns out to be.',
+        'Do not use a set-aside percentage you cannot derive. Take last year’s actual total tax, divide it by last year’s net profit, and use that number — then move that share of every net dollar into a separate account on the day it lands, not at the end of the month. If you have no prior year, start high and correct downward once you have real figures rather than the other way round.',
+        'Set aside from net, not from gross. What came in is not your income.'
+      ], bullets:[] },
+
+    { id:'sec_filing', categoryId:'rc_1099ny', sortOrder:7, heading:'Filing and paying',
+      body:[
+        'The chain is fixed, and every form on it is doing one job.'
+      ],
+      bullets:[
+        'Schedule C turns receipts minus expenses into one number: net profit.',
+        'Schedule SE takes that number and computes self-employment tax.',
+        'Form 1040 assembles the whole return; New York residents also file Form IT-201.',
+        'Estimated tax is paid four times a year — federal Form 1040-ES and New York Form IT-2105 — due {{est_dates}}.'
+      ],
+      body2:[
+        'The safe harbour is the part worth understanding, because it is what stops a good year from becoming a penalty. Pay in either 90% of this year’s tax or 100% of last year’s (110% if your income was above the higher-income threshold), and the underpayment penalty does not apply even if you still owe more at filing. Paying last year’s number is the easier target to hit, because you already know it.'
+      ] },
+
+    { id:'sec_nyc', categoryId:'rc_1099ny', sortOrder:8, heading:'The New York City layer',
+      body:[
+        'This is the section most commonly missed, and the one most likely to be expensive.',
+        'Barbering services are exempt from sales tax everywhere in New York State — except in New York City, where they are subject to the city’s local tax at {{nyc_service_rate}}. That rate only. The 4% state rate and the MCTD rate do not apply to these services, so charging the familiar {{nyc_product_rate}} on a haircut is wrong in the other direction.',
+        'If you collect from clients directly in the five boroughs, that makes you a vendor. You must apply for a Certificate of Authority at least twenty days before you begin taking taxable receipts, and you cannot legally collect tax until it is issued.'
+      ],
+      bullets:[
+        'Sales tax returns: Form ST-100 with Schedule N (Form ST-100.5) on the quarterly schedule, or Form ST-101 annually. The ST-809/ST-810 forms are for monthly filers and will not apply until you are well past $300,000 in a quarter.',
+        'Retail products you sell to a client are taxable throughout the state, at {{nyc_product_rate}} in the city. Products you use up while performing a service cannot be bought for resale — you pay tax on those to your supplier.',
+        'Booth rent itself is a rental of real property and is not subject to sales tax. But utilities and equipment rental bundled into the same chair fee can be, so it matters how the agreement is written.',
+        'NYC Unincorporated Business Tax applies to unincorporated businesses in the city. A credit eliminates it entirely at or below {{ubt_zero}} of UBT taxable income and phases out above that, so most solo barbers owe nothing — but the filing question is separate from the owing question.',
+        'The Metropolitan Commuter Transportation Mobility Tax applies to self-employment earnings allocated to the MCTD above {{mctmt}} for tax years beginning on or after 1 January 2026. This threshold changed — earlier years used a much lower one.'
+      ] },
+
+    { id:'sec_jurisdiction', categoryId:'rc_1099ny', sortOrder:9, heading:'Where you live vs. where you work',
+      body:[
+        'If you live in New Jersey or Connecticut and work in New York City, you are dealing with two states at once, and the structure is worth knowing even though the arithmetic belongs to a preparer.',
+        'Your resident state taxes all of your income, wherever you earned it. New York taxes what you earned in New York, and you file a non-resident return for it. Your resident state then generally gives you a credit for tax paid to New York, which is what stops the same dollar being taxed twice — but the credit is rarely a perfect offset, and it is never automatic.',
+        'New York City’s personal income tax is a resident tax. If you live outside the city, you do not owe it on income earned inside the city. That surprises people in both directions.',
+        'This is the situation where doing it yourself stops paying. Two state returns plus an allocation is where software most often gets it quietly wrong.'
+      ], bullets:[] },
+
+    { id:'sec_freelance', categoryId:'rc_1099ny', sortOrder:10, heading:'If you are hired as a freelancer, get it in writing',
+      body:[
+        'New York’s Freelance Isn’t Free Act became state law on 28 August 2024, as Article 44-A of the General Business Law. It applies to independent contractors, and it is one of the few places where the law puts the obligation on the party hiring you.'
+      ],
+      bullets:[
+        'A written contract is required once the work is worth {{fifa_threshold}} or more, counting all contracts with the same hiring party over the preceding 120 days.',
+        'If the contract states no payment date, payment is due no later than thirty days after the work is complete.',
+        'The hiring party must keep the contract for at least six years and produce it to the Attorney General on request. If they cannot produce it, the law presumes your version of the terms.',
+        'The Department of Labor publishes a free model Freelance Worker Agreement, so there is no reason to work without one.'
+      ] },
+
+    { id:'sec_licence', categoryId:'rc_1099ny', sortOrder:11, heading:'Your licence',
+      body:[
+        'Barbering is licensed by the New York State Department of State under Article 28 of the General Business Law; cosmetology, esthetics, nail specialty, natural hair styling and waxing sit under the separate appearance-enhancement article.'
+      ],
+      bullets:[
+        'The term of licensure is four years.',
+        'There is no continuing-education requirement for renewal. There is a one-time course on infection control and sanitation required before initial licensure.',
+        'Licence fees and required coursework are ordinary business expenses.'
+      ] },
+
+    { id:'sec_year', categoryId:'rc_1099ny', sortOrder:12, heading:'A year that works',
+      body:[
+        'None of the above survives contact with a busy floor unless it is a habit. The cadence matters more than the tooling.'
+      ],
+      bullets:[
+        'Every day you work — write down cash and tips before you leave.',
+        'Weekly — move the set-aside percentage into the tax account, and photograph the week’s receipts.',
+        'Monthly — reconcile the business account against your own log, and check that processor deposits match what you recorded gross.',
+        'Quarterly — pay the federal and New York estimates, and file the sales-tax return if you are registered.',
+        'Annually — reconcile every 1099 you receive against your own totals before anything goes on a return, and pull together licence, insurance and equipment records.'
+      ] },
+
+    { id:'sec_help', categoryId:'rc_1099ny', sortOrder:13, heading:'When to bring in a professional',
+      body:[
+        'Doing your own return is reasonable when your situation is simple: one state, no employees, no equipment being depreciated, and books you actually kept.',
+        'Get help when any of these are true — a second state, employees or subcontractors of your own, a year where income moved sharply, a notice from any agency, a question about how you are classified, or a first year in business. The fee is almost always smaller than the thing it catches.',
+        'What to bring: your own income and expense totals, every 1099 you received, bank and processor statements, mileage log, equipment purchases with dates, licence and insurance records, and last year’s return.'
+      ], bullets:[] }
+  ],
+
+  /* Uploaded files and links out. List reads never carry file bytes — dataUrl is
+     fetched on demand by getResourceDocFile(), because a base64 PDF in a list
+     response is the difference between a snappy page and a stalled one. */
+  resourceDocuments: [
+    { id:'doc_handbook', categoryId:'rc_shop', sortOrder:1, kind:'file', status:'published',
+      title:'Employee handbook', description:'Policies, expectations, culture and procedures. Acknowledged at your Step I meeting.',
+      fileName:'artisan-handbook.pdf', downloadName:'artisan-handbook.pdf', mimeType:'application/pdf',
+      byteSize:2826, version:1, openCount:12, updatedOn:'2026-06-02', url:null, dataUrl:'data:application/pdf;base64,JVBERi0xLjQKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUl0gL0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAvTWVkaWFCb3ggWzAgMCA2MTIgNzkyXSAvUmVzb3VyY2VzIDw8IC9Gb250IDw8IC9GMSA1IDAgUiAvRjIgNiAwIFIgPj4gPj4gL0NvbnRlbnRzIDQgMCBSID4+CmVuZG9iago0IDAgb2JqCjw8IC9MZW5ndGggMjE3NCA+PgpzdHJlYW0KQlQgL0YyIDE2IFRmIDU2IDc2MCBUZCAoUXVhcnRlcmx5IHNldC1hc2lkZSB3b3Jrc2hlZXQpIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA3MzIgVGQgKEFydGlzYW4gQmFyYmVyIC0gcmVmZXJlbmNlIG1hdGVyaWFsLiBOb3QgdGF4IGFkdmljZS4pIFRqIEVUCkJUIC9GMiAxMSBUZiA1NiA3MDIgVGQgKDEuIFdoYXQgY2FtZSBpbiB0aGlzIHF1YXJ0ZXIpIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA2ODcgVGQgKCAgIENhcmQgc2V0dGxlbWVudHMgXChncm9zcywgYmVmb3JlIHByb2Nlc3NvciBmZWVzXCkgLi4uLi4uLi4uICRfX19fX19fX19fKSBUaiBFVApCVCAvRjEgMTAgVGYgNTYgNjcyIFRkICggICBDYXNoIGNvbGxlY3RlZCAuLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLiAkX19fX19fX19fXykgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDY1NyBUZCAoICAgUGF5bWVudC1hcHAgdHJhbnNmZXJzIGZyb20gY2xpZW50cyAuLi4uLi4uLi4uLi4uLi4uLi4uLi4gJF9fX19fX19fX18pIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA2NDIgVGQgKCAgIFRpcHMgXChjYXNoIGFuZCBjYXJkXCkgLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4gJF9fX19fX19fX18pIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA2MjcgVGQgKCAgIEEuIFRPVEFMIFJFQ0VJUFRTIC4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uICRfX19fX19fX19fKSBUaiBFVApCVCAvRjIgMTEgVGYgNTYgNTk3IFRkICgyLiBXaGF0IHdlbnQgb3V0IHRoaXMgcXVhcnRlcikgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDU4MiBUZCAoICAgQm9vdGggLyBjaGFpciByZW50IC4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4gJF9fX19fX19fX18pIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA1NjcgVGQgKCAgIFByb2R1Y3QgYW5kIHN1cHBsaWVzIC4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uICRfX19fX19fX19fKSBUaiBFVApCVCAvRjEgMTAgVGYgNTYgNTUyIFRkICggICBUb29scyBhbmQgZXF1aXBtZW50IC4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLiAkX19fX19fX19fXykgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDUzNyBUZCAoICAgTGljZW5jZSwgaW5zdXJhbmNlLCBjb250aW51aW5nIGVkdWNhdGlvbiAuLi4uLi4uLi4uLi4uLi4gJF9fX19fX19fX18pIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA1MjIgVGQgKCAgIFByb2Nlc3NpbmcgZmVlcywgYm9va2luZyBzb2Z0d2FyZSwgcGhvbmUgc2hhcmUgLi4uLi4uLi4uICRfX19fX19fX19fKSBUaiBFVApCVCAvRjEgMTAgVGYgNTYgNTA3IFRkICggICBCdXNpbmVzcyBtaWxlYWdlOiBfX19fX18gbWlsZXMgeCByYXRlIC4uLi4uLi4uLi4uLi4uLi4uLi4gJF9fX19fX19fX18pIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA0OTIgVGQgKCAgIEIuIFRPVEFMIEVYUEVOU0VTIC4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uICRfX19fX19fX19fKSBUaiBFVApCVCAvRjIgMTEgVGYgNTYgNDYyIFRkICgzLiBUaGUgbnVtYmVyIHRoYXQgbWF0dGVycykgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDQ0NyBUZCAoICAgQy4gTkVUIFwoQSBtaW51cyBCXCkgLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLiAkX19fX19fX19fXykgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDQxNyBUZCAoICAgU2V0IGFzaWRlIGZyb20gQywgbm90IGZyb20gQS4gQSBpcyBub3QgeW91ciBpbmNvbWUuKSBUaiBFVApCVCAvRjEgMTAgVGYgNTYgNDAyIFRkICggICBELiBTZXQtYXNpZGUgJSBcKHNlZSAnU2V0dGluZyBtb25leSBhc2lkZSdcKSAuLi4uLi4uLi4uLi4uIF9fX19fXyUpIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiAzODcgVGQgKCAgIEUuIE1PVkUgVE8gVEFYIEFDQ09VTlQgXChDIHggRFwpIC4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4gJF9fX19fX19fX18pIFRqIEVUCkJUIC9GMiAxMSBUZiA1NiAzNTcgVGQgKDQuIERhdGVzKSBUaiBFVApCVCAvRjEgMTAgVGYgNTYgMzQyIFRkICggICBGZWRlcmFsIEZvcm0gMTA0MC1FUyBhbmQgTmV3IFlvcmsgRm9ybSBJVC0yMTA1IGFyZSBkdWUpIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiAzMjcgVGQgKCAgIDE1IEFwcmlsLCAxNSBKdW5lLCAxNSBTZXB0ZW1iZXIsIGFuZCAxNSBKYW51YXJ5LikgVGogRVQKZW5kc3RyZWFtCmVuZG9iago1IDAgb2JqCjw8IC9UeXBlIC9Gb250IC9TdWJ0eXBlIC9UeXBlMSAvQmFzZUZvbnQgL0hlbHZldGljYSA+PgplbmRvYmoKNiAwIG9iago8PCAvVHlwZSAvRm9udCAvU3VidHlwZSAvVHlwZTEgL0Jhc2VGb250IC9IZWx2ZXRpY2EtQm9sZCA+PgplbmRvYmoKeHJlZgowIDcKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDA5IDAwMDAwIG4gCjAwMDAwMDAwNTggMDAwMDAgbiAKMDAwMDAwMDExNSAwMDAwMCBuIAowMDAwMDAwMjUxIDAwMDAwIG4gCjAwMDAwMDI0NzcgMDAwMDAgbiAKMDAwMDAwMjU0NyAwMDAwMCBuIAp0cmFpbGVyCjw8IC9TaXplIDcgL1Jvb3QgMSAwIFIgPj4Kc3RhcnR4cmVmCjI2MjIKJSVFT0YK' },
+    { id:'doc_dress', categoryId:'rc_shop', sortOrder:2, kind:'file', status:'published',
+      title:'Dress & appearance standards', description:'What the floor looks like, and why.',
+      fileName:'dress-standards.pdf', downloadName:'dress-standards.pdf', mimeType:'application/pdf',
+      byteSize:2513, version:1, openCount:5, updatedOn:'2026-05-18', url:null, dataUrl:'data:application/pdf;base64,JVBERi0xLjQKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUl0gL0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAvTWVkaWFCb3ggWzAgMCA2MTIgNzkyXSAvUmVzb3VyY2VzIDw8IC9Gb250IDw8IC9GMSA1IDAgUiAvRjIgNiAwIFIgPj4gPj4gL0NvbnRlbnRzIDQgMCBSID4+CmVuZG9iago0IDAgb2JqCjw8IC9MZW5ndGggMTg2MSA+PgpzdHJlYW0KQlQgL0YyIDE2IFRmIDU2IDc2MCBUZCAoTWlsZWFnZSBsb2cpIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA3MzIgVGQgKEFydGlzYW4gQmFyYmVyIC0gcmVmZXJlbmNlIG1hdGVyaWFsLiBOb3QgdGF4IGFkdmljZS4pIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA3MDIgVGQgKEEgY29udGVtcG9yYW5lb3VzIGxvZyBpcyB0aGUgc3Vic3RhbnRpYXRpb24uIEZpbGwgaXQgaW4gYXMgeW91IGRyaXZlLCkgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDY4NyBUZCAobm90IGluIEFwcmlsLiBDb21tdXRpbmcgZnJvbSBob21lIHRvIHlvdXIgcmVndWxhciBwbGFjZSBvZiB3b3JrIGlzIG5vdCkgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDY3MiBUZCAoYnVzaW5lc3MgbWlsZWFnZTsgdHJhdmVsIGJldHdlZW4gd29yayBsb2NhdGlvbnMgZ2VuZXJhbGx5IGlzLikgVGogRVQKQlQgL0YyIDExIFRmIDU2IDY0MiBUZCAoREFURSAgICAgICBTVEFSVCAgICAgIEVORCAgICAgICAgTUlMRVMgICAgQlVTSU5FU1MgUFVSUE9TRSkgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDYyNyBUZCAoX19fX19fX18gICBfX19fX19fXyAgIF9fX19fX19fICAgX19fX19fICAgX19fX19fX19fX19fX19fX19fX19fX19fKSBUaiBFVApCVCAvRjEgMTAgVGYgNTYgNjEyIFRkIChfX19fX19fXyAgIF9fX19fX19fICAgX19fX19fX18gICBfX19fX18gICBfX19fX19fX19fX19fX19fX19fX19fX18pIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA1OTcgVGQgKF9fX19fX19fICAgX19fX19fX18gICBfX19fX19fXyAgIF9fX19fXyAgIF9fX19fX19fX19fX19fX19fX19fX19fXykgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDU4MiBUZCAoX19fX19fX18gICBfX19fX19fXyAgIF9fX19fX19fICAgX19fX19fICAgX19fX19fX19fX19fX19fX19fX19fX19fKSBUaiBFVApCVCAvRjEgMTAgVGYgNTYgNTY3IFRkIChfX19fX19fXyAgIF9fX19fX19fICAgX19fX19fX18gICBfX19fX18gICBfX19fX19fX19fX19fX19fX19fX19fX18pIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA1NTIgVGQgKF9fX19fX19fICAgX19fX19fX18gICBfX19fX19fXyAgIF9fX19fXyAgIF9fX19fX19fX19fX19fX19fX19fX19fXykgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDUzNyBUZCAoX19fX19fX18gICBfX19fX19fXyAgIF9fX19fX19fICAgX19fX19fICAgX19fX19fX19fX19fX19fX19fX19fX19fKSBUaiBFVApCVCAvRjEgMTAgVGYgNTYgNTIyIFRkIChfX19fX19fXyAgIF9fX19fX19fICAgX19fX19fX18gICBfX19fX18gICBfX19fX19fX19fX19fX19fX19fX19fX18pIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA1MDcgVGQgKF9fX19fX19fICAgX19fX19fX18gICBfX19fX19fXyAgIF9fX19fXyAgIF9fX19fX19fX19fX19fX19fX19fX19fXykgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDQ5MiBUZCAoX19fX19fX18gICBfX19fX19fXyAgIF9fX19fX19fICAgX19fX19fICAgX19fX19fX19fX19fX19fX19fX19fX19fKSBUaiBFVApCVCAvRjEgMTAgVGYgNTYgNDc3IFRkIChfX19fX19fXyAgIF9fX19fX19fICAgX19fX19fX18gICBfX19fX18gICBfX19fX19fX19fX19fX19fX19fX19fX18pIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA0NjIgVGQgKF9fX19fX19fICAgX19fX19fX18gICBfX19fX19fXyAgIF9fX19fXyAgIF9fX19fX19fX19fX19fX19fX19fX19fXykgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDQzMiBUZCAoQWxzbyByZWNvcmQgeW91ciBvZG9tZXRlciBhdCB0aGUgc3RhcnQgYW5kIGVuZCBvZiB0aGUgeWVhci4pIFRqIEVUCkJUIC9GMiAxMSBUZiA1NiA0MDIgVGQgKFRPVEFMIEJVU0lORVNTIE1JTEVTIFRISVMgUEVSSU9EIC4uLi4uLi4uLi4gX19fX19fKSBUaiBFVAplbmRzdHJlYW0KZW5kb2JqCjUgMCBvYmoKPDwgL1R5cGUgL0ZvbnQgL1N1YnR5cGUgL1R5cGUxIC9CYXNlRm9udCAvSGVsdmV0aWNhID4+CmVuZG9iago2IDAgb2JqCjw8IC9UeXBlIC9Gb250IC9TdWJ0eXBlIC9UeXBlMSAvQmFzZUZvbnQgL0hlbHZldGljYS1Cb2xkID4+CmVuZG9iagp4cmVmCjAgNwowMDAwMDAwMDAwIDY1NTM1IGYgCjAwMDAwMDAwMDkgMDAwMDAgbiAKMDAwMDAwMDA1OCAwMDAwMCBuIAowMDAwMDAwMTE1IDAwMDAwIG4gCjAwMDAwMDAyNTEgMDAwMDAgbiAKMDAwMDAwMjE2NCAwMDAwMCBuIAowMDAwMDAyMjM0IDAwMDAwIG4gCnRyYWlsZXIKPDwgL1NpemUgNyAvUm9vdCAxIDAgUiA+PgpzdGFydHhyZWYKMjMwOQolJUVPRgo=' },
+    { id:'doc_setaside', categoryId:'rc_1099ny', sortOrder:1, kind:'file', status:'published',
+      title:'Quarterly set-aside worksheet', description:'Print it, fill it in each quarter. Set aside from net, not from gross.',
+      fileName:'set-aside-worksheet.pdf', downloadName:'set-aside-worksheet.pdf', mimeType:'application/pdf',
+      byteSize:2826, version:1, openCount:3, updatedOn:'2026-08-01', url:null, dataUrl:'data:application/pdf;base64,JVBERi0xLjQKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUl0gL0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAvTWVkaWFCb3ggWzAgMCA2MTIgNzkyXSAvUmVzb3VyY2VzIDw8IC9Gb250IDw8IC9GMSA1IDAgUiAvRjIgNiAwIFIgPj4gPj4gL0NvbnRlbnRzIDQgMCBSID4+CmVuZG9iago0IDAgb2JqCjw8IC9MZW5ndGggMjE3NCA+PgpzdHJlYW0KQlQgL0YyIDE2IFRmIDU2IDc2MCBUZCAoUXVhcnRlcmx5IHNldC1hc2lkZSB3b3Jrc2hlZXQpIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA3MzIgVGQgKEFydGlzYW4gQmFyYmVyIC0gcmVmZXJlbmNlIG1hdGVyaWFsLiBOb3QgdGF4IGFkdmljZS4pIFRqIEVUCkJUIC9GMiAxMSBUZiA1NiA3MDIgVGQgKDEuIFdoYXQgY2FtZSBpbiB0aGlzIHF1YXJ0ZXIpIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA2ODcgVGQgKCAgIENhcmQgc2V0dGxlbWVudHMgXChncm9zcywgYmVmb3JlIHByb2Nlc3NvciBmZWVzXCkgLi4uLi4uLi4uICRfX19fX19fX19fKSBUaiBFVApCVCAvRjEgMTAgVGYgNTYgNjcyIFRkICggICBDYXNoIGNvbGxlY3RlZCAuLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLiAkX19fX19fX19fXykgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDY1NyBUZCAoICAgUGF5bWVudC1hcHAgdHJhbnNmZXJzIGZyb20gY2xpZW50cyAuLi4uLi4uLi4uLi4uLi4uLi4uLi4gJF9fX19fX19fX18pIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA2NDIgVGQgKCAgIFRpcHMgXChjYXNoIGFuZCBjYXJkXCkgLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4gJF9fX19fX19fX18pIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA2MjcgVGQgKCAgIEEuIFRPVEFMIFJFQ0VJUFRTIC4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uICRfX19fX19fX19fKSBUaiBFVApCVCAvRjIgMTEgVGYgNTYgNTk3IFRkICgyLiBXaGF0IHdlbnQgb3V0IHRoaXMgcXVhcnRlcikgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDU4MiBUZCAoICAgQm9vdGggLyBjaGFpciByZW50IC4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4gJF9fX19fX19fX18pIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA1NjcgVGQgKCAgIFByb2R1Y3QgYW5kIHN1cHBsaWVzIC4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uICRfX19fX19fX19fKSBUaiBFVApCVCAvRjEgMTAgVGYgNTYgNTUyIFRkICggICBUb29scyBhbmQgZXF1aXBtZW50IC4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLiAkX19fX19fX19fXykgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDUzNyBUZCAoICAgTGljZW5jZSwgaW5zdXJhbmNlLCBjb250aW51aW5nIGVkdWNhdGlvbiAuLi4uLi4uLi4uLi4uLi4gJF9fX19fX19fX18pIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA1MjIgVGQgKCAgIFByb2Nlc3NpbmcgZmVlcywgYm9va2luZyBzb2Z0d2FyZSwgcGhvbmUgc2hhcmUgLi4uLi4uLi4uICRfX19fX19fX19fKSBUaiBFVApCVCAvRjEgMTAgVGYgNTYgNTA3IFRkICggICBCdXNpbmVzcyBtaWxlYWdlOiBfX19fX18gbWlsZXMgeCByYXRlIC4uLi4uLi4uLi4uLi4uLi4uLi4gJF9fX19fX19fX18pIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA0OTIgVGQgKCAgIEIuIFRPVEFMIEVYUEVOU0VTIC4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uICRfX19fX19fX19fKSBUaiBFVApCVCAvRjIgMTEgVGYgNTYgNDYyIFRkICgzLiBUaGUgbnVtYmVyIHRoYXQgbWF0dGVycykgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDQ0NyBUZCAoICAgQy4gTkVUIFwoQSBtaW51cyBCXCkgLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLiAkX19fX19fX19fXykgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDQxNyBUZCAoICAgU2V0IGFzaWRlIGZyb20gQywgbm90IGZyb20gQS4gQSBpcyBub3QgeW91ciBpbmNvbWUuKSBUaiBFVApCVCAvRjEgMTAgVGYgNTYgNDAyIFRkICggICBELiBTZXQtYXNpZGUgJSBcKHNlZSAnU2V0dGluZyBtb25leSBhc2lkZSdcKSAuLi4uLi4uLi4uLi4uIF9fX19fXyUpIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiAzODcgVGQgKCAgIEUuIE1PVkUgVE8gVEFYIEFDQ09VTlQgXChDIHggRFwpIC4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4gJF9fX19fX19fX18pIFRqIEVUCkJUIC9GMiAxMSBUZiA1NiAzNTcgVGQgKDQuIERhdGVzKSBUaiBFVApCVCAvRjEgMTAgVGYgNTYgMzQyIFRkICggICBGZWRlcmFsIEZvcm0gMTA0MC1FUyBhbmQgTmV3IFlvcmsgRm9ybSBJVC0yMTA1IGFyZSBkdWUpIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiAzMjcgVGQgKCAgIDE1IEFwcmlsLCAxNSBKdW5lLCAxNSBTZXB0ZW1iZXIsIGFuZCAxNSBKYW51YXJ5LikgVGogRVQKZW5kc3RyZWFtCmVuZG9iago1IDAgb2JqCjw8IC9UeXBlIC9Gb250IC9TdWJ0eXBlIC9UeXBlMSAvQmFzZUZvbnQgL0hlbHZldGljYSA+PgplbmRvYmoKNiAwIG9iago8PCAvVHlwZSAvRm9udCAvU3VidHlwZSAvVHlwZTEgL0Jhc2VGb250IC9IZWx2ZXRpY2EtQm9sZCA+PgplbmRvYmoKeHJlZgowIDcKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDA5IDAwMDAwIG4gCjAwMDAwMDAwNTggMDAwMDAgbiAKMDAwMDAwMDExNSAwMDAwMCBuIAowMDAwMDAwMjUxIDAwMDAwIG4gCjAwMDAwMDI0NzcgMDAwMDAgbiAKMDAwMDAwMjU0NyAwMDAwMCBuIAp0cmFpbGVyCjw8IC9TaXplIDcgL1Jvb3QgMSAwIFIgPj4Kc3RhcnR4cmVmCjI2MjIKJSVFT0YK' },
+    { id:'doc_mileage', categoryId:'rc_1099ny', sortOrder:2, kind:'file', status:'published',
+      title:'Mileage log', description:'A contemporaneous log is the substantiation. Fill it in as you drive.',
+      fileName:'mileage-log.pdf', downloadName:'mileage-log.pdf', mimeType:'application/pdf',
+      byteSize:2513, version:1, openCount:2, updatedOn:'2026-08-01', url:null, dataUrl:'data:application/pdf;base64,JVBERi0xLjQKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUl0gL0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAvTWVkaWFCb3ggWzAgMCA2MTIgNzkyXSAvUmVzb3VyY2VzIDw8IC9Gb250IDw8IC9GMSA1IDAgUiAvRjIgNiAwIFIgPj4gPj4gL0NvbnRlbnRzIDQgMCBSID4+CmVuZG9iago0IDAgb2JqCjw8IC9MZW5ndGggMTg2MSA+PgpzdHJlYW0KQlQgL0YyIDE2IFRmIDU2IDc2MCBUZCAoTWlsZWFnZSBsb2cpIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA3MzIgVGQgKEFydGlzYW4gQmFyYmVyIC0gcmVmZXJlbmNlIG1hdGVyaWFsLiBOb3QgdGF4IGFkdmljZS4pIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA3MDIgVGQgKEEgY29udGVtcG9yYW5lb3VzIGxvZyBpcyB0aGUgc3Vic3RhbnRpYXRpb24uIEZpbGwgaXQgaW4gYXMgeW91IGRyaXZlLCkgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDY4NyBUZCAobm90IGluIEFwcmlsLiBDb21tdXRpbmcgZnJvbSBob21lIHRvIHlvdXIgcmVndWxhciBwbGFjZSBvZiB3b3JrIGlzIG5vdCkgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDY3MiBUZCAoYnVzaW5lc3MgbWlsZWFnZTsgdHJhdmVsIGJldHdlZW4gd29yayBsb2NhdGlvbnMgZ2VuZXJhbGx5IGlzLikgVGogRVQKQlQgL0YyIDExIFRmIDU2IDY0MiBUZCAoREFURSAgICAgICBTVEFSVCAgICAgIEVORCAgICAgICAgTUlMRVMgICAgQlVTSU5FU1MgUFVSUE9TRSkgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDYyNyBUZCAoX19fX19fX18gICBfX19fX19fXyAgIF9fX19fX19fICAgX19fX19fICAgX19fX19fX19fX19fX19fX19fX19fX19fKSBUaiBFVApCVCAvRjEgMTAgVGYgNTYgNjEyIFRkIChfX19fX19fXyAgIF9fX19fX19fICAgX19fX19fX18gICBfX19fX18gICBfX19fX19fX19fX19fX19fX19fX19fX18pIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA1OTcgVGQgKF9fX19fX19fICAgX19fX19fX18gICBfX19fX19fXyAgIF9fX19fXyAgIF9fX19fX19fX19fX19fX19fX19fX19fXykgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDU4MiBUZCAoX19fX19fX18gICBfX19fX19fXyAgIF9fX19fX19fICAgX19fX19fICAgX19fX19fX19fX19fX19fX19fX19fX19fKSBUaiBFVApCVCAvRjEgMTAgVGYgNTYgNTY3IFRkIChfX19fX19fXyAgIF9fX19fX19fICAgX19fX19fX18gICBfX19fX18gICBfX19fX19fX19fX19fX19fX19fX19fX18pIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA1NTIgVGQgKF9fX19fX19fICAgX19fX19fX18gICBfX19fX19fXyAgIF9fX19fXyAgIF9fX19fX19fX19fX19fX19fX19fX19fXykgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDUzNyBUZCAoX19fX19fX18gICBfX19fX19fXyAgIF9fX19fX19fICAgX19fX19fICAgX19fX19fX19fX19fX19fX19fX19fX19fKSBUaiBFVApCVCAvRjEgMTAgVGYgNTYgNTIyIFRkIChfX19fX19fXyAgIF9fX19fX19fICAgX19fX19fX18gICBfX19fX18gICBfX19fX19fX19fX19fX19fX19fX19fX18pIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA1MDcgVGQgKF9fX19fX19fICAgX19fX19fX18gICBfX19fX19fXyAgIF9fX19fXyAgIF9fX19fX19fX19fX19fX19fX19fX19fXykgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDQ5MiBUZCAoX19fX19fX18gICBfX19fX19fXyAgIF9fX19fX19fICAgX19fX19fICAgX19fX19fX19fX19fX19fX19fX19fX19fKSBUaiBFVApCVCAvRjEgMTAgVGYgNTYgNDc3IFRkIChfX19fX19fXyAgIF9fX19fX19fICAgX19fX19fX18gICBfX19fX18gICBfX19fX19fX19fX19fX19fX19fX19fX18pIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA0NjIgVGQgKF9fX19fX19fICAgX19fX19fX18gICBfX19fX19fXyAgIF9fX19fXyAgIF9fX19fX19fX19fX19fX19fX19fX19fXykgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDQzMiBUZCAoQWxzbyByZWNvcmQgeW91ciBvZG9tZXRlciBhdCB0aGUgc3RhcnQgYW5kIGVuZCBvZiB0aGUgeWVhci4pIFRqIEVUCkJUIC9GMiAxMSBUZiA1NiA0MDIgVGQgKFRPVEFMIEJVU0lORVNTIE1JTEVTIFRISVMgUEVSSU9EIC4uLi4uLi4uLi4gX19fX19fKSBUaiBFVAplbmRzdHJlYW0KZW5kb2JqCjUgMCBvYmoKPDwgL1R5cGUgL0ZvbnQgL1N1YnR5cGUgL1R5cGUxIC9CYXNlRm9udCAvSGVsdmV0aWNhID4+CmVuZG9iago2IDAgb2JqCjw8IC9UeXBlIC9Gb250IC9TdWJ0eXBlIC9UeXBlMSAvQmFzZUZvbnQgL0hlbHZldGljYS1Cb2xkID4+CmVuZG9iagp4cmVmCjAgNwowMDAwMDAwMDAwIDY1NTM1IGYgCjAwMDAwMDAwMDkgMDAwMDAgbiAKMDAwMDAwMDA1OCAwMDAwMCBuIAowMDAwMDAwMTE1IDAwMDAwIG4gCjAwMDAwMDAyNTEgMDAwMDAgbiAKMDAwMDAwMjE2NCAwMDAwMCBuIAowMDAwMDAyMjM0IDAwMDAwIG4gCnRyYWlsZXIKPDwgL1NpemUgNyAvUm9vdCAxIDAgUiA+PgpzdGFydHhyZWYKMjMwOQolJUVPRgo=' },
+    { id:'doc_irs_gig', categoryId:'rc_1099ny', sortOrder:3, kind:'link', status:'published',
+      title:'IRS Gig Economy Tax Center', description:'The IRS’s own starting point. Authoritative, and it stays current when this page does not.',
+      fileName:null, downloadName:null, mimeType:null, byteSize:null, version:1, openCount:8, updatedOn:'2026-08-01',
+      url:'https://www.irs.gov/businesses/gig-economy-tax-center', dataUrl:null },
+    { id:'doc_ny_freelance', categoryId:'rc_1099ny', sortOrder:4, kind:'link', status:'published',
+      title:'NYSDOL — Freelance Isn’t Free Act', description:'Includes the free model Freelance Worker Agreement.',
+      fileName:null, downloadName:null, mimeType:null, byteSize:null, version:1, openCount:4, updatedOn:'2026-08-01',
+      url:'https://dol.ny.gov/freelance-isnt-free-act', dataUrl:null },
+    { id:'doc_sanitation', categoryId:'rc_health', sortOrder:1, kind:'file', status:'published',
+      title:'Station sanitation checklist', description:'Between every guest, and at close.',
+      fileName:'sanitation-checklist.pdf', downloadName:'sanitation-checklist.pdf', mimeType:'application/pdf',
+      byteSize:2513, version:2, openCount:21, updatedOn:'2026-07-14', url:null, dataUrl:'data:application/pdf;base64,JVBERi0xLjQKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUl0gL0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAvTWVkaWFCb3ggWzAgMCA2MTIgNzkyXSAvUmVzb3VyY2VzIDw8IC9Gb250IDw8IC9GMSA1IDAgUiAvRjIgNiAwIFIgPj4gPj4gL0NvbnRlbnRzIDQgMCBSID4+CmVuZG9iago0IDAgb2JqCjw8IC9MZW5ndGggMTg2MSA+PgpzdHJlYW0KQlQgL0YyIDE2IFRmIDU2IDc2MCBUZCAoTWlsZWFnZSBsb2cpIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA3MzIgVGQgKEFydGlzYW4gQmFyYmVyIC0gcmVmZXJlbmNlIG1hdGVyaWFsLiBOb3QgdGF4IGFkdmljZS4pIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA3MDIgVGQgKEEgY29udGVtcG9yYW5lb3VzIGxvZyBpcyB0aGUgc3Vic3RhbnRpYXRpb24uIEZpbGwgaXQgaW4gYXMgeW91IGRyaXZlLCkgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDY4NyBUZCAobm90IGluIEFwcmlsLiBDb21tdXRpbmcgZnJvbSBob21lIHRvIHlvdXIgcmVndWxhciBwbGFjZSBvZiB3b3JrIGlzIG5vdCkgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDY3MiBUZCAoYnVzaW5lc3MgbWlsZWFnZTsgdHJhdmVsIGJldHdlZW4gd29yayBsb2NhdGlvbnMgZ2VuZXJhbGx5IGlzLikgVGogRVQKQlQgL0YyIDExIFRmIDU2IDY0MiBUZCAoREFURSAgICAgICBTVEFSVCAgICAgIEVORCAgICAgICAgTUlMRVMgICAgQlVTSU5FU1MgUFVSUE9TRSkgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDYyNyBUZCAoX19fX19fX18gICBfX19fX19fXyAgIF9fX19fX19fICAgX19fX19fICAgX19fX19fX19fX19fX19fX19fX19fX19fKSBUaiBFVApCVCAvRjEgMTAgVGYgNTYgNjEyIFRkIChfX19fX19fXyAgIF9fX19fX19fICAgX19fX19fX18gICBfX19fX18gICBfX19fX19fX19fX19fX19fX19fX19fX18pIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA1OTcgVGQgKF9fX19fX19fICAgX19fX19fX18gICBfX19fX19fXyAgIF9fX19fXyAgIF9fX19fX19fX19fX19fX19fX19fX19fXykgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDU4MiBUZCAoX19fX19fX18gICBfX19fX19fXyAgIF9fX19fX19fICAgX19fX19fICAgX19fX19fX19fX19fX19fX19fX19fX19fKSBUaiBFVApCVCAvRjEgMTAgVGYgNTYgNTY3IFRkIChfX19fX19fXyAgIF9fX19fX19fICAgX19fX19fX18gICBfX19fX18gICBfX19fX19fX19fX19fX19fX19fX19fX18pIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA1NTIgVGQgKF9fX19fX19fICAgX19fX19fX18gICBfX19fX19fXyAgIF9fX19fXyAgIF9fX19fX19fX19fX19fX19fX19fX19fXykgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDUzNyBUZCAoX19fX19fX18gICBfX19fX19fXyAgIF9fX19fX19fICAgX19fX19fICAgX19fX19fX19fX19fX19fX19fX19fX19fKSBUaiBFVApCVCAvRjEgMTAgVGYgNTYgNTIyIFRkIChfX19fX19fXyAgIF9fX19fX19fICAgX19fX19fX18gICBfX19fX18gICBfX19fX19fX19fX19fX19fX19fX19fX18pIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA1MDcgVGQgKF9fX19fX19fICAgX19fX19fX18gICBfX19fX19fXyAgIF9fX19fXyAgIF9fX19fX19fX19fX19fX19fX19fX19fXykgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDQ5MiBUZCAoX19fX19fX18gICBfX19fX19fXyAgIF9fX19fX19fICAgX19fX19fICAgX19fX19fX19fX19fX19fX19fX19fX19fKSBUaiBFVApCVCAvRjEgMTAgVGYgNTYgNDc3IFRkIChfX19fX19fXyAgIF9fX19fX19fICAgX19fX19fX18gICBfX19fX18gICBfX19fX19fX19fX19fX19fX19fX19fX18pIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA0NjIgVGQgKF9fX19fX19fICAgX19fX19fX18gICBfX19fX19fXyAgIF9fX19fXyAgIF9fX19fX19fX19fX19fX19fX19fX19fXykgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDQzMiBUZCAoQWxzbyByZWNvcmQgeW91ciBvZG9tZXRlciBhdCB0aGUgc3RhcnQgYW5kIGVuZCBvZiB0aGUgeWVhci4pIFRqIEVUCkJUIC9GMiAxMSBUZiA1NiA0MDIgVGQgKFRPVEFMIEJVU0lORVNTIE1JTEVTIFRISVMgUEVSSU9EIC4uLi4uLi4uLi4gX19fX19fKSBUaiBFVAplbmRzdHJlYW0KZW5kb2JqCjUgMCBvYmoKPDwgL1R5cGUgL0ZvbnQgL1N1YnR5cGUgL1R5cGUxIC9CYXNlRm9udCAvSGVsdmV0aWNhID4+CmVuZG9iago2IDAgb2JqCjw8IC9UeXBlIC9Gb250IC9TdWJ0eXBlIC9UeXBlMSAvQmFzZUZvbnQgL0hlbHZldGljYS1Cb2xkID4+CmVuZG9iagp4cmVmCjAgNwowMDAwMDAwMDAwIDY1NTM1IGYgCjAwMDAwMDAwMDkgMDAwMDAgbiAKMDAwMDAwMDA1OCAwMDAwMCBuIAowMDAwMDAwMTE1IDAwMDAwIG4gCjAwMDAwMDAyNTEgMDAwMDAgbiAKMDAwMDAwMjE2NCAwMDAwMCBuIAowMDAwMDAyMjM0IDAwMDAwIG4gCnRyYWlsZXIKPDwgL1NpemUgNyAvUm9vdCAxIDAgUiA+PgpzdGFydHhyZWYKMjMwOQolJUVPRgo=' },
+    { id:'doc_dos_rules', categoryId:'rc_health', sortOrder:2, kind:'link', status:'published',
+      title:'NYS Division of Licensing — barbering', description:'Licensing, renewal and the state’s sanitation requirements.',
+      fileName:null, downloadName:null, mimeType:null, byteSize:null, version:1, openCount:1, updatedOn:'2026-07-14',
+      url:'https://dos.ny.gov/barber', dataUrl:null },
+    { id:'doc_paysched', categoryId:'rc_pay', sortOrder:1, kind:'file', status:'draft',
+      title:'Pay schedule 2026', description:'Draft — not yet published to employees.',
+      fileName:'pay-schedule-2026.pdf', downloadName:'pay-schedule-2026.pdf', mimeType:'application/pdf',
+      byteSize:2826, version:1, openCount:0, updatedOn:'2026-07-28', url:null, dataUrl:'data:application/pdf;base64,JVBERi0xLjQKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUl0gL0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAvTWVkaWFCb3ggWzAgMCA2MTIgNzkyXSAvUmVzb3VyY2VzIDw8IC9Gb250IDw8IC9GMSA1IDAgUiAvRjIgNiAwIFIgPj4gPj4gL0NvbnRlbnRzIDQgMCBSID4+CmVuZG9iago0IDAgb2JqCjw8IC9MZW5ndGggMjE3NCA+PgpzdHJlYW0KQlQgL0YyIDE2IFRmIDU2IDc2MCBUZCAoUXVhcnRlcmx5IHNldC1hc2lkZSB3b3Jrc2hlZXQpIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA3MzIgVGQgKEFydGlzYW4gQmFyYmVyIC0gcmVmZXJlbmNlIG1hdGVyaWFsLiBOb3QgdGF4IGFkdmljZS4pIFRqIEVUCkJUIC9GMiAxMSBUZiA1NiA3MDIgVGQgKDEuIFdoYXQgY2FtZSBpbiB0aGlzIHF1YXJ0ZXIpIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA2ODcgVGQgKCAgIENhcmQgc2V0dGxlbWVudHMgXChncm9zcywgYmVmb3JlIHByb2Nlc3NvciBmZWVzXCkgLi4uLi4uLi4uICRfX19fX19fX19fKSBUaiBFVApCVCAvRjEgMTAgVGYgNTYgNjcyIFRkICggICBDYXNoIGNvbGxlY3RlZCAuLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLiAkX19fX19fX19fXykgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDY1NyBUZCAoICAgUGF5bWVudC1hcHAgdHJhbnNmZXJzIGZyb20gY2xpZW50cyAuLi4uLi4uLi4uLi4uLi4uLi4uLi4gJF9fX19fX19fX18pIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA2NDIgVGQgKCAgIFRpcHMgXChjYXNoIGFuZCBjYXJkXCkgLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4gJF9fX19fX19fX18pIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA2MjcgVGQgKCAgIEEuIFRPVEFMIFJFQ0VJUFRTIC4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uICRfX19fX19fX19fKSBUaiBFVApCVCAvRjIgMTEgVGYgNTYgNTk3IFRkICgyLiBXaGF0IHdlbnQgb3V0IHRoaXMgcXVhcnRlcikgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDU4MiBUZCAoICAgQm9vdGggLyBjaGFpciByZW50IC4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4gJF9fX19fX19fX18pIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA1NjcgVGQgKCAgIFByb2R1Y3QgYW5kIHN1cHBsaWVzIC4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uICRfX19fX19fX19fKSBUaiBFVApCVCAvRjEgMTAgVGYgNTYgNTUyIFRkICggICBUb29scyBhbmQgZXF1aXBtZW50IC4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLiAkX19fX19fX19fXykgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDUzNyBUZCAoICAgTGljZW5jZSwgaW5zdXJhbmNlLCBjb250aW51aW5nIGVkdWNhdGlvbiAuLi4uLi4uLi4uLi4uLi4gJF9fX19fX19fX18pIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA1MjIgVGQgKCAgIFByb2Nlc3NpbmcgZmVlcywgYm9va2luZyBzb2Z0d2FyZSwgcGhvbmUgc2hhcmUgLi4uLi4uLi4uICRfX19fX19fX19fKSBUaiBFVApCVCAvRjEgMTAgVGYgNTYgNTA3IFRkICggICBCdXNpbmVzcyBtaWxlYWdlOiBfX19fX18gbWlsZXMgeCByYXRlIC4uLi4uLi4uLi4uLi4uLi4uLi4gJF9fX19fX19fX18pIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA0OTIgVGQgKCAgIEIuIFRPVEFMIEVYUEVOU0VTIC4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uICRfX19fX19fX19fKSBUaiBFVApCVCAvRjIgMTEgVGYgNTYgNDYyIFRkICgzLiBUaGUgbnVtYmVyIHRoYXQgbWF0dGVycykgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDQ0NyBUZCAoICAgQy4gTkVUIFwoQSBtaW51cyBCXCkgLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLiAkX19fX19fX19fXykgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDQxNyBUZCAoICAgU2V0IGFzaWRlIGZyb20gQywgbm90IGZyb20gQS4gQSBpcyBub3QgeW91ciBpbmNvbWUuKSBUaiBFVApCVCAvRjEgMTAgVGYgNTYgNDAyIFRkICggICBELiBTZXQtYXNpZGUgJSBcKHNlZSAnU2V0dGluZyBtb25leSBhc2lkZSdcKSAuLi4uLi4uLi4uLi4uIF9fX19fXyUpIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiAzODcgVGQgKCAgIEUuIE1PVkUgVE8gVEFYIEFDQ09VTlQgXChDIHggRFwpIC4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4gJF9fX19fX19fX18pIFRqIEVUCkJUIC9GMiAxMSBUZiA1NiAzNTcgVGQgKDQuIERhdGVzKSBUaiBFVApCVCAvRjEgMTAgVGYgNTYgMzQyIFRkICggICBGZWRlcmFsIEZvcm0gMTA0MC1FUyBhbmQgTmV3IFlvcmsgRm9ybSBJVC0yMTA1IGFyZSBkdWUpIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiAzMjcgVGQgKCAgIDE1IEFwcmlsLCAxNSBKdW5lLCAxNSBTZXB0ZW1iZXIsIGFuZCAxNSBKYW51YXJ5LikgVGogRVQKZW5kc3RyZWFtCmVuZG9iago1IDAgb2JqCjw8IC9UeXBlIC9Gb250IC9TdWJ0eXBlIC9UeXBlMSAvQmFzZUZvbnQgL0hlbHZldGljYSA+PgplbmRvYmoKNiAwIG9iago8PCAvVHlwZSAvRm9udCAvU3VidHlwZSAvVHlwZTEgL0Jhc2VGb250IC9IZWx2ZXRpY2EtQm9sZCA+PgplbmRvYmoKeHJlZgowIDcKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDA5IDAwMDAwIG4gCjAwMDAwMDAwNTggMDAwMDAgbiAKMDAwMDAwMDExNSAwMDAwMCBuIAowMDAwMDAwMjUxIDAwMDAwIG4gCjAwMDAwMDI0NzcgMDAwMDAgbiAKMDAwMDAwMjU0NyAwMDAwMCBuIAp0cmFpbGVyCjw8IC9TaXplIDcgL1Jvb3QgMSAwIFIgPj4Kc3RhcnR4cmVmCjI2MjIKJSVFT0YK' }
   ]
 };
 
@@ -776,6 +1156,10 @@ let _seq = 1000;
 const newId = prefix => prefix + '_' + (++_seq);
 const _delay = () => Promise.resolve();               // stand-in for network latency
 const byOrder = (a, b) => (a.sortOrder || 0) - (b.sortOrder || 0);
+/* Copy, never alias: the caller's array must not become the stored row, or a
+   later push by the caller silently edits the database. Non-arrays are
+   normalised so one bad value cannot take the whole render pass down. */
+const _asList = v => Array.isArray(v) ? v.map(String) : (v == null || v === '' ? [] : [String(v)]);
 
 function _applicableMeetings(emp) {
   return DB.meetings.filter(m => !m.roleOnly || emp.eligibleForAsp).slice().sort(byOrder);
@@ -783,9 +1167,13 @@ function _applicableMeetings(emp) {
 function _instances(empId) { return DB.employeeMeetings.filter(x => x.employeeId === empId); }
 function _bumpProgress(emp) {
   const appl = _applicableMeetings(emp);
-  const done = _instances(emp.id).filter(i => i.status === 'complete').length;
+  const applicableIds = new Set(appl.map(m => m.id));
+  /* Only completions that count toward THIS employee's journey belong in the
+     numerator — otherwise a stale instance for a step they are not eligible for
+     pushes the fraction above 1 and progress past 100. */
+  const done = _instances(emp.id).filter(i => i.status === 'complete' && applicableIds.has(i.meetingId)).length;
   const computed = Math.round(20 + (appl.length ? done / appl.length : 0) * 80);
-  emp.progress = Math.max(emp.progress || 0, computed);
+  emp.progress = Math.min(100, Math.max(emp.progress || 0, computed));
 }
 function _nextStep(emp) {
   for (const m of _applicableMeetings(emp)) {
@@ -803,7 +1191,8 @@ function _meetingSummary(m, inst, applicable) {
     when: inst ? inst.when : null,
     host: (inst && inst.host) || m.defaultHost,
     acknowledgedAt: inst ? inst.acknowledgedAt : null,
-    hasInstance: !!inst, applicable: !!applicable
+    hasInstance: !!inst, applicable: !!applicable,
+    resourceDocumentId: m.resourceDocumentId || null
   };
 }
 
@@ -855,18 +1244,21 @@ const Store = {
     const row = {
       id: newId('tm'), sortOrder: max + 1, name: data.name, initials: initialsOf(data.name),
       role: data.role, experience: data.experience || '', photoUrl: null,
-      bio: data.bio || 'Part of the Artisan team.', specialties: data.specialties || [], hostsMeetingIds: []
+      bio: data.bio || 'Part of the Artisan team.', specialties: _asList(data.specialties), hostsMeetingIds: []
     };
     DB.team.push(row); return clone(row);
   },
   async updateTeamMember(id, patch) {                                                                             // PATCH  /team/:id
     await _delay();
     const t = DB.team.find(x => x.id === id); if (!t) throw new Error('team member not found');
-    if (patch.name !== undefined) { t.name = patch.name; t.initials = initialsOf(patch.name); }
+    /* The edit form always resubmits the name, so re-deriving on presence
+       rather than on change silently overwrote a hand-set monogram. */
+    if (patch.name !== undefined && patch.name !== t.name) { t.name = patch.name; t.initials = initialsOf(patch.name); }
+    else if (patch.name !== undefined) t.name = patch.name;
     if (patch.role !== undefined) t.role = patch.role;
     if (patch.experience !== undefined) t.experience = patch.experience;
     if (patch.bio !== undefined) t.bio = patch.bio;
-    if (patch.specialties !== undefined) t.specialties = patch.specialties;
+    if (patch.specialties !== undefined) t.specialties = _asList(patch.specialties);
     return clone(t);
   },
   async deleteTeamMember(id) {                                                                                    // DELETE /team/:id
@@ -882,13 +1274,21 @@ const Store = {
   /* ---- slot / meeting mutations ---- */
   async addSlot(meetingId, slot) {                                                                               // POST  /meetings/:id/slots
     await _delay();
+    if (!DB.meetings.some(m => m.id === meetingId)) throw new Error('meeting not found');
     const row = { id: newId('slot'), meetingId, when: slot.when, host: slot.host };
     DB.slots.push(row); return clone(row);
   },
   async updateMeeting(meetingId, patch) {                                                                        // PATCH /meetings/:id
     await _delay();
     const m = DB.meetings.find(x => x.id === meetingId); if (!m) throw new Error('meeting not found');
-    if (patch.defaultHost !== undefined) m.defaultHost = patch.defaultHost;
+    if (patch.defaultHost !== undefined) {
+      /* Slots created under the old default carried it as their own host, so
+         leaving them alone made the times under a meeting book the previous
+         host after a change. Move the ones that never diverged. */
+      const previous = m.defaultHost;
+      m.defaultHost = patch.defaultHost;
+      DB.slots.filter(s => s.meetingId === meetingId && s.host === previous).forEach(s => { s.host = patch.defaultHost; });
+    }
     return clone(m);
   },
 
@@ -935,10 +1335,152 @@ const Store = {
   },
   async setChecklistItem(empId, itemId, done) {                                                                   // PUT /employees/:id/checklist/:itemId { done }
     await _delay();
+    /* API.md: "Only valid for items in manual groups; meeting:* items are not
+       writable." Both foreign keys are checked so a bad id 404s instead of
+       inserting a row that violates checklist_state. */
+    if (!DB.employees.some(e => e.id === empId)) throw new Error('employee not found');
+    if (String(itemId).startsWith('meeting:')) throw new Error('derived checklist items are not writable');
+    if (!DB.checklistItems.some(it => it.id === itemId)) throw new Error('checklist item not found');
     let s = DB.checklistState.find(x => x.employeeId === empId && x.itemId === itemId);
     if (!s) { s = { employeeId: empId, itemId, done: !!done }; DB.checklistState.push(s); }
     else s.done = !!done;
     return clone(s);
+  },
+
+  /* ---- resources: reads ----
+     Visibility cascades. A published document inside a draft or admins-only
+     category is NOT reachable, including by direct id — otherwise a document is
+     exposed the moment someone learns its id. In production `isAdmin` comes from
+     the session, never from the request. */
+  async listResourceCategories(includeAll = false) {                                                            // GET  /resources/categories[?include=all]
+    await _delay();
+    return clone(DB.resourceCategories.filter(c => _catVisible(c, includeAll)).slice().sort(byOrder));
+  },
+  async listResourceSections(categoryId, includeAll = false) {                                                  // GET  /resources/categories/:id/sections
+    await _delay();
+    const cat = DB.resourceCategories.find(c => c.id === categoryId);
+    if (!_catVisible(cat, includeAll)) return [];
+    return clone(DB.resourceSections.filter(x => x.categoryId === categoryId).slice().sort(byOrder));
+  },
+  async listResourceFigures(categoryId, includeAll = false) {                                                   // GET  /resources/categories/:id/figures
+    await _delay();
+    const cat = DB.resourceCategories.find(c => c.id === categoryId);
+    if (!_catVisible(cat, includeAll)) return [];
+    return clone(DB.resourceFigures.filter(x => x.categoryId === categoryId));
+  },
+  async listResourceDocuments(categoryId, includeAll = false) {                                                 // GET  /resources/categories/:id/documents
+    await _delay();
+    const cat = DB.resourceCategories.find(c => c.id === categoryId);
+    if (!_catVisible(cat, includeAll)) return [];
+    return clone(DB.resourceDocuments
+      .filter(d => d.categoryId === categoryId && (includeAll || d.status === 'published'))
+      .slice().sort(byOrder).map(_docSummary));
+  },
+  /* Separate from the list on purpose: a base64 PDF inside a list response is the
+     difference between a page that opens and one that stalls. */
+  async getResourceDocFile(docId, includeAll = false) {                                                         // GET  /resources/documents/:id/file
+    await _delay();
+    const d = DB.resourceDocuments.find(x => x.id === docId);
+    if (!d || !_docVisible(d, includeAll) || !d.dataUrl) return null;
+    return clone({ id: d.id, title: d.title, fileName: d.fileName, downloadName: d.downloadName,
+                   mimeType: d.mimeType, byteSize: d.byteSize, dataUrl: d.dataUrl });
+  },
+  async openResourceDocument(docId, includeAll = false) {                                                       // POST /resources/documents/:id/open
+    await _delay();
+    const d = DB.resourceDocuments.find(x => x.id === docId);
+    if (!d || !_docVisible(d, includeAll)) throw new Error('document not found');
+    d.openCount = (d.openCount || 0) + 1;
+    return clone(_docSummary(d));
+  },
+
+  /* ---- resources: category mutations ---- */
+  async addResourceCategory(data) {                                                                             // POST   /resources/categories
+    await _delay();
+    const max = DB.resourceCategories.reduce((n, c) => Math.max(n, c.sortOrder || 0), 0);
+    const row = { id: newId('rc'), sortOrder: max + 1, name: data.name, shortName: data.shortName || data.name,
+                  status: 'draft', visibility: 'everyone', blurb: data.blurb || '',
+                  taxYear: null, reviewedOn: null, audienceNote: '' };
+    DB.resourceCategories.push(row); return clone(row);
+  },
+  async updateResourceCategory(id, patch) {                                                                     // PATCH  /resources/categories/:id
+    await _delay();
+    const c = DB.resourceCategories.find(x => x.id === id); if (!c) throw new Error('category not found');
+    ['name','shortName','blurb','status','visibility','audienceNote','taxYear','reviewedOn']
+      .forEach(k => { if (patch[k] !== undefined) c[k] = patch[k]; });
+    return clone(c);
+  },
+  async reorderResourceCategories(orderedIds) {                                                                 // PUT    /resources/categories/order
+    await _delay();
+    orderedIds.forEach((id, i) => { const c = DB.resourceCategories.find(x => x.id === id); if (c) c.sortOrder = i + 1; });
+    return clone(DB.resourceCategories.slice().sort(byOrder));
+  },
+  async deleteResourceCategory(id) {                                                                            // DELETE /resources/categories/:id
+    await _delay();
+    const i = DB.resourceCategories.findIndex(x => x.id === id);
+    if (i >= 0) DB.resourceCategories.splice(i, 1);
+    /* Children go with it — the SQL FKs are ON DELETE CASCADE. */
+    DB.resourceSections  = DB.resourceSections.filter(x => x.categoryId !== id);
+    DB.resourceDocuments = DB.resourceDocuments.filter(x => x.categoryId !== id);
+    DB.resourceFigures   = DB.resourceFigures.filter(x => x.categoryId !== id);
+    return { id, deleted: true };
+  },
+
+  /* ---- resources: document mutations ---- */
+  async addResourceDocument(categoryId, data) {                                                                 // POST   /resources/categories/:id/documents
+    await _delay();
+    const cat = DB.resourceCategories.find(c => c.id === categoryId); if (!cat) throw new Error('category not found');
+    const max = DB.resourceDocuments.filter(d => d.categoryId === categoryId)
+      .reduce((n, d) => Math.max(n, d.sortOrder || 0), 0);
+    const row = {
+      id: newId('doc'), categoryId, sortOrder: max + 1, kind: data.kind || 'file', status: 'draft',
+      title: data.title, description: data.description || '',
+      fileName: data.fileName || null, downloadName: safeFileName(data.fileName),
+      mimeType: data.mimeType || null, byteSize: data.byteSize || null,
+      version: 1, openCount: 0, updatedOn: data.updatedOn || '', url: data.url || null,
+      dataUrl: data.dataUrl || null
+    };
+    DB.resourceDocuments.push(row); return clone(_docSummary(row));
+  },
+  async updateResourceDocument(id, patch) {                                                                     // PATCH  /resources/documents/:id
+    await _delay();
+    const d = DB.resourceDocuments.find(x => x.id === id); if (!d) throw new Error('document not found');
+    ['title','description','status','sortOrder','url','updatedOn']
+      .forEach(k => { if (patch[k] !== undefined) d[k] = patch[k]; });
+    return clone(_docSummary(d));
+  },
+  async replaceResourceDocumentFile(id, file) {                                                                 // PUT    /resources/documents/:id/file
+    await _delay();
+    const d = DB.resourceDocuments.find(x => x.id === id); if (!d) throw new Error('document not found');
+    /* The prototype overwrites. Production inserts a resource_document_versions
+       row FIRST — see the note in schema.sql; without it "old object retained"
+       is a claim, not a mechanism. */
+    d.dataUrl = file.dataUrl; d.mimeType = file.mimeType; d.byteSize = file.byteSize;
+    d.fileName = file.fileName; d.downloadName = safeFileName(file.fileName);
+    d.version = (d.version || 1) + 1; d.updatedOn = file.updatedOn || d.updatedOn;
+    return clone(_docSummary(d));
+  },
+  async deleteResourceDocument(id) {                                                                            // DELETE /resources/documents/:id
+    await _delay();
+    const i = DB.resourceDocuments.findIndex(x => x.id === id);
+    if (i >= 0) DB.resourceDocuments.splice(i, 1);
+    return { id, deleted: true };
+  },
+
+  /* ---- resources: authored prose + figures ---- */
+  async saveResourceSections(categoryId, sections) {                                                            // PUT   /resources/categories/:id/sections
+    await _delay();
+    DB.resourceSections = DB.resourceSections.filter(x => x.categoryId !== categoryId);
+    sections.forEach((sec, i) => DB.resourceSections.push({
+      id: sec.id || newId('sec'), categoryId, sortOrder: i + 1,
+      heading: sec.heading || '', body: sec.body || [], bullets: sec.bullets || [], body2: sec.body2 || []
+    }));
+    return clone(DB.resourceSections.filter(x => x.categoryId === categoryId).slice().sort(byOrder));
+  },
+  async updateResourceFigure(id, patch) {                                                                       // PATCH /resources/figures/:id
+    await _delay();
+    const f = DB.resourceFigures.find(x => x.id === id); if (!f) throw new Error('figure not found');
+    ['value','label','sourceUrl','taxYear'].forEach(k => { if (patch[k] !== undefined) f[k] = patch[k]; });
+    return clone(f);
   },
 
   /* ---- content ---- */
@@ -949,12 +1491,48 @@ const Store = {
     return clone(DB.content);
   }
 };
+/* ---- resources: visibility + shaping (server-side concerns in production) ---- */
+const RESOURCE_MAX_BYTES = 2 * 1024 * 1024;   /* prototype only: files live in memory as base64 */
+const RESOURCE_MIME = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'];
+/* Never image/svg+xml. An SVG is a script container, and a blob: URL inherits
+   the origin of the page that created it. */
+
+function _catVisible(cat, isAdmin) {
+  return !!cat && (isAdmin || (cat.status === 'published' && cat.visibility !== 'admins'));
+}
+function _docVisible(doc, isAdmin) {
+  if (!doc) return false;
+  const cat = DB.resourceCategories.find(c => c.id === doc.categoryId);
+  return _catVisible(cat, isAdmin) && (isAdmin || doc.status === 'published');
+}
+/* List reads never carry file bytes. */
+function _docSummary(d) {
+  return { id: d.id, categoryId: d.categoryId, sortOrder: d.sortOrder, kind: d.kind, status: d.status,
+           title: d.title, description: d.description, fileName: d.fileName, downloadName: d.downloadName,
+           mimeType: d.mimeType, byteSize: d.byteSize, version: d.version, openCount: d.openCount,
+           updatedOn: d.updatedOn, url: d.url, hasFile: !!d.dataUrl };
+}
+/* The original name is kept for display; this derives the name used for the
+   download attribute (and, in production, Content-Disposition). */
+function safeFileName(name) {
+  const base = String(name == null ? '' : name).split(/[\\/]/).pop();
+  const cleaned = base.replace(/[^A-Za-z0-9._-]+/g, '-').replace(/-{2,}/g, '-').replace(/^[-.]+/, '');
+  return (cleaned || 'document').slice(0, 100);
+}
+
 /* creates an employee_meetings row if missing (used by schedule/complete/ack/assign) */
 function _ensureInstance(empId, meetingId) {
+  /* Validate BEFORE writing. This used to insert a row for any id pair, so a
+     typo produced an orphan that both read paths then hid — the booking existed
+     but was invisible, which is worse than a refusal. */
+  const emp = DB.employees.find(e => e.id === empId);
+  if (!emp) throw new Error('employee not found');
+  const m = DB.meetings.find(x => x.id === meetingId);
+  if (!m) throw new Error('meeting not found');
+  if (m.roleOnly && !emp.eligibleForAsp) throw new Error('meeting not applicable to this employee');
   let inst = DB.employeeMeetings.find(x => x.employeeId === empId && x.meetingId === meetingId);
   if (!inst) {
-    const m = DB.meetings.find(x => x.id === meetingId);
-    inst = { id: newId('em'), employeeId: empId, meetingId, status: 'pending', when: null, host: m ? m.defaultHost : null, acknowledgedAt: null };
+    inst = { id: newId('em'), employeeId: empId, meetingId, status: 'pending', when: null, host: m.defaultHost, acknowledgedAt: null };
     DB.employeeMeetings.push(inst);
   }
   return inst;
@@ -962,10 +1540,46 @@ function _ensureInstance(empId, meetingId) {
 
 /* ===================== 3. State + UI ==================================== */
 const CURRENT_USER = 'emp_jordan';                 // the signed-in employee (would come from auth)
-const state = { content: {}, team: [], meetings: [], slots: {}, employees: [], me: { employee: null, meetings: [], checklist: [] } };
+const state = { content: {}, team: [], meetings: [], slots: {}, employees: [], employeeMeetings: {}, me: { employee: null, meetings: [], checklist: [] },
+  /* Two category lists, mirroring what two API calls with different auth return.
+     The employee list is what a non-admin session would actually receive. */
+  resources: { categories: [], allCategories: [], sections: {}, figures: {}, docs: {}, allDocs: {} } };
 let mode = 'employee', current = 's-home', rescheduleId = null, editId = null, uploadTargetId = null;
+let resOpen = null, resOpenAdmin = null, editCatId = null, docTargetCatId = null, docReplaceId = null;
+let viewerUrl = null, viewerDoc = null;
 
 const $ = s => document.querySelector(s);
+
+/* ---- output encoding ----
+   Every render function below builds markup with template strings, so anything
+   that came from a person (a name, a bio, a note, a slot label) has to be
+   encoded on the way out. Three contexts, three helpers — using the wrong one
+   is the whole bug class.
+     esc()     text nodes and double-quoted attribute values
+     escArg()  a value inside a single-quoted JS string inside an attribute,
+               e.g. onclick="openMember('…')" — JS-escape first, then HTML-escape,
+               because the browser decodes the attribute before JS ever parses it
+     safeUrl() anything landing in src/href, so a javascript: payload can't run */
+const esc = v => String(v == null ? '' : v)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+  .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+const escArg = v => esc(String(v == null ? '' : v).replace(/\\/g,'\\\\').replace(/'/g,"\\'"));
+function safeUrl(u){
+  const s = String(u == null ? '' : u).trim();
+  return /^(https?:\/\/|data:image\/|\/|\.\/|[^:]*$)/i.test(s) ? esc(s) : '';
+}
+
+/* Document sources. Deliberately separate from safeUrl(): that one correctly
+   strips blob: for image contexts, and widening it would weaken every other
+   caller. This accepts only blob: and data: URLs on the upload allowlist. */
+function safeFileUrl(u){
+  const v = String(u == null ? '' : u).trim();
+  if(/^blob:/i.test(v)) return esc(v);
+  const m = /^data:([^;,]+)[;,]/i.exec(v);
+  if(m && RESOURCE_MIME.indexOf(m[1].toLowerCase()) >= 0) return esc(v);
+  return '';
+}
+
 function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._x); t._x=setTimeout(()=>t.classList.remove('show'),2400); }
 function statusChip(s){
   if(s==='complete')return '<span class="chip complete">Complete</span>';
@@ -983,24 +1597,40 @@ async function refresh(){
   state.employees = await Store.listEmployees();
   state.slots     = {};
   for(const m of state.meetings){ state.slots[m.id] = await Store.listSlots(m.id); }
+  state.employeeMeetings = {};
+  for(const e of state.employees){ state.employeeMeetings[e.id] = await Store.listEmployeeMeetings(e.id); }
   state.me.employee  = await Store.getEmployee(CURRENT_USER);
   state.me.meetings  = await Store.listEmployeeMeetings(CURRENT_USER);
   state.me.checklist = await Store.getChecklist(CURRENT_USER);
+  state.resources.categories    = await Store.listResourceCategories(false);
+  state.resources.allCategories = await Store.listResourceCategories(true);
+  state.resources.sections = {}; state.resources.figures = {};
+  state.resources.docs = {};     state.resources.allDocs = {};
+  for(const c of state.resources.allCategories){
+    state.resources.sections[c.id] = await Store.listResourceSections(c.id, true);
+    state.resources.figures[c.id]  = await Store.listResourceFigures(c.id, true);
+    state.resources.allDocs[c.id]  = await Store.listResourceDocuments(c.id, true);
+    state.resources.docs[c.id]     = await Store.listResourceDocuments(c.id, false);
+  }
   renderAll();
 }
-function renderAll(){ syncIdentity(); renderRail(); renderChecklist(); renderHome(); renderTeam(); renderAdminTeam(); renderRoster(); renderSlots(); renderContentForm(); renderNav(); }
+function renderAll(){ syncIdentity(); renderRail(); renderChecklist(); renderHome(); renderTeam(); renderAdminTeam(); renderRoster(); renderSlots(); renderContentForm(); renderTrainingScreen(); renderResources(); renderResourcesAdmin(); renderNav(); }
 
 /* ---- navigation ---- */
 const NAV = {
-  employee:[{label:'Onboarding',header:true},{id:'s-home',label:'Home'},{id:'s-team',label:'Meet the shop'},{id:'s-checklist',label:'My checklist'},{id:'s-meetings',label:'Meetings'},{id:'s-training',label:'Training access'},{id:'s-help',label:'Questions'}],
-  admin:[{label:'Manage',header:true},{id:'a-overview',label:'Overview'},{id:'a-team',label:'Team & photos'},{id:'a-slots',label:'Meeting times'},{id:'a-content',label:'Content'}]
+  employee:[{label:'Onboarding',header:true},{id:'s-home',label:'Home'},{id:'s-team',label:'Meet the shop'},{id:'s-checklist',label:'My checklist'},{id:'s-meetings',label:'Meetings'},{id:'s-training',label:'Training access'},
+            {label:'Reference',header:true},{id:'s-resources',label:'Resources'},{id:'s-help',label:'Questions'}],
+  admin:[{label:'Manage',header:true},{id:'a-overview',label:'Overview'},{id:'a-team',label:'Team & photos'},{id:'a-slots',label:'Meeting times'},{id:'a-content',label:'Content'},{id:'a-resources',label:'Resources'}]
 };
 function renderNav(){
   $('#nav').innerHTML = NAV[mode].map(n=> n.header
-    ? `<div class="nav-label">${n.label}</div>`
-    : `<button class="navbtn ${n.id===current?'active':''}" onclick="go('${n.id}')">${n.label}</button>`).join('');
+    ? `<div class="nav-label">${esc(n.label)}</div>`
+    : `<button class="navbtn ${n.id===current?'active':''}" onclick="go('${escArg(n.id)}')">${esc(n.label)}</button>`).join('');
 }
 function go(id){
+  /* A half-finished reschedule is meeting-detail state; walking away disarms it,
+     otherwise returning later silently reopens the picker. */
+  if(id !== 's-meeting') rescheduleId = null;
   current=id;
   document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active', s.id===id));
   renderNav();
@@ -1025,12 +1655,12 @@ function setMode(m){
 /* ---- employee: meetings ---- */
 function renderRail(){
   $('#rail').innerHTML = state.me.meetings.slice().sort((a,b)=>a.step-b.step).map(m=>`
-    <div class="step ${m.status}">
-      <div class="numeral">${m.roman}</div>
-      <div class="step-card" role="button" tabindex="0" onclick="openMeeting('${m.meetingId}')" onkeydown="if(event.key==='Enter')openMeeting('${m.meetingId}')">
+    <div class="step ${esc(m.status)}">
+      <div class="numeral">${esc(m.roman)}</div>
+      <div class="step-card" role="button" tabindex="0" onclick="openMeeting('${escArg(m.meetingId)}')" onkeydown="if(event.key==='Enter')openMeeting('${escArg(m.meetingId)}')">
         <div>
-          <h3>${m.title}${m.roleOnly?' <span class="chip role" style="margin-left:6px">Your role</span>':''}</h3>
-          <div class="meta">${m.host}${m.when?` · ${m.when}`:''}</div>
+          <h3>${esc(m.title)}${m.roleOnly?' <span class="chip role" style="margin-left:6px">Your role</span>':''}</h3>
+          <div class="meta">${esc(m.host)}${m.when?` · ${esc(m.when)}`:''}</div>
         </div>
         <div class="step-right">${statusChip(m.status)}<span class="arrow">→</span></div>
       </div>
@@ -1043,18 +1673,18 @@ function openMeeting(meetingId){
   const picking = m.status==='pending' || rescheduleId===meetingId;
   let action='';
   if(picking){
-    action = `<hr class="hr"><h3>${rescheduleId===meetingId?'Choose a new time':'Pick a time'}</h3><p class="sub">Hosted by ${m.host} · about ${m.durationMin} min.</p>
-      <div class="slots">${slots.map(s=>`<button class="slot" onclick="schedule('${meetingId}','${s.when}')">${s.when}</button>`).join('') || '<span class="sub">No times available yet — check back soon.</span>'}</div>
-      ${rescheduleId===meetingId?`<div style="margin-top:10px"><button class="btn ghost small" onclick="cancelReschedule('${meetingId}')">Keep ${m.when}</button></div>`:''}`;
+    action = `<hr class="hr"><h3>${rescheduleId===meetingId?'Choose a new time':'Pick a time'}</h3><p class="sub">Hosted by ${esc(m.host)} · about ${esc(m.durationMin)} min.</p>
+      <div class="slots">${slots.map(s=>`<button class="slot" onclick="schedule('${escArg(meetingId)}','${escArg(s.when)}')">${esc(s.when)}</button>`).join('') || '<span class="sub">No times available yet — check back soon.</span>'}</div>
+      ${rescheduleId===meetingId?`<div style="margin-top:10px"><button class="btn ghost small" onclick="cancelReschedule('${escArg(meetingId)}')">Keep ${esc(m.when)}</button></div>`:''}`;
   } else if(m.status==='scheduled'){
-    action = `<hr class="hr"><h3>You're booked</h3><p class="sub">${m.when} with ${m.host} · about ${m.durationMin} min.</p>
+    action = `<hr class="hr"><h3>You're booked</h3><p class="sub">${esc(m.when)} with ${esc(m.host)} · about ${esc(m.durationMin)} min.</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
-        <button class="btn small" onclick="addToCalendar('${meetingId}')">Add to calendar ↓</button>
-        <button class="btn ghost small" onclick="reschedule('${meetingId}')">Reschedule</button>
+        <button class="btn small" onclick="addToCalendar('${escArg(meetingId)}')">Add to calendar ↓</button>
+        <button class="btn ghost small" onclick="reschedule('${escArg(meetingId)}')">Reschedule</button>
       </div>`;
   } else {
-    action = `<hr class="hr"><h3>Done and noted</h3><p class="sub">Completed ${m.when||''}. Completion is recorded on your checklist.</p>
-      <div style="margin-top:12px"><button class="btn ghost small" onclick="addToCalendar('${meetingId}')">Add to calendar ↓</button></div>`;
+    action = `<hr class="hr"><h3>Done and noted</h3><p class="sub">Completed ${esc(m.when||'')}. Completion is recorded on your checklist.</p>
+      <div style="margin-top:12px"><button class="btn ghost small" onclick="addToCalendar('${escArg(meetingId)}')">Add to calendar ↓</button></div>`;
   }
   let ack='';
   if(m.requiresAck){
@@ -1062,30 +1692,30 @@ function openMeeting(meetingId){
     ack = `<hr class="hr"><h3>Handbook acknowledgment</h3>
       <p class="sub">Confirm you've reviewed the employee handbook.</p>
       <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
-        <button class="btn ghost small" onclick="toast('Handbook opens in a new tab in the full build')">Open the handbook ↗</button>
-        <button class="btn small" id="ackBtn" onclick="ackHandbook('${meetingId}')" ${done?'disabled style="opacity:.55;cursor:default"':''}>${done?'✓ Acknowledged':'Acknowledge handbook'}</button>
+        ${m.resourceDocumentId?`<button class="btn ghost small" onclick="openDoc('${escArg(m.resourceDocumentId)}')">Open the handbook ↗</button>`:''}
+        <button class="btn small" id="ackBtn" onclick="ackHandbook('${escArg(meetingId)}')" ${done?'disabled style="opacity:.55;cursor:default"':''}>${done?'✓ Acknowledged':'Acknowledge handbook'}</button>
       </div>`;
   }
   const prep = m.prep ? `<hr class="hr"><h3>Prepare for this meeting</h3>
-      <ul class="topic-list">${m.prep.map(p=>`<li>${p}</li>`).join('')}</ul>` : '';
+      <ul class="topic-list">${m.prep.map(p=>`<li>${esc(p)}</li>`).join('')}</ul>` : '';
   $('#s-meeting').innerHTML = `
     <button class="back" onclick="go('s-meetings')">← All meetings</button>
     <div class="detail-head">
-      <div class="numeral" style="width:56px;height:56px;font-size:20px">${m.roman}</div>
+      <div class="numeral" style="width:56px;height:56px;font-size:20px">${esc(m.roman)}</div>
       <div>
-        <div class="eyebrow" style="margin-bottom:4px">Step ${m.roman} of IV · about ${m.durationMin} min</div>
-        <h1 class="display" style="font-size:clamp(22px,3.4vw,30px)">${m.title}</h1>
+        <div class="eyebrow" style="margin-bottom:4px">Step ${esc(m.roman)} of IV · about ${esc(m.durationMin)} min</div>
+        <h1 class="display" style="font-size:clamp(22px,3.4vw,30px)">${esc(m.title)}</h1>
       </div>
       <div style="margin-left:auto">${statusChip(m.status)}</div>
     </div>
     <div class="card">
-      <h3>Purpose</h3><p class="sub">${m.purpose}</p>
+      <h3>Purpose</h3><p class="sub">${esc(m.purpose)}</p>
       <hr class="hr">
-      <h3>${m.topicsLabel}</h3>
-      <ul class="topic-list">${m.topics.map(t=>`<li>${t}</li>`).join('')}</ul>
+      <h3>${esc(m.topicsLabel)}</h3>
+      <ul class="topic-list">${m.topics.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>
       ${prep}${ack}${action}
     </div>
-    ${m.boundary?`<div class="note"><strong>Scope:</strong> ${m.boundary}</div>`:''}`;
+    ${m.boundary?`<div class="note"><strong>Scope:</strong> ${esc(m.boundary)}</div>`:''}`;
   go('s-meeting');
 }
 async function schedule(meetingId, when){
@@ -1104,24 +1734,38 @@ async function ackHandbook(meetingId){
 /* calendar (.ics) export — client generates the file for the user */
 function pad2(n){return String(n).padStart(2,'0')}
 function parseWhen(w){
-  const parts=w.split('\u00b7').map(s=>s.trim());
+  const label=String(w==null?'':w);
+  const parts=label.split('\u00b7').map(s=>s.trim());
   const mo={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
-  const dm=parts[0].split(/\s+/);
-  const tm=parts[1].match(/(\d+):(\d+)\s*(AM|PM)/i);
+  const dm=parts[0]?parts[0].split(/\s+/):[];
+  const tm=parts[1]?parts[1].match(/(\d+):(\d+)\s*(AM|PM)/i):null;
+  /* Fail with the offending label rather than a bare TypeError from
+     dereferencing undefined — callers need to know WHAT was unparseable. */
+  if(parts.length<2 || dm.length<3 || !(dm[1] in mo) || !tm)
+    throw new Error('Unrecognised time label: \u201c'+label+'\u201d');
   let hh=parseInt(tm[1],10); const mm=parseInt(tm[2],10);
   if(/pm/i.test(tm[3])&&hh!==12) hh+=12; if(/am/i.test(tm[3])&&hh===12) hh=0;
   return new Date(2026, mo[dm[1]], parseInt(dm[2],10), hh, mm);
 }
 function fmtICS(d){return ''+d.getFullYear()+pad2(d.getMonth()+1)+pad2(d.getDate())+'T'+pad2(d.getHours())+pad2(d.getMinutes())+'00'}
+/* RFC 5545 TEXT values escape backslash, semicolon, comma and newlines.
+   A meeting title with a comma in it would otherwise split the property. */
+function escIcs(v){
+  return String(v == null ? '' : v)
+    .replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n');
+}
 function addToCalendar(meetingId){
   const m = state.me.meetings.find(x=>x.meetingId===meetingId);
   if(!m||!m.when){ toast('Pick a time first'); return; }
-  const start=parseWhen(m.when), end=new Date(start.getTime()+(m.durationMin||45)*60000);
+  let start;
+  try { start = parseWhen(m.when); }
+  catch(err){ toast('That meeting has no usable time yet'); return; }
+  const end=new Date(start.getTime()+(m.durationMin||45)*60000);
   const ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Artisan Barber//Onboarding//EN','BEGIN:VEVENT',
     'UID:'+meetingId+'-'+start.getTime()+'@artisanbarber','DTSTAMP:'+fmtICS(new Date()),
     'DTSTART:'+fmtICS(start),'DTEND:'+fmtICS(end),
-    'SUMMARY:Artisan Onboarding \u2014 '+m.title,'DESCRIPTION:Hosted by '+m.host,
-    'LOCATION:Artisan Barber\\, 331 E 81st St','END:VEVENT','END:VCALENDAR'].join('\r\n');
+    'SUMMARY:Artisan Onboarding \u2014 '+escIcs(m.title),'DESCRIPTION:Hosted by '+escIcs(m.host),
+    'LOCATION:'+escIcs('Artisan Barber, 331 E 81st St'),'END:VEVENT','END:VCALENDAR'].join('\r\n');
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([ics],{type:'text/calendar'}));
   a.download='artisan-'+meetingId+'.ics'; document.body.appendChild(a); a.click();
@@ -1132,16 +1776,16 @@ function addToCalendar(meetingId){
 function renderChecklist(){
   $('#checkGroups').innerHTML = state.me.checklist.map(g=>`
     <div class="check-group">
-      <h2>${g.title}</h2><div class="gsub">${g.subtitle}</div>
+      <h2>${esc(g.title)}</h2><div class="gsub">${esc(g.subtitle)}</div>
       ${g.items.map(it=>{
         if(it.locked){
           return `<div class="check-item ${it.done?'done':''}">
-            <input type="checkbox" ${it.done?'checked':''} disabled aria-label="${it.label}">
-            <label>${it.label}</label><span class="auto">${statusChip(it.status)}</span></div>`;
+            <input type="checkbox" ${it.done?'checked':''} disabled aria-label="${esc(it.label)}">
+            <label>${esc(it.label)}</label><span class="auto">${statusChip(it.status)}</span></div>`;
         }
         return `<div class="check-item ${it.done?'done':''}">
-          <input type="checkbox" id="ck_${it.id}" ${it.done?'checked':''} onchange="tick('${it.id}',this.checked)">
-          <label for="ck_${it.id}">${it.label}</label></div>`;
+          <input type="checkbox" id="ck_${esc(it.id)}" ${it.done?'checked':''} onchange="tick('${escArg(it.id)}',this.checked)">
+          <label for="ck_${esc(it.id)}">${esc(it.label)}</label></div>`;
       }).join('')}
     </div>`).join('');
   updateProgress();
@@ -1163,6 +1807,8 @@ function updateProgress(){
 
 /* ---- employee: home ---- */
 function renderHome(){
+  const w=$('#homeWelcome');
+  if(w && state.content.welcomeMessage) w.textContent=state.content.welcomeMessage;
   const {done,total}=progressCounts();
   const pct= total?Math.round(done/total*100):0;
   $('#ringPct').textContent=pct+'%';
@@ -1175,14 +1821,16 @@ function renderHome(){
   $('#statTrain').textContent = (login&&login.done) ? 'Confirmed' : 'Not yet';
   const next = meets.slice().sort((a,b)=>a.step-b.step).find(m=>m.status!=='complete');
   $('#upNext').innerHTML = next ? `
-    <div class="numeral">${next.roman}</div>
+    <div class="numeral">${esc(next.roman)}</div>
     <div style="flex:1;min-width:180px">
       <div class="eyebrow" style="margin-bottom:2px">Up next</div>
-      <h3>${next.title}</h3>
-      <div class="sub">${next.status==='scheduled' ? next.when+' · '+next.host : 'Not scheduled yet · '+next.host}</div>
+      <h3>${esc(next.title)}</h3>
+      <div class="sub">${next.status==='scheduled' ? esc(next.when)+' · '+esc(next.host) : 'Not scheduled yet · '+esc(next.host)}</div>
     </div>
-    <button class="btn small" onclick="openMeeting('${next.meetingId}')">${next.status==='scheduled'?'View details':'Pick a time'}</button>`
-    : `<div style="flex:1"><h3>All ${meets.length} meetings complete.</h3><div class="sub">Finish your checklist and confirm training access — then you're fully on the floor.</div></div>`;
+    <button class="btn small" onclick="openMeeting('${escArg(next.meetingId)}')">${next.status==='scheduled'?'View details':'Pick a time'}</button>`
+    : (meets.length
+      ? `<div style="flex:1"><h3>All ${meets.length} meetings complete.</h3><div class="sub">Finish your checklist and confirm training access — then you're fully on the floor.</div></div>`
+      : `<div style="flex:1"><h3>No meetings assigned yet.</h3><div class="sub">Your introduction meetings will appear here once the shop schedules them.</div></div>`);
 }
 function findItem(itemId){
   for(const g of state.me.checklist){ const it=g.items.find(x=>x.id===itemId); if(it) return it; }
@@ -1190,6 +1838,15 @@ function findItem(itemId){
 }
 
 /* ---- employee: training ---- */
+/* Derived, not imperative. confirmLogin() used to set the button text directly,
+   so any later re-render silently reverted it. */
+function renderTrainingScreen(){
+  const login = findItem('itm_login');
+  const b = $('#loginBtn');
+  if(b) b.textContent = (login && login.done) ? '\u2713 Login confirmed' : 'Confirm my login works';
+  const link = $('#trainingLink');
+  if(link) link.textContent = state.content.trainingUrl || 'Not set yet';
+}
 async function openTraining(){
   await Store.setChecklistItem(CURRENT_USER, 'itm_open', true);
   await refresh();
@@ -1198,22 +1855,21 @@ async function openTraining(){
 async function confirmLogin(){
   await Store.setChecklistItem(CURRENT_USER, 'itm_login', true);
   await refresh();
-  const b=$('#loginBtn'); if(b) b.textContent='✓ Login confirmed';
   toast('Login confirmed — nice, you\u2019re in');
 }
 
 /* ---- employee: team ---- */
 function renderTeam(){
   $('#teamGrid').innerHTML = state.team.map(t=>`
-    <div class="member" role="button" tabindex="0" onclick="openMember('${t.id}')" onkeydown="if(event.key==='Enter')openMember('${t.id}')">
+    <div class="member" role="button" tabindex="0" onclick="openMember('${escArg(t.id)}')" onkeydown="if(event.key==='Enter')openMember('${escArg(t.id)}')">
       <div class="photo">
-        ${t.photoUrl?`<img src="${t.photoUrl}" alt="${t.name}">`:`<span class="mono">${t.initials}</span><span class="tag-cam">Headshot</span>`}
+        ${t.photoUrl?`<img src="${safeUrl(t.photoUrl)}" alt="${esc(t.name)}">`:`<span class="mono">${esc(t.initials)}</span><span class="tag-cam">Headshot</span>`}
       </div>
       <div class="body">
-        <h3>${t.name}</h3>
-        <div class="mrole">${t.role}</div>
-        <p>${t.bio}</p>
-        <div class="tags">${t.specialties.map(x=>`<span class="chip">${x}</span>`).join('')}</div>
+        <h3>${esc(t.name)}</h3>
+        <div class="mrole">${esc(t.role)}</div>
+        <p>${esc(t.bio)}</p>
+        <div class="tags">${t.specialties.map(x=>`<span class="chip">${esc(x)}</span>`).join('')}</div>
         <div class="more">View profile →</div>
       </div>
     </div>`).join('');
@@ -1227,24 +1883,24 @@ function openMember(id){
   const hostBlock = hosts.length ? `
     <hr class="hr">
     <h3>In your onboarding</h3>
-    <p class="sub">${first} hosts ${hosts.length>1?'these meetings':'this meeting'}:</p>
-    <div class="md-hosts">${hosts.map(m=>`<button class="btn ghost small" onclick="openMember_toMeeting('${m.id}')">Step ${m.roman} · ${m.title} →</button>`).join('')}</div>` : '';
+    <p class="sub">${esc(first)} hosts ${hosts.length>1?'these meetings':'this meeting'}:</p>
+    <div class="md-hosts">${hosts.map(m=>`<button class="btn ghost small" onclick="openMember_toMeeting('${escArg(m.id)}')">Step ${esc(m.roman)} · ${esc(m.title)} →</button>`).join('')}</div>` : '';
   $('#s-member').innerHTML = `
     <button class="back" onclick="go('s-team')">← Meet the shop</button>
     <div class="member-detail">
-      <div class="md-photo">${t.photoUrl?`<img src="${t.photoUrl}" alt="${t.name}">`:`<span class="mono">${t.initials}</span>`}</div>
+      <div class="md-photo">${t.photoUrl?`<img src="${safeUrl(t.photoUrl)}" alt="${esc(t.name)}">`:`<span class="mono">${esc(t.initials)}</span>`}</div>
       <div class="md-body">
         <div class="eyebrow" style="margin-bottom:6px">Artisan Barber</div>
-        <h1 class="display">${t.name}</h1>
-        <div class="mrole">${t.role}${t.experience?` · ${t.experience}`:''}</div>
-        <p>${t.bio}</p>
-        <div class="tags">${t.specialties.map(x=>`<span class="chip">${x}</span>`).join('')}</div>
+        <h1 class="display">${esc(t.name)}</h1>
+        <div class="mrole">${esc(t.role)}${t.experience?` · ${esc(t.experience)}`:''}</div>
+        <p>${esc(t.bio)}</p>
+        <div class="tags">${t.specialties.map(x=>`<span class="chip">${esc(x)}</span>`).join('')}</div>
       </div>
     </div>
     <div class="card" style="margin-top:20px">
       <h3>Specialties</h3>
-      <p class="sub">What ${first} is known for on the floor.</p>
-      <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:10px">${t.specialties.map(x=>`<span class="chip role">${x}</span>`).join('')}</div>
+      <p class="sub">What ${esc(first)} is known for on the floor.</p>
+      <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:10px">${t.specialties.map(x=>`<span class="chip role">${esc(x)}</span>`).join('')}</div>
       ${hostBlock}
     </div>`;
   go('s-member');
@@ -1258,38 +1914,45 @@ function openMember_toMeeting(meetingId){
 /* ---- admin: roster ---- */
 function renderRoster(){
   $('#rosterBody').innerHTML = state.employees.map(e=>`
-    <tr class="row" tabindex="0" onclick="openEmp('${e.id}')" onkeydown="if(event.key==='Enter')openEmp('${e.id}')">
-      <td><strong>${e.name}</strong><div class="who-role">${e.dayLabel}</div></td>
-      <td class="hide-m">${e.role}</td>
-      <td><span class="mini-bar"><i style="width:${e.progress}%"></i></span>${e.progress}%</td>
-      <td class="hide-m">${e.nextStep}</td>
+    <tr class="row" tabindex="0" onclick="openEmp('${escArg(e.id)}')" onkeydown="if(event.key==='Enter')openEmp('${escArg(e.id)}')">
+      <td><strong>${esc(e.name)}</strong><div class="who-role">${esc(e.dayLabel)}</div></td>
+      <td class="hide-m">${esc(e.role)}</td>
+      <td><span class="mini-bar"><i style="width:${Math.max(0,Math.min(100,Number(e.progress)||0))}%"></i></span>${esc(e.progress)}%</td>
+      <td class="hide-m">${esc(e.nextStep)}</td>
       <td>${e.trainingAccess?'<span class="chip complete">Confirmed</span>':'<span class="chip">Pending</span>'}</td>
     </tr>`).join('');
   $('#statAccess').textContent = state.employees.filter(e=>!e.trainingAccess).length;
+  /* These two were literals in the markup and never moved. */
+  const onboarding = $('#statOnboarding');
+  if(onboarding) onboarding.textContent = state.employees.filter(e=>e.nextStep!=='Complete').length;
+  const week = $('#statWeek');
+  if(week) week.textContent = state.employees.reduce(
+    (total,e)=>total+(state.employeeMeetings[e.id]||[]).filter(m=>m.status==='scheduled').length, 0);
 }
 async function openEmp(empId){
   const e = await Store.getEmployee(empId);
+  if(!e){ toast('That employee is no longer on the roster'); go('a-overview'); return; }
   const meets = await Store.listEmployeeMeetings(empId, true);   // include all (so admin can assign role-only steps)
   const rows = meets.map(m=>{
     let btns='';
     if(!m.applicable && m.roleOnly && !m.hasInstance){
-      btns = `<button class="btn ghost small" onclick="assignProgram('${empId}')">Assign to this role</button>`;
+      btns = `<button class="btn ghost small" onclick="assignProgram('${escArg(empId)}')">Assign to this role</button>`;
     } else if(m.status!=='complete'){
-      btns = `<button class="btn small" onclick="adminComplete('${empId}','${m.meetingId}')">Mark complete</button>`;
-      if(m.status==='pending' || m.status==='na') btns = `<button class="btn ghost small" onclick="adminAssignTime('${empId}','${m.meetingId}')">Assign time</button> ` + btns;
+      btns = `<button class="btn small" onclick="adminComplete('${escArg(empId)}','${escArg(m.meetingId)}')">Mark complete</button>`;
+      if(m.status==='pending' || m.status==='na') btns = `<button class="btn ghost small" onclick="adminAssignTime('${escArg(empId)}','${escArg(m.meetingId)}')">Assign time</button> ` + btns;
     }
     return `<div class="emp-meet">
-      <div class="nm"><div class="numeral">${m.roman}</div><div><strong style="font-size:14px">${m.shortTitle}</strong><div class="who-role">${m.roleOnly?'Role-based step':'Required for all'}</div></div></div>
+      <div class="nm"><div class="numeral">${esc(m.roman)}</div><div><strong style="font-size:14px">${esc(m.shortTitle)}</strong><div class="who-role">${m.roleOnly?'Role-based step':'Required for all'}</div></div></div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${statusChip(m.status)}${btns}</div>
     </div>`;
   }).join('');
   $('#a-employee').innerHTML = `
     <button class="back" onclick="go('a-overview')">← All employees</button>
     <div class="detail-head">
-      <div class="avatar" style="width:52px;height:52px;font-size:19px">${e.initials}</div>
+      <div class="avatar" style="width:52px;height:52px;font-size:19px">${esc(e.initials)}</div>
       <div>
-        <h1 class="display" style="font-size:clamp(22px,3.4vw,30px)">${e.name}</h1>
-        <div class="sub">${e.role} · ${e.dayLabel} · ${e.progress}% onboarded</div>
+        <h1 class="display" style="font-size:clamp(22px,3.4vw,30px)">${esc(e.name)}</h1>
+        <div class="sub">${esc(e.role)} · ${esc(e.dayLabel)} · ${esc(e.progress)}% onboarded</div>
       </div>
     </div>
     <div class="card"><h3>Meeting journey</h3>${rows}</div>
@@ -1297,25 +1960,29 @@ async function openEmp(empId){
       <h3>Training-platform access</h3>
       <p class="sub">Confirm access was issued and the employee got into the training site.</p>
       <div style="display:flex;gap:20px;margin-top:14px;flex-wrap:wrap">
-        <span class="switch ${e.trainingAccess?'on':''}" role="switch" aria-checked="${e.trainingAccess}" tabindex="0"
-          onclick="toggleAccess('${empId}')" onkeydown="if(event.key==='Enter')toggleAccess('${empId}')">
+        <span class="switch ${e.trainingAccess?'on':''}" role="switch" aria-checked="${e.trainingAccess?'true':'false'}" tabindex="0"
+          onclick="toggleAccess('${escArg(empId)}')" onkeydown="if(event.key==='Enter')toggleAccess('${escArg(empId)}')">
           <span class="track"></span> Access confirmed</span>
       </div>
     </div>
     <div class="card">
       <h3>Internal notes</h3>
       <p class="sub">Visible to admins only.</p>
-      <textarea class="notes" id="noteBox" style="margin-top:10px" placeholder="Add a note about ${e.name.split(' ')[0]}\u2026">${e.adminNotes||''}</textarea>
-      <div style="margin-top:10px"><button class="btn small" onclick="saveNote('${empId}')">Save note</button></div>
+      <textarea class="notes" id="noteBox" style="margin-top:10px" placeholder="Add a note about ${esc(String(e.name||'').split(' ')[0])}\u2026">${esc(e.adminNotes||'')}</textarea>
+      <div style="margin-top:10px"><button class="btn small" onclick="saveNote('${escArg(empId)}')">Save note</button></div>
     </div>`;
   go('a-employee');
 }
 async function adminComplete(empId, meetingId){ await Store.completeEmployeeMeeting(empId, meetingId); toast('Marked complete'); await refresh(); openEmp(empId); }
 async function adminAssignTime(empId, meetingId){
   const slots = state.slots[meetingId] || [];
-  const when = slots.length ? slots[0].when : 'Time TBD';
+  /* Booking the literal string 'Time TBD' used to produce a slot the employee
+     could see but never add to a calendar — parseWhen() throws on it. Refuse
+     instead of writing a booking nobody can act on. */
+  if(!slots.length){ toast('Add a time for this meeting first, under Meeting times'); return; }
+  const when = slots[0].when;
   await Store.scheduleEmployeeMeeting(empId, meetingId, when);
-  toast(slots.length ? `Time assigned — ${when}` : 'Marked as scheduled');
+  toast(`Time assigned — ${when}`);
   await refresh(); openEmp(empId);
 }
 async function assignProgram(empId){ await Store.assignProgram(empId); toast('Assistant Stylist introduction assigned'); await refresh(); openEmp(empId); }
@@ -1333,24 +2000,28 @@ const SLOT_POOL=['Thu Jul 16 · 4:30 PM','Fri Jul 17 · 11:30 AM','Mon Jul 20 ·
 function renderSlots(){
   $('#slotCards').innerHTML = state.meetings.map(m=>{
     const slots = state.slots[m.id] || [];
-    const hostOpts = ['Charlie · Owner','Bobby · Manager','Juan · Senior Stylist','Kris · Barber']
-      .map(h=>`<option ${m.defaultHost===h?'selected':''}>${h}</option>`).join('');
+    const builtIn = ['Charlie · Owner','Bobby · Manager','Juan · Senior Stylist','Kris · Barber'];
+    /* Include whoever is actually stored, so the control cannot fall back to the
+       first option and misreport who hosts the meeting. */
+    const hostChoices = builtIn.indexOf(m.defaultHost) >= 0 || !m.defaultHost ? builtIn : builtIn.concat([m.defaultHost]);
+    const hostOpts = hostChoices
+      .map(h=>`<option ${m.defaultHost===h?'selected':''}>${esc(h)}</option>`).join('');
     return `<div class="card">
       <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
         <div class="nm" style="display:flex;gap:12px;align-items:center">
-          <div class="numeral" style="width:38px;height:38px;font-size:14px">${m.roman}</div>
-          <div><h3>${m.title}</h3><div class="sub">${m.roleOnly?'Assigned to relevant roles only':'Required for all new hires'}</div></div>
+          <div class="numeral" style="width:38px;height:38px;font-size:14px">${esc(m.roman)}</div>
+          <div><h3>${esc(m.title)}</h3><div class="sub">${m.roleOnly?'Assigned to relevant roles only':'Required for all new hires'}</div></div>
         </div>
         <div style="min-width:180px">
-          <label class="field-label" style="margin-top:0" for="host_${m.id}">Host</label>
-          <select class="field" id="host_${m.id}" onchange="setMeetingHost('${m.id}',this.value)">${hostOpts}</select>
+          <label class="field-label" style="margin-top:0" for="host_${esc(m.id)}">Host</label>
+          <select class="field" id="host_${esc(m.id)}" onchange="setMeetingHost('${escArg(m.id)}',this.value)">${hostOpts}</select>
         </div>
       </div>
       <label class="field-label">Available times</label>
       <div class="slots" style="margin-top:4px">
-        ${slots.map(s=>`<span class="slot" style="cursor:default">${s.when}</span>`).join('') || '<span class="sub">No times yet.</span>'}
+        ${slots.map(s=>`<span class="slot" style="cursor:default">${esc(s.when)}</span>`).join('') || '<span class="sub">No times yet.</span>'}
       </div>
-      <div style="margin-top:12px"><button class="btn ghost small" onclick="addSlot('${m.id}')">+ Add a time</button></div>
+      <div style="margin-top:12px"><button class="btn ghost small" onclick="addSlot('${escArg(m.id)}')">+ Add a time</button></div>
     </div>`;
   }).join('');
 }
@@ -1368,19 +2039,22 @@ async function setMeetingHost(meetingId, host){ await Store.updateMeeting(meetin
 function renderAdminTeam(){
   $('#teamAdmin').innerHTML = state.team.map(t=>`
     <div class="tm-row">
-      <div class="tm-thumb">${t.photoUrl?`<img src="${t.photoUrl}" alt="${t.name}">`:`<span class="mono">${t.initials}</span>`}</div>
-      <div class="tm-info"><strong>${t.name}</strong><div class="who-role">${t.role}${t.experience?' · '+t.experience:''} · ${t.photoUrl?'Photo set':'No photo yet'}</div></div>
+      <div class="tm-thumb">${t.photoUrl?`<img src="${safeUrl(t.photoUrl)}" alt="${esc(t.name)}">`:`<span class="mono">${esc(t.initials)}</span>`}</div>
+      <div class="tm-info"><strong>${esc(t.name)}</strong><div class="who-role">${esc(t.role)}${t.experience?' · '+esc(t.experience):''} · ${t.photoUrl?'Photo set':'No photo yet'}</div></div>
       <div class="tm-actions">
-        <button class="btn small" onclick="pickHeadshot('${t.id}')">${t.photoUrl?'Replace photo':'Upload headshot'}</button>
-        <button class="btn ghost small" onclick="openEditMember('${t.id}')">Edit</button>
-        <button class="btn ghost small" onclick="removeMember('${t.id}')">Remove</button>
+        <button class="btn small" onclick="pickHeadshot('${escArg(t.id)}')">${t.photoUrl?'Replace photo':'Upload headshot'}</button>
+        <button class="btn ghost small" onclick="openEditMember('${escArg(t.id)}')">Edit</button>
+        <button class="btn ghost small" onclick="removeMember('${escArg(t.id)}')">Remove</button>
       </div>
     </div>`).join('');
 }
 function initialsOf(name){
   const p=(name||'').trim().split(/\s+/).filter(Boolean);
   if(!p.length) return '?';
-  return (p.length>1 ? p[0][0]+p[1][0] : p[0].slice(0,2)).toUpperCase();
+  /* Array.from splits by code point, so an emoji or any astral character is not
+     cut in half the way string indexing cuts it. */
+  const glyphs = w => Array.from(w);
+  return (p.length>1 ? glyphs(p[0])[0]+glyphs(p[1])[0] : glyphs(p[0]).slice(0,2).join('')).toUpperCase();
 }
 function openAddMember(){
   editId=null;
@@ -1397,7 +2071,7 @@ function openEditMember(id){
   $('#mfName').value=t.name; $('#mfRole').value=t.role; $('#mfSince').value=t.experience||'';
   $('#mfTags').value=(t.specialties||[]).join(', '); $('#mfBio').value=t.bio||'';
   const pr=$('#mfPhotoRow');
-  if(t.photoUrl){ pr.style.display='block'; pr.innerHTML=`<button class="btn ghost small" onclick="removeHeadshot('${id}')">Remove current photo</button>`; }
+  if(t.photoUrl){ pr.style.display='block'; pr.innerHTML=`<button class="btn ghost small" onclick="removeHeadshot('${escArg(id)}')">Remove current photo</button>`; }
   else { pr.style.display='none'; pr.innerHTML=''; }
   $('#memberForm').style.display='block';
   $('#memberForm').scrollIntoView({behavior:'smooth',block:'center'}); $('#mfName').focus();
@@ -1438,7 +2112,7 @@ function onHeadshot(e){
     toast((t?t.name.split(' ')[0]:'Photo')+'\u2019s headshot updated');
     await refresh();
     if(editId===id){ const pr=$('#mfPhotoRow'); pr.style.display='block';
-      pr.innerHTML=`<button class="btn ghost small" onclick="removeHeadshot('${id}')">Remove current photo</button>`; }
+      pr.innerHTML=`<button class="btn ghost small" onclick="removeHeadshot('${escArg(id)}')">Remove current photo</button>`; }
   };
   reader.onerror=()=>{ toast('That image couldn\u2019t be read'); uploadTargetId=null; };
   reader.readAsDataURL(file);
@@ -1457,8 +2131,460 @@ function renderContentForm(){
 async function saveWelcome(){ await Store.updateContent({ welcomeMessage:$('#welcomeTxt').value }); toast('Welcome message saved'); await refresh(); }
 async function saveTrainingLink(){ await Store.updateContent({ trainingUrl:$('#trainUrl').value }); toast('Training link updated'); await refresh(); }
 
+/* ==========================================================================
+   RESOURCES
+   Mini-tabs of reference material. Admin uploads; everyone reads.
+   The boundary this must not cross: reference is read at the reader's
+   discretion — no sequence, no assessment, no completion state. Anything that
+   needs "who completed this, and did they pass" is training, and training lives
+   on the separate training site.
+   ========================================================================== */
+
+/* ---- small formatters ---- */
+function fmtBytes(n){
+  if(n == null) return '';
+  if(n < 1024) return n + ' B';
+  if(n < 1024*1024) return (n/1024).toFixed(0) + ' KB';
+  return (n/1024/1024).toFixed(1) + ' MB';
+}
+function docExt(d){
+  if(d.kind === 'link') return 'Link';
+  const m = { 'application/pdf':'PDF', 'image/png':'PNG', 'image/jpeg':'JPG', 'image/webp':'WEBP' };
+  return m[d.mimeType] || (d.fileName || '').split('.').pop().slice(0,4).toUpperCase() || 'FILE';
+}
+const canPreview = d => d.kind === 'file' && d.hasFile && RESOURCE_MIME.indexOf(d.mimeType) >= 0;
+
+/* Escape first, then swap {{token}} for the figure. Values are year-stamped so a
+   2026 rate cannot silently read as current in 2027. */
+function figText(text, figs){
+  return esc(text).replace(/\{\{(\w+)\}\}/g, (whole, token) => {
+    const f = (figs || []).find(x => x.token === token);
+    if(!f) return whole;
+    return `<span class="fig" title="${esc(f.label)}${f.sourceUrl?' — '+esc(f.sourceUrl):''}">${esc(f.value)}<sup>${esc(f.taxYear)}</sup></span>`;
+  });
+}
+function emptyCard(msg){ return `<div class="empty">${esc(msg)}</div>`; }
+
+/* ---- tab strip (a real tablist) ---- */
+function tabStrip(cats, activeId, scope){
+  return cats.map(c => {
+    const on = c.id === activeId;
+    const count = ((scope === 'adm' ? state.resources.allDocs : state.resources.docs)[c.id] || []).length;
+    return `<button role="tab" id="tab-${scope}-${esc(c.id)}" data-cat="${esc(c.id)}"
+      aria-selected="${on?'true':'false'}" tabindex="${on?'0':'-1'}"
+      title="${esc(c.name)}"
+      onclick="selectResourceTab('${escArg(c.id)}','${scope}')"
+      onkeydown="resTabKey(event,'${scope}')">${esc(c.shortName || c.name)}<span class="n">${count}</span>${
+        scope === 'adm' && c.status !== 'published' ? '<span class="draftdot" title="Draft"></span>' : ''}</button>`;
+  }).join('');
+}
+/* Roving tabindex, wraparound, activation follows focus. */
+function resTabKey(ev, scope){
+  if(['ArrowRight','ArrowLeft','Home','End'].indexOf(ev.key) < 0) return;
+  ev.preventDefault();
+  const stripId = scope === 'adm' ? '#resTabsAdmin' : '#resTabs';
+  const btns = qaIn(stripId, '[role="tab"]');
+  if(!btns.length) return;
+  const cur = Math.max(0, btns.findIndex(b => b.getAttribute('aria-selected') === 'true'));
+  let next = cur;
+  if(ev.key === 'ArrowRight') next = (cur + 1) % btns.length;
+  if(ev.key === 'ArrowLeft')  next = (cur - 1 + btns.length) % btns.length;
+  if(ev.key === 'Home') next = 0;
+  if(ev.key === 'End')  next = btns.length - 1;
+  const id = btns[next].getAttribute('data-cat');
+  selectResourceTab(id, scope);
+  const moved = document.querySelector(stripId + ' [data-cat="' + id + '"]');
+  if(moved) moved.focus();
+}
+const qaIn = (root, sel) => Array.from(document.querySelectorAll(root + ' ' + sel));
+
+function selectResourceTab(id, scope){
+  if(scope === 'adm'){ resOpenAdmin = id; renderResourcesAdmin(); }
+  else { resOpen = id; renderResources(); }
+}
+
+/* ---- document row ---- */
+function docRow(d, isAdmin){
+  const meta = [d.kind === 'link' ? 'External link' : docExt(d),
+                d.byteSize ? fmtBytes(d.byteSize) : '',
+                d.updatedOn ? 'Updated ' + d.updatedOn : '',
+                (d.version > 1 ? 'v' + d.version : '')].filter(Boolean).join(' · ');
+  let actions = '';
+  if(d.kind === 'link'){
+    actions = `<a class="btn small" href="${safeUrl(d.url)}" target="_blank" rel="noopener noreferrer">Open ↗</a>`;
+  } else {
+    if(canPreview(d)) actions += `<button class="btn small" onclick="openDoc('${escArg(d.id)}')">View</button>`;
+    if(d.hasFile) actions += `<button class="btn ghost small" onclick="downloadDoc('${escArg(d.id)}')">Download ↓</button>`;
+    if(!d.hasFile) actions += `<span class="chip">No file</span>`;
+  }
+  if(isAdmin){
+    actions += `<button class="btn ghost small" onclick="replaceDoc('${escArg(d.id)}')">Replace</button>`;
+    actions += `<span class="switch ${d.status==='published'?'on':''}" role="switch" aria-checked="${d.status==='published'?'true':'false'}" tabindex="0"
+      onclick="toggleDocStatus('${escArg(d.id)}')" onkeydown="if(event.key==='Enter')toggleDocStatus('${escArg(d.id)}')"><span class="track"></span>Published</span>`;
+    actions += `<button class="btn ghost small danger" onclick="deleteDoc('${escArg(d.id)}')">Delete</button>`;
+  }
+  return `<div class="doc-row">
+    <div class="doc-ext">${esc(docExt(d))}</div>
+    <div class="doc-info">
+      <strong>${esc(d.title)}${isAdmin && d.status!=='published' ? ' <span class="chip draft">Draft</span>':''}</strong>
+      <div class="meta">${esc(meta)}</div>
+      ${d.description?`<p>${esc(d.description)}</p>`:''}
+    </div>
+    <div class="doc-actions">${actions}</div>
+  </div>`;
+}
+
+/* ---- employee view ---- */
+function renderResources(){
+  const cats = state.resources.categories;
+  const strip = $('#resTabs'), panel = $('#resPanel');
+  if(!strip || !panel) return;
+  if(!cats.length){
+    strip.innerHTML = '';
+    panel.innerHTML = emptyCard('No resources have been published yet. They will appear here once the shop adds them.');
+    return;
+  }
+  if(!cats.some(c => c.id === resOpen)) resOpen = cats[0].id;
+  strip.innerHTML = tabStrip(cats, resOpen, 'emp');
+  panel.setAttribute('aria-labelledby', 'tab-emp-' + resOpen);
+  panel.innerHTML = categoryPanel(resOpen, false);
+}
+
+function categoryPanel(catId, isAdmin){
+  const list = isAdmin ? state.resources.allCategories : state.resources.categories;
+  const cat = list.find(c => c.id === catId);
+  if(!cat) return emptyCard('That tab is no longer available.');
+  const secs = state.resources.sections[catId] || [];
+  const figs = state.resources.figures[catId] || [];
+  const docs = (isAdmin ? state.resources.allDocs : state.resources.docs)[catId] || [];
+
+  const stamp = cat.taxYear
+    ? `<div class="eyebrow" style="margin-top:14px">Tax year ${esc(cat.taxYear)}${cat.reviewedOn?` · reviewed ${esc(cat.reviewedOn)}`:''}</div>` : '';
+
+  const toc = secs.length > 2 ? `<details class="toc" ${window.innerWidth > 880 ? 'open' : ''}>
+    <summary>On this page</summary>
+    <ol>${secs.map(sec => `<li><button onclick="jumpToSection('${escArg(sec.id)}')">${esc(sec.heading)}</button></li>`).join('')}</ol>
+  </details>` : '';
+
+  const article = secs.length ? `<div class="article">${secs.map(sec => `
+      <h2 id="h-${esc(sec.id)}">${esc(sec.heading)}</h2>
+      ${(sec.body||[]).map(t => `<p>${figText(t, figs)}</p>`).join('')}
+      ${(sec.bullets||[]).length ? `<ul class="topic-list">${sec.bullets.map(b => `<li>${figText(b, figs)}</li>`).join('')}</ul>` : ''}
+      ${(sec.body2||[]).map(t => `<p>${figText(t, figs)}</p>`).join('')}
+    `).join('')}</div>` : '';
+
+  const docBlock = docs.length
+    ? `<div class="card" style="margin-top:20px"><h3>${secs.length?'Documents':'Files'}</h3>
+         <p class="sub">${secs.length?'Worksheets and references for this section.':'Open or download anything here.'}</p>
+         <div style="margin-top:6px">${docs.map(d => docRow(d, isAdmin)).join('')}</div></div>`
+    : `<div style="margin-top:20px">${emptyCard(isAdmin ? 'No documents in this tab yet — upload one below.' : 'No documents in this tab yet.')}</div>`;
+
+  const disclaimer = cat.taxYear ? `<div class="note"><strong>Informational only.</strong> This is not tax or legal advice. Figures change every year — each one shows the year it applies to and links to the agency that publishes it. Check there, or with a tax professional, before acting.</div>` : '';
+
+  return `<div style="margin-top:6px">
+      <h2 style="font-family:'Marcellus',serif;font-weight:400;font-size:23px">${esc(cat.name)}</h2>
+      ${cat.blurb?`<p class="lede" style="margin-top:6px">${esc(cat.blurb)}</p>`:''}
+      ${stamp}
+      ${cat.audienceNote?`<div class="note" style="margin-top:12px"><strong>Who this is for:</strong> ${esc(cat.audienceNote)}</div>`:''}
+      ${toc}${article}${disclaimer}${docBlock}
+    </div>`;
+}
+
+function jumpToSection(secId){
+  const el = document.getElementById('h-' + secId);
+  if(el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+/* ---- viewer ----
+   data URL -> Blob -> object URL -> <iframe>. Never window.open(dataUrl):
+   Chrome blocks top-level navigation to data: URLs. Exactly one live object URL
+   at a time, revoked on close AFTER the frame is torn down. */
+function dataUrlToBlob(dataUrl){
+  const m = /^data:([^;,]+);base64,(.*)$/.exec(String(dataUrl || ''));
+  if(!m) return null;
+  const bin = atob(m[2]);
+  const bytes = new Uint8Array(bin.length);
+  for(let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new Blob([bytes], { type: m[1] });
+}
+async function openDoc(docId){
+  const isAdmin = mode === 'admin';
+  const f = await Store.getResourceDocFile(docId, isAdmin);
+  if(!f){ toast('That document isn’t available'); return; }
+  try { await Store.openResourceDocument(docId, isAdmin); } catch(_) { /* the count is not worth failing the open */ }
+  releaseViewer();
+  const blob = dataUrlToBlob(f.dataUrl);
+  if(!blob){ toast('That file couldn’t be read'); return; }
+  viewerUrl = URL.createObjectURL(blob);
+  viewerDoc = f;
+  const src = safeFileUrl(viewerUrl);
+  $('#vTitle').textContent = f.title;
+  $('#vMeta').textContent = [docExtOf(f.mimeType), fmtBytes(f.byteSize)].filter(Boolean).join(' · ');
+  $('#vBody').innerHTML = f.mimeType === 'application/pdf'
+    ? `<iframe src="${src}" title="${esc(f.title)}"></iframe>`
+    : `<img src="${src}" alt="${esc(f.title)}">`;
+  $('#viewer').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  await refresh();
+}
+function docExtOf(mime){
+  return ({ 'application/pdf':'PDF','image/png':'PNG','image/jpeg':'JPG','image/webp':'WEBP' })[mime] || '';
+}
+function releaseViewer(){
+  const body = $('#vBody'); if(body) body.innerHTML = '';   /* tear the frame down first */
+  if(viewerUrl){ URL.revokeObjectURL(viewerUrl); viewerUrl = null; }
+  viewerDoc = null;
+}
+function closeViewer(){
+  const v = $('#viewer'); if(v) v.classList.remove('open');
+  releaseViewer();
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape' && $('#viewer') && $('#viewer').classList.contains('open')) closeViewer();
+});
+function saveBlob(blob, name){
+  const a = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  a.href = url; a.download = name || 'document';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 0);   /* revoke after the click is handled */
+}
+async function downloadDoc(docId){
+  const f = await Store.getResourceDocFile(docId, mode === 'admin');
+  if(!f){ toast('That document isn’t available'); return; }
+  const blob = dataUrlToBlob(f.dataUrl);
+  if(!blob){ toast('That file couldn’t be read'); return; }
+  saveBlob(blob, f.downloadName || safeFileName(f.fileName));
+  toast('Downloaded ' + (f.downloadName || 'document'));
+}
+function downloadOpenDoc(){
+  if(!viewerDoc) return;
+  const blob = dataUrlToBlob(viewerDoc.dataUrl);
+  if(blob) saveBlob(blob, viewerDoc.downloadName || safeFileName(viewerDoc.fileName));
+}
+
+/* ---- admin ---- */
+function renderResourcesAdmin(){
+  const cats = state.resources.allCategories;
+  const rows = $('#catAdmin');
+  if(rows){
+    rows.innerHTML = cats.length ? cats.map((c, i) => `
+      <div class="res-admin-row">
+        <div class="tm-info"><strong>${esc(c.name)}${c.status!=='published'?' <span class="chip draft">Draft</span>':''}</strong>
+          <div class="who-role">${esc(c.shortName || c.name)} · ${(state.resources.allDocs[c.id]||[]).length} document(s)${c.blurb?' · '+esc(c.blurb):''}</div></div>
+        <div class="tm-actions">
+          <span class="switch ${c.status==='published'?'on':''}" role="switch" aria-checked="${c.status==='published'?'true':'false'}" tabindex="0"
+            onclick="toggleCategoryStatus('${escArg(c.id)}')" onkeydown="if(event.key==='Enter')toggleCategoryStatus('${escArg(c.id)}')"><span class="track"></span>Published</span>
+          <button class="btn ghost small" onclick="moveCategory('${escArg(c.id)}',-1)" ${i===0?'disabled style="opacity:.4"':''} aria-label="Move up">↑</button>
+          <button class="btn ghost small" onclick="moveCategory('${escArg(c.id)}',1)" ${i===cats.length-1?'disabled style="opacity:.4"':''} aria-label="Move down">↓</button>
+          <button class="btn ghost small" onclick="openEditCategory('${escArg(c.id)}')">Rename</button>
+          <button class="btn ghost small danger" onclick="deleteCategory('${escArg(c.id)}')">Delete</button>
+        </div>
+      </div>`).join('') : emptyCard('No tabs yet. Add one to get started.');
+  }
+
+  const strip = $('#resTabsAdmin'), panel = $('#resPanelAdmin');
+  if(!strip || !panel) return;
+  if(!cats.length){ strip.innerHTML = ''; panel.innerHTML = ''; return; }
+  if(!cats.some(c => c.id === resOpenAdmin)) resOpenAdmin = cats[0].id;
+  strip.innerHTML = tabStrip(cats, resOpenAdmin, 'adm');
+  panel.setAttribute('aria-labelledby', 'tab-adm-' + resOpenAdmin);
+  panel.innerHTML = categoryPanel(resOpenAdmin, true)
+    + `<div class="card" style="margin-top:14px">
+         <h3>Add a document</h3>
+         <p class="sub">Choose a file, then give it a title. PDF, PNG, JPEG or WebP, up to ${fmtBytes(RESOURCE_MAX_BYTES)}.</p>
+         <div style="margin-top:12px"><button class="btn small" onclick="pickDoc('${escArg(resOpenAdmin)}')">Choose a file…</button></div>
+       </div>`
+    + sectionsEditor(resOpenAdmin);
+}
+
+function sectionsEditor(catId){
+  const secs = state.resources.sections[catId] || [];
+  return `<div class="card" style="margin-top:14px">
+    <h3>Page text</h3>
+    <p class="sub">Prose shown above the documents. Paragraphs are separated by blank lines; bullets go one per line. Reference a figure with {{token}}.</p>
+    ${secs.map((sec, i) => `
+      <div style="border-top:1px solid var(--line);padding-top:12px;margin-top:12px">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <input class="field" id="sh_${esc(sec.id)}" value="${esc(sec.heading)}" style="flex:1;min-width:180px">
+          <button class="btn ghost small" onclick="moveSection('${escArg(catId)}','${escArg(sec.id)}',-1)" ${i===0?'disabled style="opacity:.4"':''} aria-label="Move up">↑</button>
+          <button class="btn ghost small" onclick="moveSection('${escArg(catId)}','${escArg(sec.id)}',1)" ${i===secs.length-1?'disabled style="opacity:.4"':''} aria-label="Move down">↓</button>
+          <button class="btn ghost small danger" onclick="removeSection('${escArg(catId)}','${escArg(sec.id)}')">Remove</button>
+        </div>
+        <label class="field-label" for="sb_${esc(sec.id)}">Paragraphs</label>
+        <textarea class="notes" id="sb_${esc(sec.id)}">${esc((sec.body||[]).join('\n\n'))}</textarea>
+        <label class="field-label" for="sl_${esc(sec.id)}">Bullets</label>
+        <textarea class="notes" id="sl_${esc(sec.id)}">${esc((sec.bullets||[]).join('\n'))}</textarea>
+      </div>`).join('')}
+    <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+      <button class="btn small" onclick="saveSections('${escArg(catId)}')">Save page text</button>
+      <button class="btn ghost small" onclick="addSection('${escArg(catId)}')">+ Add section</button>
+    </div>
+  </div>`;
+}
+
+function readSections(catId){
+  return (state.resources.sections[catId] || []).map(sec => {
+    const h = $('#sh_' + sec.id), b = $('#sb_' + sec.id), l = $('#sl_' + sec.id);
+    return {
+      id: sec.id,
+      heading: h ? h.value.trim() : sec.heading,
+      body: b ? b.value.split(/\n\s*\n/).map(x => x.trim()).filter(Boolean) : sec.body,
+      bullets: l ? l.value.split(/\n/).map(x => x.trim()).filter(Boolean) : sec.bullets,
+      body2: sec.body2 || []
+    };
+  });
+}
+async function saveSections(catId){
+  await Store.saveResourceSections(catId, readSections(catId));
+  toast('Page text saved'); await refresh();
+}
+async function addSection(catId){
+  const secs = readSections(catId);
+  secs.push({ heading: 'New section', body: [], bullets: [], body2: [] });
+  await Store.saveResourceSections(catId, secs);
+  toast('Section added'); await refresh();
+}
+async function removeSection(catId, secId){
+  const sec = (state.resources.sections[catId] || []).find(x => x.id === secId);
+  if(sec && !confirm(`Remove the section “${sec.heading}”? Its text is deleted.`)) return;
+  await Store.saveResourceSections(catId, readSections(catId).filter(x => x.id !== secId));
+  toast('Section removed'); await refresh();
+}
+async function moveSection(catId, secId, dir){
+  const secs = readSections(catId);
+  const i = secs.findIndex(x => x.id === secId), j = i + dir;
+  if(i < 0 || j < 0 || j >= secs.length) return;
+  secs.splice(j, 0, secs.splice(i, 1)[0]);
+  await Store.saveResourceSections(catId, secs);
+  await refresh();
+}
+
+/* category CRUD */
+function openAddCategory(){
+  editCatId = null;
+  $('#catFormTitle').textContent = 'Add a tab';
+  $('#cfName').value = ''; $('#cfShort').value = ''; $('#cfBlurb').value = '';
+  $('#catForm').style.display = 'block';
+  $('#catForm').scrollIntoView({ behavior:'smooth', block:'center' }); $('#cfName').focus();
+}
+function openEditCategory(id){
+  const c = state.resources.allCategories.find(x => x.id === id); if(!c) return;
+  editCatId = id;
+  $('#catFormTitle').textContent = 'Edit ' + c.name;
+  $('#cfName').value = c.name; $('#cfShort').value = c.shortName || ''; $('#cfBlurb').value = c.blurb || '';
+  $('#catForm').style.display = 'block';
+  $('#catForm').scrollIntoView({ behavior:'smooth', block:'center' }); $('#cfName').focus();
+}
+function cancelCategory(){ $('#catForm').style.display = 'none'; editCatId = null; }
+async function saveCategory(){
+  const name = $('#cfName').value.trim();
+  if(!name){ toast('Give the tab a name'); $('#cfName').focus(); return; }
+  const payload = { name, shortName: $('#cfShort').value.trim() || name, blurb: $('#cfBlurb').value.trim() };
+  if(editCatId){ await Store.updateResourceCategory(editCatId, payload); toast('Tab updated'); }
+  else { const c = await Store.addResourceCategory(payload); resOpenAdmin = c.id; toast('Tab added — it stays a draft until you publish it'); }
+  $('#catForm').style.display = 'none'; editCatId = null;
+  await refresh();
+}
+async function deleteCategory(id){
+  const c = state.resources.allCategories.find(x => x.id === id); if(!c) return;
+  const n = (state.resources.allDocs[id] || []).length;
+  const secs = (state.resources.sections[id] || []).length;
+  if(!confirm(`Delete “${c.name}”? This also deletes ${n} document(s) and ${secs} section(s) of page text.`)) return;
+  await Store.deleteResourceCategory(id);
+  if(resOpenAdmin === id) resOpenAdmin = null;
+  if(resOpen === id) resOpen = null;
+  toast('Tab deleted'); await refresh();
+}
+async function toggleCategoryStatus(id){
+  const c = state.resources.allCategories.find(x => x.id === id); if(!c) return;
+  const next = c.status === 'published' ? 'draft' : 'published';
+  await Store.updateResourceCategory(id, { status: next });
+  toast(next === 'published' ? 'Published — employees can see this tab now' : 'Unpublished — employees no longer see this tab');
+  await refresh();
+}
+async function moveCategory(id, dir){
+  const ids = state.resources.allCategories.map(c => c.id);
+  const i = ids.indexOf(id), j = i + dir;
+  if(i < 0 || j < 0 || j >= ids.length) return;
+  ids.splice(j, 0, ids.splice(i, 1)[0]);
+  await Store.reorderResourceCategories(ids);
+  await refresh();
+}
+
+/* document upload */
+function pickDoc(catId){ docTargetCatId = catId; docReplaceId = null; document.getElementById('docInput').click(); }
+function replaceDoc(docId){ docReplaceId = docId; docTargetCatId = null; document.getElementById('docInput').click(); }
+function onDocFile(e){
+  const file = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if(!file) return;
+  if(RESOURCE_MIME.indexOf(file.type) < 0){
+    toast('PDF, PNG, JPEG or WebP only'); docTargetCatId = null; docReplaceId = null; return;
+  }
+  /* file.type is guessed from the extension, so this is UX courtesy, not a
+     security control. Production sniffs magic bytes server-side. */
+  if(file.size > RESOURCE_MAX_BYTES){
+    toast(`Too large — the prototype holds files in memory, so the cap is ${fmtBytes(RESOURCE_MAX_BYTES)}`);
+    docTargetCatId = null; docReplaceId = null; return;
+  }
+  const reader = new FileReader();
+  reader.onload = async ev => {
+    const catId = docTargetCatId, replaceId = docReplaceId;
+    docTargetCatId = null; docReplaceId = null;
+    const payload = { dataUrl: ev.target.result, mimeType: file.type, byteSize: file.size,
+                      fileName: file.name, updatedOn: todayStamp() };
+    if(replaceId){
+      await Store.replaceResourceDocumentFile(replaceId, payload);
+      toast('File replaced');
+    } else if(catId){
+      const title = (file.name || 'Document').replace(/\.[^.]+$/, '');
+      await Store.addResourceDocument(catId, { ...payload, kind:'file', title, description:'' });
+      toast('Uploaded as a draft — publish it when it is ready');
+    }
+    await refresh();
+  };
+  reader.onerror = () => { toast('That file couldn’t be read'); docTargetCatId = null; docReplaceId = null; };
+  reader.readAsDataURL(file);
+}
+function todayStamp(){
+  const d = new Date();
+  return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+}
+async function toggleDocStatus(id){
+  const all = Object.values(state.resources.allDocs).flat();
+  const d = all.find(x => x.id === id); if(!d) return;
+  const next = d.status === 'published' ? 'draft' : 'published';
+  await Store.updateResourceDocument(id, { status: next });
+  toast(next === 'published' ? 'Published — employees can open it now' : 'Unpublished — employees no longer see it');
+  await refresh();
+}
+async function deleteDoc(id){
+  const all = Object.values(state.resources.allDocs).flat();
+  const d = all.find(x => x.id === id); if(!d) return;
+  if(!confirm(`Delete “${d.title}”? Employees will no longer be able to open it.`)) return;
+  await Store.deleteResourceDocument(id);
+  toast('Document deleted'); await refresh();
+}
+
 /* ===================== init ==================================== */
-refresh().then(()=>go('s-home'));
+refresh().then(()=>go('s-home')).then(loadSelfTest);
+
+/* Self-test harness — opt-in and never loaded in normal use, so the shipped
+   app stays dependency-free. Open index.html?selftest=1 (or #selftest) to run
+   the suite in tests.js; see TESTING.md. */
+function loadSelfTest(){
+  const wanted = new URLSearchParams(location.search).has('selftest') || location.hash === '#selftest';
+  if(!wanted) return;
+  const s=document.createElement('script');
+  s.src='tests.js';
+  s.onerror=()=>{
+    console.error('[selftest] tests.js failed to load — serve the folder or keep tests.js beside index.html');
+    document.title='SELFTEST LOAD ERROR';
+  };
+  document.head.appendChild(s);
+}
 
 </script>
 </body>

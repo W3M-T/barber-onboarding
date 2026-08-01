@@ -1,0 +1,39 @@
+name: tests
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  selftest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # No npm install: run-tests.mjs has no dependencies and drives a Chromium
+      # that is already on the runner. Ubuntu images ship Chrome at a path the
+      # runner probes, but pin it explicitly so a base-image change cannot turn
+      # this into a silent skip.
+      - name: Locate Chrome
+        run: |
+          for candidate in \
+            /usr/bin/google-chrome-stable \
+            /usr/bin/google-chrome \
+            /usr/bin/chromium-browser \
+            /usr/bin/chromium; do
+            if [ -x "$candidate" ]; then
+              echo "CHROME_BIN=$candidate" >> "$GITHUB_ENV"
+              echo "using $candidate"
+              exit 0
+            fi
+          done
+          echo "::error::no Chrome or Chromium found on the runner"
+          exit 1
+
+      - name: Run the self-test suite
+        run: node artisan-onboarding_1/run-tests.mjs

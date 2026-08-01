@@ -130,7 +130,143 @@ CREATE TABLE checklist_state (
   PRIMARY KEY (employee_id, item_id)
 );
 
+-- ============================================================================
+-- Resources: mini-tabs of reference material
+--
+-- THE BOUNDARY, and it is load-bearing: if anyone would ever need to answer
+-- "who completed this, when, and did they pass?", it is training and belongs on
+-- the separate training site — not here. Resources is read-at-your-own-pace
+-- reference material with no sequence, no assessment and no completion state.
+-- See RESOURCES-SCOPE.md.
+--
+-- Sections hang off the CATEGORY, not off a document, so a mini-tab can be both
+-- a readable page and a folder of files without a kind flag on the container.
+-- ============================================================================
+
+CREATE TYPE resource_status     AS ENUM ('draft', 'published');
+CREATE TYPE resource_visibility AS ENUM ('everyone', 'admins');
+CREATE TYPE resource_doc_kind   AS ENUM ('file', 'link');
+
+-- ---- resource_categories: one row per mini-tab --------------------------
+CREATE TABLE resource_categories (
+  id             TEXT PRIMARY KEY,                 -- 'rc_1099ny'
+  name           TEXT NOT NULL,
+  short_name     TEXT NOT NULL,                    -- pill label; name is the panel heading
+  blurb          TEXT NOT NULL DEFAULT '',
+  status         resource_status     NOT NULL DEFAULT 'draft',
+  visibility     resource_visibility NOT NULL DEFAULT 'everyone',
+  tax_year       INT,                              -- non-null marks a year-sensitive tab
+  reviewed_on    DATE,
+  audience_note  TEXT NOT NULL DEFAULT '',
+  sort_order     INT NOT NULL DEFAULT 0,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- ---- resource_sections: authored prose, child of the category -----------
+CREATE TABLE resource_sections (
+  id           TEXT PRIMARY KEY,                   -- 'sec_income'
+  category_id  TEXT NOT NULL REFERENCES resource_categories(id) ON DELETE CASCADE,
+  heading      TEXT NOT NULL,
+  body         JSONB NOT NULL DEFAULT '[]'::jsonb, -- string[] of paragraphs
+  bullets      JSONB NOT NULL DEFAULT '[]'::jsonb, -- string[]
+  body2        JSONB NOT NULL DEFAULT '[]'::jsonb, -- paragraphs after the bullets
+  sort_order   INT NOT NULL DEFAULT 0
+);
+CREATE INDEX idx_res_sections_cat ON resource_sections(category_id);
+
+-- ---- resource_figures: year-stamped values referenced from prose --------
+-- Prose writes {{token}}; the renderer substitutes the value and shows the year.
+-- This is the answer to the staleness problem: a hardcoded 2026 rate is wrong in
+-- 2027 and fails silently, so figures are data an admin can correct, not code.
+CREATE TABLE resource_figures (
+  id           TEXT PRIMARY KEY,                   -- 'fig_mile'
+  category_id  TEXT NOT NULL REFERENCES resource_categories(id) ON DELETE CASCADE,
+  token        TEXT NOT NULL,                      -- 'mileage'
+  tax_year     INT  NOT NULL,
+  value        TEXT NOT NULL,                      -- display string, not a number
+  label        TEXT NOT NULL,
+  source_url   TEXT NOT NULL,
+  UNIQUE (category_id, token, tax_year)
+);
+
+-- ---- resource_documents: uploaded files and links out -------------------
+CREATE TABLE resource_documents (
+  id             TEXT PRIMARY KEY,                 -- 'doc_setaside'
+  category_id    TEXT NOT NULL REFERENCES resource_categories(id) ON DELETE CASCADE,
+  kind           resource_doc_kind NOT NULL DEFAULT 'file',
+  status         resource_status   NOT NULL DEFAULT 'draft',
+  title          TEXT NOT NULL,
+  description    TEXT NOT NULL DEFAULT '',
+  file_name      TEXT,                             -- as uploaded; DISPLAY ONLY, always escaped
+  download_name  TEXT,                             -- sanitised; used for Content-Disposition
+  mime_type      TEXT,                             -- authoritative value is the SNIFFED one
+  byte_size      BIGINT,
+  storage_url    TEXT,                             -- object-storage key (prototype: base64 in memory)
+  url            TEXT,                             -- kind='link' target
+  version        INT  NOT NULL DEFAULT 1,
+  open_count     INT  NOT NULL DEFAULT 0,          -- aggregate only; see the note below
+  updated_on     DATE,
+  sort_order     INT  NOT NULL DEFAULT 0,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT resource_doc_shape CHECK (
+    (kind = 'link' AND url IS NOT NULL) OR (kind = 'file' AND file_name IS NOT NULL)),
+  CONSTRAINT resource_doc_mime CHECK (
+    mime_type IS NULL OR mime_type IN ('application/pdf','image/png','image/jpeg','image/webp'))
+);
+CREATE INDEX idx_res_docs_cat ON resource_documents(category_id, sort_order);
+
+-- A meeting can point at a document — the Step I handbook button uses this.
+ALTER TABLE meetings
+  ADD COLUMN resource_document_id TEXT REFERENCES resource_documents(id) ON DELETE SET NULL;
+
 COMMIT;
+
+-- ============================================================================
+-- Resources implementation notes
+-- ----------------------------------------------------------------------------
+-- * VISIBILITY CASCADES. A published document inside a draft or admins-only
+--   category must NOT be reachable, including by direct id — otherwise the
+--   document is exposed the moment someone learns the id. Resolve the parent
+--   category on every document read.
+--
+-- * ROLE COMES FROM THE SESSION, never from the request. `?include=all` is a
+--   request, honored only when the caller is an admin and silently downgraded
+--   otherwise. Do not return 403 — a 403 confirms that drafts exist.
+--
+-- * image/svg+xml IS DELIBERATELY ABSENT from resource_doc_mime. An SVG is a
+--   script container, and a blob: URL inherits the origin of the page that
+--   created it. Do not add it.
+--
+-- * mime_type must be the value SNIFFED from magic bytes, not the browser's
+--   guess. file.type is derived from the extension, so renaming payload.html to
+--   payload.pdf passes any client-side check. Reject on sniffed/declared
+--   mismatch and store the sniffed value.
+--
+-- * file_name vs download_name do two different jobs. Keep the uploaded name
+--   verbatim for display (always rendered escaped); derive download_name at
+--   write time by taking the basename and collapsing anything outside
+--   [A-Za-z0-9._-]. An allowlist strips bidi overrides and CR/LF for free,
+--   which a blocklist does not.
+--
+-- * open_count is AGGREGATE ONLY and there is no resource_views table. A
+--   per-employee read-receipt table on a tax-information page creates a record
+--   of which worker read about misclassification, retained indefinitely and
+--   discoverable — and it breaks on contact with reality, because an
+--   ON DELETE CASCADE from employees erases it exactly when it would matter.
+--   The question admin actually has is "is anyone reading this", which a
+--   counter answers. See RESOURCES-SCOPE.md section 7.
+--
+-- * VERSIONING IS NOT IMPLEMENTED. version is a counter; replacing a file
+--   overwrites storage_url. Before claiming old objects are retained, add
+--   resource_document_versions (document_id, version, storage_url, byte_size,
+--   checksum, replaced_at, replaced_by, PK (document_id, version)) and insert a
+--   row before every overwrite.
+--
+-- * NO WRITE AUDIT EXISTS YET. Add resource_audit_log (id, actor_user_id,
+--   action, entity_type, entity_id, detail JSONB, created_at) written by every
+--   mutating endpoint, deriving the actor from the session and never from the
+--   body.
+-- ============================================================================
 
 -- ============================================================================
 -- Implementation notes
