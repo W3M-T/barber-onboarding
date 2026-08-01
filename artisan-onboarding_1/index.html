@@ -1458,7 +1458,22 @@ async function saveWelcome(){ await Store.updateContent({ welcomeMessage:$('#wel
 async function saveTrainingLink(){ await Store.updateContent({ trainingUrl:$('#trainUrl').value }); toast('Training link updated'); await refresh(); }
 
 /* ===================== init ==================================== */
-refresh().then(()=>go('s-home'));
+refresh().then(()=>go('s-home')).then(loadSelfTest);
+
+/* Self-test harness — opt-in and never loaded in normal use, so the shipped
+   app stays dependency-free. Open index.html?selftest=1 (or #selftest) to run
+   the suite in tests.js; see TESTING.md. */
+function loadSelfTest(){
+  const wanted = new URLSearchParams(location.search).has('selftest') || location.hash === '#selftest';
+  if(!wanted) return;
+  const s=document.createElement('script');
+  s.src='tests.js';
+  s.onerror=()=>{
+    console.error('[selftest] tests.js failed to load — serve the folder or keep tests.js beside index.html');
+    document.title='SELFTEST LOAD ERROR';
+  };
+  document.head.appendChild(s);
+}
 
 </script>
 </body>
