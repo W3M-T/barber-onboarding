@@ -438,7 +438,7 @@ body.admin .btn.danger{border-color:#D4796A;color:#D4796A}
         <div>
           <div class="eyebrow">Artisan Barber · 331 E 81st St · New hire</div>
           <h1 class="display">Welcome to the shop, Jordan.</h1>
-          <p class="lede">This space gets you ready for the floor — paperwork, your four introduction meetings, and access to the Artisan training site. Work through it at your pace before your first full week.</p>
+          <p class="lede" id="homeWelcome">This space gets you ready for the floor — paperwork, your four introduction meetings, and access to the Artisan training site. Work through it at your pace before your first full week.</p>
         </div>
         <div class="ring" aria-label="Onboarding progress">
           <svg width="104" height="104" viewBox="0 0 104 104">
@@ -502,6 +502,7 @@ body.admin .btn.danger{border-color:#D4796A;color:#D4796A}
       <div class="card keycard" style="margin-top:18px">
         <h3>Your training account</h3>
         <p class="sub">Access is issued after your Step IV introduction. Use your shop email to sign in the first time.</p>
+        <p class="sub" style="margin-top:8px">Training site: <span id="trainingLink"></span></p>
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
           <button class="btn" onclick="openTraining()">Open training platform ↗</button>
           <button class="btn ghost" id="loginBtn" onclick="confirmLogin()">Confirm my login works</button>
@@ -572,8 +573,8 @@ body.admin .btn.danger{border-color:#D4796A;color:#D4796A}
       <div class="eyebrow">Back of house</div>
       <h1 class="display">Onboarding at a glance.</h1>
       <div class="stat-row">
-        <div class="stat"><b>4</b><span>Currently onboarding</span></div>
-        <div class="stat"><b>3</b><span>Meetings this week</span></div>
+        <div class="stat"><b id="statOnboarding">0</b><span>Currently onboarding</span></div>
+        <div class="stat"><b id="statWeek">0</b><span>Meetings scheduled</span></div>
         <div class="stat"><b id="statAccess">2</b><span>Awaiting training access</span></div>
       </div>
       <div class="card" style="margin-top:16px;padding:8px 16px 4px;overflow-x:auto">
@@ -794,19 +795,19 @@ const DB = {
 
   /* team: shop artisans shown on "Meet the shop" (table: team_members) */
   team: [
-    { id:'tm_charlie', sortOrder:1, name:'Charlie', initials:'C', role:'Founder & Owner', experience:'Est. 2017', photoUrl:null,
+    { id:'tm_charlie', sortOrder:1, name:'Charlie', initials:'CH', role:'Founder & Owner', experience:'Est. 2017', photoUrl:null,
       bio:'Opened the shop in 2017 and still sets its standard — creative energy, community first, precise grooming. Your contact for Artisan Continued Development and training support.',
       specialties:['Shop culture','Training support'], hostsMeetingIds:['mtg_handbook','mtg_acd'] },
-    { id:'tm_bobby', sortOrder:2, name:'Bobby', initials:'B', role:'Master Stylist · Manager', experience:'~20 yrs experience', photoUrl:null,
+    { id:'tm_bobby', sortOrder:2, name:'Bobby', initials:'BO', role:'Master Stylist · Manager', experience:'~20 yrs experience', photoUrl:null,
       bio:'Almost twenty years behind the chair. Bold, classic scissor work — and the shop\u2019s specialist for curly and wavy hair. He also holds the front-of-house standard.',
       specialties:['Curly & wavy','Front desk standard'], hostsMeetingIds:['mtg_frontdesk'] },
     { id:'tm_juan', sortOrder:3, name:'Juan Hernandez', initials:'JH', role:'Senior Stylist', experience:'', photoUrl:null,
       bio:'Sharp clipper work, clean fades, and a patient eye for detail. Juan runs shadow weeks and mentors new stylists through the Assistant Stylist Program.',
       specialties:['Mentorship','Precision fades'], hostsMeetingIds:['mtg_assistant'] },
-    { id:'tm_kris', sortOrder:4, name:'Kris', initials:'K', role:'Barber', experience:'20+ yrs experience', photoUrl:null,
+    { id:'tm_kris', sortOrder:4, name:'Kris', initials:'KR', role:'Barber', experience:'20+ yrs experience', photoUrl:null,
       bio:'Queens-raised with two decades of experience. Every cut is a tailored scissor cut — and every guest leaves feeling like a regular.',
       specialties:['Tailored cuts','Guest rapport'], hostsMeetingIds:[] },
-    { id:'tm_cathy', sortOrder:5, name:'Cathy', initials:'CT', role:'Kids Specialist', experience:'', photoUrl:null,
+    { id:'tm_cathy', sortOrder:5, name:'Cathy', initials:'CA', role:'Kids Specialist', experience:'', photoUrl:null,
       bio:'The shop\u2019s specialist for younger guests. Early-morning appointments built for kids — and the reason they come back smiling.',
       specialties:['Children\u2019s cuts'], hostsMeetingIds:[] }
   ],
@@ -838,7 +839,7 @@ const DB = {
       eligibleForAsp:false, trainingAccess:true,  progress:100, isCurrentUser:false,
       adminNotes:'Onboarding complete. Fully on the books.' },
     { id:'emp_sam', name:'Sam Okafor', initials:'SO', role:'Assistant Stylist', dayLabel:'Day 1',
-      eligibleForAsp:true,  trainingAccess:false, progress:10, isCurrentUser:false,
+      eligibleForAsp:true,  trainingAccess:false, progress:20, isCurrentUser:false,
       adminNotes:'' }
   ],
 
@@ -849,12 +850,12 @@ const DB = {
     { id:'em_2',  employeeId:'emp_jordan', meetingId:'mtg_frontdesk', status:'scheduled', when:'Wed Jul 15 · 9:30 AM',  host:'Bobby · Manager',  acknowledgedAt:null },
     { id:'em_3',  employeeId:'emp_jordan', meetingId:'mtg_assistant', status:'pending',   when:null, host:'Juan · Senior Stylist', acknowledgedAt:null },
     { id:'em_4',  employeeId:'emp_jordan', meetingId:'mtg_acd',       status:'pending',   when:null, host:'Charlie · Owner', acknowledgedAt:null },
-    { id:'em_5',  employeeId:'emp_maya',   meetingId:'mtg_handbook',  status:'complete',  when:'Mon Jun 30 · 10:00 AM', host:'Charlie · Owner', acknowledgedAt:'2026-06-30T10:40:00Z' },
-    { id:'em_6',  employeeId:'emp_maya',   meetingId:'mtg_frontdesk', status:'complete',  when:'Tue Jul 1 · 9:30 AM',  host:'Bobby · Manager',  acknowledgedAt:null },
+    { id:'em_5',  employeeId:'emp_maya',   meetingId:'mtg_handbook',  status:'complete',  when:'Tue Jun 30 · 10:00 AM', host:'Charlie · Owner', acknowledgedAt:'2026-06-30T10:40:00Z' },
+    { id:'em_6',  employeeId:'emp_maya',   meetingId:'mtg_frontdesk', status:'complete',  when:'Wed Jul 1 · 9:30 AM',  host:'Bobby · Manager',  acknowledgedAt:null },
     { id:'em_7',  employeeId:'emp_maya',   meetingId:'mtg_acd',       status:'scheduled', when:'Fri Jul 17 · 4:00 PM',  host:'Charlie · Owner', acknowledgedAt:null },
-    { id:'em_8',  employeeId:'emp_leo',    meetingId:'mtg_handbook',  status:'complete',  when:'Mon Jun 16 · 10:00 AM', host:'Charlie · Owner', acknowledgedAt:'2026-06-16T10:35:00Z' },
-    { id:'em_9',  employeeId:'emp_leo',    meetingId:'mtg_frontdesk', status:'complete',  when:'Tue Jun 17 · 9:30 AM',  host:'Bobby · Manager',  acknowledgedAt:null },
-    { id:'em_10', employeeId:'emp_leo',    meetingId:'mtg_acd',       status:'complete',  when:'Wed Jun 18 · 2:30 PM',  host:'Charlie · Owner', acknowledgedAt:null },
+    { id:'em_8',  employeeId:'emp_leo',    meetingId:'mtg_handbook',  status:'complete',  when:'Tue Jun 16 · 10:00 AM', host:'Charlie · Owner', acknowledgedAt:'2026-06-16T10:35:00Z' },
+    { id:'em_9',  employeeId:'emp_leo',    meetingId:'mtg_frontdesk', status:'complete',  when:'Wed Jun 17 · 9:30 AM',  host:'Bobby · Manager',  acknowledgedAt:null },
+    { id:'em_10', employeeId:'emp_leo',    meetingId:'mtg_acd',       status:'complete',  when:'Thu Jun 18 · 2:30 PM',  host:'Charlie · Owner', acknowledgedAt:null },
     { id:'em_11', employeeId:'emp_sam',    meetingId:'mtg_handbook',  status:'scheduled', when:'Thu Jul 16 · 10:00 AM', host:'Charlie · Owner', acknowledgedAt:null },
     { id:'em_12', employeeId:'emp_sam',    meetingId:'mtg_frontdesk', status:'pending',   when:null, host:'Bobby · Manager',  acknowledgedAt:null },
     { id:'em_13', employeeId:'emp_sam',    meetingId:'mtg_assistant', status:'pending',   when:null, host:'Juan · Senior Stylist', acknowledgedAt:null },
@@ -1155,6 +1156,10 @@ let _seq = 1000;
 const newId = prefix => prefix + '_' + (++_seq);
 const _delay = () => Promise.resolve();               // stand-in for network latency
 const byOrder = (a, b) => (a.sortOrder || 0) - (b.sortOrder || 0);
+/* Copy, never alias: the caller's array must not become the stored row, or a
+   later push by the caller silently edits the database. Non-arrays are
+   normalised so one bad value cannot take the whole render pass down. */
+const _asList = v => Array.isArray(v) ? v.map(String) : (v == null || v === '' ? [] : [String(v)]);
 
 function _applicableMeetings(emp) {
   return DB.meetings.filter(m => !m.roleOnly || emp.eligibleForAsp).slice().sort(byOrder);
@@ -1162,9 +1167,13 @@ function _applicableMeetings(emp) {
 function _instances(empId) { return DB.employeeMeetings.filter(x => x.employeeId === empId); }
 function _bumpProgress(emp) {
   const appl = _applicableMeetings(emp);
-  const done = _instances(emp.id).filter(i => i.status === 'complete').length;
+  const applicableIds = new Set(appl.map(m => m.id));
+  /* Only completions that count toward THIS employee's journey belong in the
+     numerator — otherwise a stale instance for a step they are not eligible for
+     pushes the fraction above 1 and progress past 100. */
+  const done = _instances(emp.id).filter(i => i.status === 'complete' && applicableIds.has(i.meetingId)).length;
   const computed = Math.round(20 + (appl.length ? done / appl.length : 0) * 80);
-  emp.progress = Math.max(emp.progress || 0, computed);
+  emp.progress = Math.min(100, Math.max(emp.progress || 0, computed));
 }
 function _nextStep(emp) {
   for (const m of _applicableMeetings(emp)) {
@@ -1235,18 +1244,21 @@ const Store = {
     const row = {
       id: newId('tm'), sortOrder: max + 1, name: data.name, initials: initialsOf(data.name),
       role: data.role, experience: data.experience || '', photoUrl: null,
-      bio: data.bio || 'Part of the Artisan team.', specialties: data.specialties || [], hostsMeetingIds: []
+      bio: data.bio || 'Part of the Artisan team.', specialties: _asList(data.specialties), hostsMeetingIds: []
     };
     DB.team.push(row); return clone(row);
   },
   async updateTeamMember(id, patch) {                                                                             // PATCH  /team/:id
     await _delay();
     const t = DB.team.find(x => x.id === id); if (!t) throw new Error('team member not found');
-    if (patch.name !== undefined) { t.name = patch.name; t.initials = initialsOf(patch.name); }
+    /* The edit form always resubmits the name, so re-deriving on presence
+       rather than on change silently overwrote a hand-set monogram. */
+    if (patch.name !== undefined && patch.name !== t.name) { t.name = patch.name; t.initials = initialsOf(patch.name); }
+    else if (patch.name !== undefined) t.name = patch.name;
     if (patch.role !== undefined) t.role = patch.role;
     if (patch.experience !== undefined) t.experience = patch.experience;
     if (patch.bio !== undefined) t.bio = patch.bio;
-    if (patch.specialties !== undefined) t.specialties = patch.specialties;
+    if (patch.specialties !== undefined) t.specialties = _asList(patch.specialties);
     return clone(t);
   },
   async deleteTeamMember(id) {                                                                                    // DELETE /team/:id
@@ -1262,13 +1274,21 @@ const Store = {
   /* ---- slot / meeting mutations ---- */
   async addSlot(meetingId, slot) {                                                                               // POST  /meetings/:id/slots
     await _delay();
+    if (!DB.meetings.some(m => m.id === meetingId)) throw new Error('meeting not found');
     const row = { id: newId('slot'), meetingId, when: slot.when, host: slot.host };
     DB.slots.push(row); return clone(row);
   },
   async updateMeeting(meetingId, patch) {                                                                        // PATCH /meetings/:id
     await _delay();
     const m = DB.meetings.find(x => x.id === meetingId); if (!m) throw new Error('meeting not found');
-    if (patch.defaultHost !== undefined) m.defaultHost = patch.defaultHost;
+    if (patch.defaultHost !== undefined) {
+      /* Slots created under the old default carried it as their own host, so
+         leaving them alone made the times under a meeting book the previous
+         host after a change. Move the ones that never diverged. */
+      const previous = m.defaultHost;
+      m.defaultHost = patch.defaultHost;
+      DB.slots.filter(s => s.meetingId === meetingId && s.host === previous).forEach(s => { s.host = patch.defaultHost; });
+    }
     return clone(m);
   },
 
@@ -1315,6 +1335,12 @@ const Store = {
   },
   async setChecklistItem(empId, itemId, done) {                                                                   // PUT /employees/:id/checklist/:itemId { done }
     await _delay();
+    /* API.md: "Only valid for items in manual groups; meeting:* items are not
+       writable." Both foreign keys are checked so a bad id 404s instead of
+       inserting a row that violates checklist_state. */
+    if (!DB.employees.some(e => e.id === empId)) throw new Error('employee not found');
+    if (String(itemId).startsWith('meeting:')) throw new Error('derived checklist items are not writable');
+    if (!DB.checklistItems.some(it => it.id === itemId)) throw new Error('checklist item not found');
     let s = DB.checklistState.find(x => x.employeeId === empId && x.itemId === itemId);
     if (!s) { s = { employeeId: empId, itemId, done: !!done }; DB.checklistState.push(s); }
     else s.done = !!done;
@@ -1496,10 +1522,17 @@ function safeFileName(name) {
 
 /* creates an employee_meetings row if missing (used by schedule/complete/ack/assign) */
 function _ensureInstance(empId, meetingId) {
+  /* Validate BEFORE writing. This used to insert a row for any id pair, so a
+     typo produced an orphan that both read paths then hid — the booking existed
+     but was invisible, which is worse than a refusal. */
+  const emp = DB.employees.find(e => e.id === empId);
+  if (!emp) throw new Error('employee not found');
+  const m = DB.meetings.find(x => x.id === meetingId);
+  if (!m) throw new Error('meeting not found');
+  if (m.roleOnly && !emp.eligibleForAsp) throw new Error('meeting not applicable to this employee');
   let inst = DB.employeeMeetings.find(x => x.employeeId === empId && x.meetingId === meetingId);
   if (!inst) {
-    const m = DB.meetings.find(x => x.id === meetingId);
-    inst = { id: newId('em'), employeeId: empId, meetingId, status: 'pending', when: null, host: m ? m.defaultHost : null, acknowledgedAt: null };
+    inst = { id: newId('em'), employeeId: empId, meetingId, status: 'pending', when: null, host: m.defaultHost, acknowledgedAt: null };
     DB.employeeMeetings.push(inst);
   }
   return inst;
@@ -1507,7 +1540,7 @@ function _ensureInstance(empId, meetingId) {
 
 /* ===================== 3. State + UI ==================================== */
 const CURRENT_USER = 'emp_jordan';                 // the signed-in employee (would come from auth)
-const state = { content: {}, team: [], meetings: [], slots: {}, employees: [], me: { employee: null, meetings: [], checklist: [] },
+const state = { content: {}, team: [], meetings: [], slots: {}, employees: [], employeeMeetings: {}, me: { employee: null, meetings: [], checklist: [] },
   /* Two category lists, mirroring what two API calls with different auth return.
      The employee list is what a non-admin session would actually receive. */
   resources: { categories: [], allCategories: [], sections: {}, figures: {}, docs: {}, allDocs: {} } };
@@ -1564,6 +1597,8 @@ async function refresh(){
   state.employees = await Store.listEmployees();
   state.slots     = {};
   for(const m of state.meetings){ state.slots[m.id] = await Store.listSlots(m.id); }
+  state.employeeMeetings = {};
+  for(const e of state.employees){ state.employeeMeetings[e.id] = await Store.listEmployeeMeetings(e.id); }
   state.me.employee  = await Store.getEmployee(CURRENT_USER);
   state.me.meetings  = await Store.listEmployeeMeetings(CURRENT_USER);
   state.me.checklist = await Store.getChecklist(CURRENT_USER);
@@ -1579,7 +1614,7 @@ async function refresh(){
   }
   renderAll();
 }
-function renderAll(){ syncIdentity(); renderRail(); renderChecklist(); renderHome(); renderTeam(); renderAdminTeam(); renderRoster(); renderSlots(); renderContentForm(); renderResources(); renderResourcesAdmin(); renderNav(); }
+function renderAll(){ syncIdentity(); renderRail(); renderChecklist(); renderHome(); renderTeam(); renderAdminTeam(); renderRoster(); renderSlots(); renderContentForm(); renderTrainingScreen(); renderResources(); renderResourcesAdmin(); renderNav(); }
 
 /* ---- navigation ---- */
 const NAV = {
@@ -1593,6 +1628,9 @@ function renderNav(){
     : `<button class="navbtn ${n.id===current?'active':''}" onclick="go('${escArg(n.id)}')">${esc(n.label)}</button>`).join('');
 }
 function go(id){
+  /* A half-finished reschedule is meeting-detail state; walking away disarms it,
+     otherwise returning later silently reopens the picker. */
+  if(id !== 's-meeting') rescheduleId = null;
   current=id;
   document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active', s.id===id));
   renderNav();
@@ -1696,10 +1734,15 @@ async function ackHandbook(meetingId){
 /* calendar (.ics) export — client generates the file for the user */
 function pad2(n){return String(n).padStart(2,'0')}
 function parseWhen(w){
-  const parts=w.split('\u00b7').map(s=>s.trim());
+  const label=String(w==null?'':w);
+  const parts=label.split('\u00b7').map(s=>s.trim());
   const mo={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
-  const dm=parts[0].split(/\s+/);
-  const tm=parts[1].match(/(\d+):(\d+)\s*(AM|PM)/i);
+  const dm=parts[0]?parts[0].split(/\s+/):[];
+  const tm=parts[1]?parts[1].match(/(\d+):(\d+)\s*(AM|PM)/i):null;
+  /* Fail with the offending label rather than a bare TypeError from
+     dereferencing undefined — callers need to know WHAT was unparseable. */
+  if(parts.length<2 || dm.length<3 || !(dm[1] in mo) || !tm)
+    throw new Error('Unrecognised time label: \u201c'+label+'\u201d');
   let hh=parseInt(tm[1],10); const mm=parseInt(tm[2],10);
   if(/pm/i.test(tm[3])&&hh!==12) hh+=12; if(/am/i.test(tm[3])&&hh===12) hh=0;
   return new Date(2026, mo[dm[1]], parseInt(dm[2],10), hh, mm);
@@ -1714,7 +1757,10 @@ function escIcs(v){
 function addToCalendar(meetingId){
   const m = state.me.meetings.find(x=>x.meetingId===meetingId);
   if(!m||!m.when){ toast('Pick a time first'); return; }
-  const start=parseWhen(m.when), end=new Date(start.getTime()+(m.durationMin||45)*60000);
+  let start;
+  try { start = parseWhen(m.when); }
+  catch(err){ toast('That meeting has no usable time yet'); return; }
+  const end=new Date(start.getTime()+(m.durationMin||45)*60000);
   const ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Artisan Barber//Onboarding//EN','BEGIN:VEVENT',
     'UID:'+meetingId+'-'+start.getTime()+'@artisanbarber','DTSTAMP:'+fmtICS(new Date()),
     'DTSTART:'+fmtICS(start),'DTEND:'+fmtICS(end),
@@ -1761,6 +1807,8 @@ function updateProgress(){
 
 /* ---- employee: home ---- */
 function renderHome(){
+  const w=$('#homeWelcome');
+  if(w && state.content.welcomeMessage) w.textContent=state.content.welcomeMessage;
   const {done,total}=progressCounts();
   const pct= total?Math.round(done/total*100):0;
   $('#ringPct').textContent=pct+'%';
@@ -1780,7 +1828,9 @@ function renderHome(){
       <div class="sub">${next.status==='scheduled' ? esc(next.when)+' · '+esc(next.host) : 'Not scheduled yet · '+esc(next.host)}</div>
     </div>
     <button class="btn small" onclick="openMeeting('${escArg(next.meetingId)}')">${next.status==='scheduled'?'View details':'Pick a time'}</button>`
-    : `<div style="flex:1"><h3>All ${meets.length} meetings complete.</h3><div class="sub">Finish your checklist and confirm training access — then you're fully on the floor.</div></div>`;
+    : (meets.length
+      ? `<div style="flex:1"><h3>All ${meets.length} meetings complete.</h3><div class="sub">Finish your checklist and confirm training access — then you're fully on the floor.</div></div>`
+      : `<div style="flex:1"><h3>No meetings assigned yet.</h3><div class="sub">Your introduction meetings will appear here once the shop schedules them.</div></div>`);
 }
 function findItem(itemId){
   for(const g of state.me.checklist){ const it=g.items.find(x=>x.id===itemId); if(it) return it; }
@@ -1788,6 +1838,15 @@ function findItem(itemId){
 }
 
 /* ---- employee: training ---- */
+/* Derived, not imperative. confirmLogin() used to set the button text directly,
+   so any later re-render silently reverted it. */
+function renderTrainingScreen(){
+  const login = findItem('itm_login');
+  const b = $('#loginBtn');
+  if(b) b.textContent = (login && login.done) ? '\u2713 Login confirmed' : 'Confirm my login works';
+  const link = $('#trainingLink');
+  if(link) link.textContent = state.content.trainingUrl || 'Not set yet';
+}
 async function openTraining(){
   await Store.setChecklistItem(CURRENT_USER, 'itm_open', true);
   await refresh();
@@ -1796,7 +1855,6 @@ async function openTraining(){
 async function confirmLogin(){
   await Store.setChecklistItem(CURRENT_USER, 'itm_login', true);
   await refresh();
-  const b=$('#loginBtn'); if(b) b.textContent='✓ Login confirmed';
   toast('Login confirmed — nice, you\u2019re in');
 }
 
@@ -1859,14 +1917,21 @@ function renderRoster(){
     <tr class="row" tabindex="0" onclick="openEmp('${escArg(e.id)}')" onkeydown="if(event.key==='Enter')openEmp('${escArg(e.id)}')">
       <td><strong>${esc(e.name)}</strong><div class="who-role">${esc(e.dayLabel)}</div></td>
       <td class="hide-m">${esc(e.role)}</td>
-      <td><span class="mini-bar"><i style="width:${Number(e.progress)||0}%"></i></span>${esc(e.progress)}%</td>
+      <td><span class="mini-bar"><i style="width:${Math.max(0,Math.min(100,Number(e.progress)||0))}%"></i></span>${esc(e.progress)}%</td>
       <td class="hide-m">${esc(e.nextStep)}</td>
       <td>${e.trainingAccess?'<span class="chip complete">Confirmed</span>':'<span class="chip">Pending</span>'}</td>
     </tr>`).join('');
   $('#statAccess').textContent = state.employees.filter(e=>!e.trainingAccess).length;
+  /* These two were literals in the markup and never moved. */
+  const onboarding = $('#statOnboarding');
+  if(onboarding) onboarding.textContent = state.employees.filter(e=>e.nextStep!=='Complete').length;
+  const week = $('#statWeek');
+  if(week) week.textContent = state.employees.reduce(
+    (total,e)=>total+(state.employeeMeetings[e.id]||[]).filter(m=>m.status==='scheduled').length, 0);
 }
 async function openEmp(empId){
   const e = await Store.getEmployee(empId);
+  if(!e){ toast('That employee is no longer on the roster'); go('a-overview'); return; }
   const meets = await Store.listEmployeeMeetings(empId, true);   // include all (so admin can assign role-only steps)
   const rows = meets.map(m=>{
     let btns='';
@@ -1911,9 +1976,13 @@ async function openEmp(empId){
 async function adminComplete(empId, meetingId){ await Store.completeEmployeeMeeting(empId, meetingId); toast('Marked complete'); await refresh(); openEmp(empId); }
 async function adminAssignTime(empId, meetingId){
   const slots = state.slots[meetingId] || [];
-  const when = slots.length ? slots[0].when : 'Time TBD';
+  /* Booking the literal string 'Time TBD' used to produce a slot the employee
+     could see but never add to a calendar — parseWhen() throws on it. Refuse
+     instead of writing a booking nobody can act on. */
+  if(!slots.length){ toast('Add a time for this meeting first, under Meeting times'); return; }
+  const when = slots[0].when;
   await Store.scheduleEmployeeMeeting(empId, meetingId, when);
-  toast(slots.length ? `Time assigned — ${when}` : 'Marked as scheduled');
+  toast(`Time assigned — ${when}`);
   await refresh(); openEmp(empId);
 }
 async function assignProgram(empId){ await Store.assignProgram(empId); toast('Assistant Stylist introduction assigned'); await refresh(); openEmp(empId); }
@@ -1931,7 +2000,11 @@ const SLOT_POOL=['Thu Jul 16 · 4:30 PM','Fri Jul 17 · 11:30 AM','Mon Jul 20 ·
 function renderSlots(){
   $('#slotCards').innerHTML = state.meetings.map(m=>{
     const slots = state.slots[m.id] || [];
-    const hostOpts = ['Charlie · Owner','Bobby · Manager','Juan · Senior Stylist','Kris · Barber']
+    const builtIn = ['Charlie · Owner','Bobby · Manager','Juan · Senior Stylist','Kris · Barber'];
+    /* Include whoever is actually stored, so the control cannot fall back to the
+       first option and misreport who hosts the meeting. */
+    const hostChoices = builtIn.indexOf(m.defaultHost) >= 0 || !m.defaultHost ? builtIn : builtIn.concat([m.defaultHost]);
+    const hostOpts = hostChoices
       .map(h=>`<option ${m.defaultHost===h?'selected':''}>${esc(h)}</option>`).join('');
     return `<div class="card">
       <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
@@ -1978,7 +2051,10 @@ function renderAdminTeam(){
 function initialsOf(name){
   const p=(name||'').trim().split(/\s+/).filter(Boolean);
   if(!p.length) return '?';
-  return (p.length>1 ? p[0][0]+p[1][0] : p[0].slice(0,2)).toUpperCase();
+  /* Array.from splits by code point, so an emoji or any astral character is not
+     cut in half the way string indexing cuts it. */
+  const glyphs = w => Array.from(w);
+  return (p.length>1 ? glyphs(p[0])[0]+glyphs(p[1])[0] : glyphs(p[0]).slice(0,2).join('')).toUpperCase();
 }
 function openAddMember(){
   editId=null;
