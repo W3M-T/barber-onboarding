@@ -966,6 +966,26 @@ const state = { content: {}, team: [], meetings: [], slots: {}, employees: [], m
 let mode = 'employee', current = 's-home', rescheduleId = null, editId = null, uploadTargetId = null;
 
 const $ = s => document.querySelector(s);
+
+/* ---- output encoding ----
+   Every render function below builds markup with template strings, so anything
+   that came from a person (a name, a bio, a note, a slot label) has to be
+   encoded on the way out. Three contexts, three helpers — using the wrong one
+   is the whole bug class.
+     esc()     text nodes and double-quoted attribute values
+     escArg()  a value inside a single-quoted JS string inside an attribute,
+               e.g. onclick="openMember('…')" — JS-escape first, then HTML-escape,
+               because the browser decodes the attribute before JS ever parses it
+     safeUrl() anything landing in src/href, so a javascript: payload can't run */
+const esc = v => String(v == null ? '' : v)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+  .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+const escArg = v => esc(String(v == null ? '' : v).replace(/\\/g,'\\\\').replace(/'/g,"\\'"));
+function safeUrl(u){
+  const s = String(u == null ? '' : u).trim();
+  return /^(https?:\/\/|data:image\/|\/|\.\/|[^:]*$)/i.test(s) ? esc(s) : '';
+}
+
 function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._x); t._x=setTimeout(()=>t.classList.remove('show'),2400); }
 function statusChip(s){
   if(s==='complete')return '<span class="chip complete">Complete</span>';
@@ -997,8 +1017,8 @@ const NAV = {
 };
 function renderNav(){
   $('#nav').innerHTML = NAV[mode].map(n=> n.header
-    ? `<div class="nav-label">${n.label}</div>`
-    : `<button class="navbtn ${n.id===current?'active':''}" onclick="go('${n.id}')">${n.label}</button>`).join('');
+    ? `<div class="nav-label">${esc(n.label)}</div>`
+    : `<button class="navbtn ${n.id===current?'active':''}" onclick="go('${escArg(n.id)}')">${esc(n.label)}</button>`).join('');
 }
 function go(id){
   current=id;
@@ -1025,12 +1045,12 @@ function setMode(m){
 /* ---- employee: meetings ---- */
 function renderRail(){
   $('#rail').innerHTML = state.me.meetings.slice().sort((a,b)=>a.step-b.step).map(m=>`
-    <div class="step ${m.status}">
-      <div class="numeral">${m.roman}</div>
-      <div class="step-card" role="button" tabindex="0" onclick="openMeeting('${m.meetingId}')" onkeydown="if(event.key==='Enter')openMeeting('${m.meetingId}')">
+    <div class="step ${esc(m.status)}">
+      <div class="numeral">${esc(m.roman)}</div>
+      <div class="step-card" role="button" tabindex="0" onclick="openMeeting('${escArg(m.meetingId)}')" onkeydown="if(event.key==='Enter')openMeeting('${escArg(m.meetingId)}')">
         <div>
-          <h3>${m.title}${m.roleOnly?' <span class="chip role" style="margin-left:6px">Your role</span>':''}</h3>
-          <div class="meta">${m.host}${m.when?` · ${m.when}`:''}</div>
+          <h3>${esc(m.title)}${m.roleOnly?' <span class="chip role" style="margin-left:6px">Your role</span>':''}</h3>
+          <div class="meta">${esc(m.host)}${m.when?` · ${esc(m.when)}`:''}</div>
         </div>
         <div class="step-right">${statusChip(m.status)}<span class="arrow">→</span></div>
       </div>
@@ -1043,18 +1063,18 @@ function openMeeting(meetingId){
   const picking = m.status==='pending' || rescheduleId===meetingId;
   let action='';
   if(picking){
-    action = `<hr class="hr"><h3>${rescheduleId===meetingId?'Choose a new time':'Pick a time'}</h3><p class="sub">Hosted by ${m.host} · about ${m.durationMin} min.</p>
-      <div class="slots">${slots.map(s=>`<button class="slot" onclick="schedule('${meetingId}','${s.when}')">${s.when}</button>`).join('') || '<span class="sub">No times available yet — check back soon.</span>'}</div>
-      ${rescheduleId===meetingId?`<div style="margin-top:10px"><button class="btn ghost small" onclick="cancelReschedule('${meetingId}')">Keep ${m.when}</button></div>`:''}`;
+    action = `<hr class="hr"><h3>${rescheduleId===meetingId?'Choose a new time':'Pick a time'}</h3><p class="sub">Hosted by ${esc(m.host)} · about ${esc(m.durationMin)} min.</p>
+      <div class="slots">${slots.map(s=>`<button class="slot" onclick="schedule('${escArg(meetingId)}','${escArg(s.when)}')">${esc(s.when)}</button>`).join('') || '<span class="sub">No times available yet — check back soon.</span>'}</div>
+      ${rescheduleId===meetingId?`<div style="margin-top:10px"><button class="btn ghost small" onclick="cancelReschedule('${escArg(meetingId)}')">Keep ${esc(m.when)}</button></div>`:''}`;
   } else if(m.status==='scheduled'){
-    action = `<hr class="hr"><h3>You're booked</h3><p class="sub">${m.when} with ${m.host} · about ${m.durationMin} min.</p>
+    action = `<hr class="hr"><h3>You're booked</h3><p class="sub">${esc(m.when)} with ${esc(m.host)} · about ${esc(m.durationMin)} min.</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
-        <button class="btn small" onclick="addToCalendar('${meetingId}')">Add to calendar ↓</button>
-        <button class="btn ghost small" onclick="reschedule('${meetingId}')">Reschedule</button>
+        <button class="btn small" onclick="addToCalendar('${escArg(meetingId)}')">Add to calendar ↓</button>
+        <button class="btn ghost small" onclick="reschedule('${escArg(meetingId)}')">Reschedule</button>
       </div>`;
   } else {
-    action = `<hr class="hr"><h3>Done and noted</h3><p class="sub">Completed ${m.when||''}. Completion is recorded on your checklist.</p>
-      <div style="margin-top:12px"><button class="btn ghost small" onclick="addToCalendar('${meetingId}')">Add to calendar ↓</button></div>`;
+    action = `<hr class="hr"><h3>Done and noted</h3><p class="sub">Completed ${esc(m.when||'')}. Completion is recorded on your checklist.</p>
+      <div style="margin-top:12px"><button class="btn ghost small" onclick="addToCalendar('${escArg(meetingId)}')">Add to calendar ↓</button></div>`;
   }
   let ack='';
   if(m.requiresAck){
@@ -1063,29 +1083,29 @@ function openMeeting(meetingId){
       <p class="sub">Confirm you've reviewed the employee handbook.</p>
       <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
         <button class="btn ghost small" onclick="toast('Handbook opens in a new tab in the full build')">Open the handbook ↗</button>
-        <button class="btn small" id="ackBtn" onclick="ackHandbook('${meetingId}')" ${done?'disabled style="opacity:.55;cursor:default"':''}>${done?'✓ Acknowledged':'Acknowledge handbook'}</button>
+        <button class="btn small" id="ackBtn" onclick="ackHandbook('${escArg(meetingId)}')" ${done?'disabled style="opacity:.55;cursor:default"':''}>${done?'✓ Acknowledged':'Acknowledge handbook'}</button>
       </div>`;
   }
   const prep = m.prep ? `<hr class="hr"><h3>Prepare for this meeting</h3>
-      <ul class="topic-list">${m.prep.map(p=>`<li>${p}</li>`).join('')}</ul>` : '';
+      <ul class="topic-list">${m.prep.map(p=>`<li>${esc(p)}</li>`).join('')}</ul>` : '';
   $('#s-meeting').innerHTML = `
     <button class="back" onclick="go('s-meetings')">← All meetings</button>
     <div class="detail-head">
-      <div class="numeral" style="width:56px;height:56px;font-size:20px">${m.roman}</div>
+      <div class="numeral" style="width:56px;height:56px;font-size:20px">${esc(m.roman)}</div>
       <div>
-        <div class="eyebrow" style="margin-bottom:4px">Step ${m.roman} of IV · about ${m.durationMin} min</div>
-        <h1 class="display" style="font-size:clamp(22px,3.4vw,30px)">${m.title}</h1>
+        <div class="eyebrow" style="margin-bottom:4px">Step ${esc(m.roman)} of IV · about ${esc(m.durationMin)} min</div>
+        <h1 class="display" style="font-size:clamp(22px,3.4vw,30px)">${esc(m.title)}</h1>
       </div>
       <div style="margin-left:auto">${statusChip(m.status)}</div>
     </div>
     <div class="card">
-      <h3>Purpose</h3><p class="sub">${m.purpose}</p>
+      <h3>Purpose</h3><p class="sub">${esc(m.purpose)}</p>
       <hr class="hr">
-      <h3>${m.topicsLabel}</h3>
-      <ul class="topic-list">${m.topics.map(t=>`<li>${t}</li>`).join('')}</ul>
+      <h3>${esc(m.topicsLabel)}</h3>
+      <ul class="topic-list">${m.topics.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>
       ${prep}${ack}${action}
     </div>
-    ${m.boundary?`<div class="note"><strong>Scope:</strong> ${m.boundary}</div>`:''}`;
+    ${m.boundary?`<div class="note"><strong>Scope:</strong> ${esc(m.boundary)}</div>`:''}`;
   go('s-meeting');
 }
 async function schedule(meetingId, when){
@@ -1113,6 +1133,12 @@ function parseWhen(w){
   return new Date(2026, mo[dm[1]], parseInt(dm[2],10), hh, mm);
 }
 function fmtICS(d){return ''+d.getFullYear()+pad2(d.getMonth()+1)+pad2(d.getDate())+'T'+pad2(d.getHours())+pad2(d.getMinutes())+'00'}
+/* RFC 5545 TEXT values escape backslash, semicolon, comma and newlines.
+   A meeting title with a comma in it would otherwise split the property. */
+function escIcs(v){
+  return String(v == null ? '' : v)
+    .replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n');
+}
 function addToCalendar(meetingId){
   const m = state.me.meetings.find(x=>x.meetingId===meetingId);
   if(!m||!m.when){ toast('Pick a time first'); return; }
@@ -1120,8 +1146,8 @@ function addToCalendar(meetingId){
   const ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Artisan Barber//Onboarding//EN','BEGIN:VEVENT',
     'UID:'+meetingId+'-'+start.getTime()+'@artisanbarber','DTSTAMP:'+fmtICS(new Date()),
     'DTSTART:'+fmtICS(start),'DTEND:'+fmtICS(end),
-    'SUMMARY:Artisan Onboarding \u2014 '+m.title,'DESCRIPTION:Hosted by '+m.host,
-    'LOCATION:Artisan Barber\\, 331 E 81st St','END:VEVENT','END:VCALENDAR'].join('\r\n');
+    'SUMMARY:Artisan Onboarding \u2014 '+escIcs(m.title),'DESCRIPTION:Hosted by '+escIcs(m.host),
+    'LOCATION:'+escIcs('Artisan Barber, 331 E 81st St'),'END:VEVENT','END:VCALENDAR'].join('\r\n');
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([ics],{type:'text/calendar'}));
   a.download='artisan-'+meetingId+'.ics'; document.body.appendChild(a); a.click();
@@ -1132,16 +1158,16 @@ function addToCalendar(meetingId){
 function renderChecklist(){
   $('#checkGroups').innerHTML = state.me.checklist.map(g=>`
     <div class="check-group">
-      <h2>${g.title}</h2><div class="gsub">${g.subtitle}</div>
+      <h2>${esc(g.title)}</h2><div class="gsub">${esc(g.subtitle)}</div>
       ${g.items.map(it=>{
         if(it.locked){
           return `<div class="check-item ${it.done?'done':''}">
-            <input type="checkbox" ${it.done?'checked':''} disabled aria-label="${it.label}">
-            <label>${it.label}</label><span class="auto">${statusChip(it.status)}</span></div>`;
+            <input type="checkbox" ${it.done?'checked':''} disabled aria-label="${esc(it.label)}">
+            <label>${esc(it.label)}</label><span class="auto">${statusChip(it.status)}</span></div>`;
         }
         return `<div class="check-item ${it.done?'done':''}">
-          <input type="checkbox" id="ck_${it.id}" ${it.done?'checked':''} onchange="tick('${it.id}',this.checked)">
-          <label for="ck_${it.id}">${it.label}</label></div>`;
+          <input type="checkbox" id="ck_${esc(it.id)}" ${it.done?'checked':''} onchange="tick('${escArg(it.id)}',this.checked)">
+          <label for="ck_${esc(it.id)}">${esc(it.label)}</label></div>`;
       }).join('')}
     </div>`).join('');
   updateProgress();
@@ -1175,13 +1201,13 @@ function renderHome(){
   $('#statTrain').textContent = (login&&login.done) ? 'Confirmed' : 'Not yet';
   const next = meets.slice().sort((a,b)=>a.step-b.step).find(m=>m.status!=='complete');
   $('#upNext').innerHTML = next ? `
-    <div class="numeral">${next.roman}</div>
+    <div class="numeral">${esc(next.roman)}</div>
     <div style="flex:1;min-width:180px">
       <div class="eyebrow" style="margin-bottom:2px">Up next</div>
-      <h3>${next.title}</h3>
-      <div class="sub">${next.status==='scheduled' ? next.when+' · '+next.host : 'Not scheduled yet · '+next.host}</div>
+      <h3>${esc(next.title)}</h3>
+      <div class="sub">${next.status==='scheduled' ? esc(next.when)+' · '+esc(next.host) : 'Not scheduled yet · '+esc(next.host)}</div>
     </div>
-    <button class="btn small" onclick="openMeeting('${next.meetingId}')">${next.status==='scheduled'?'View details':'Pick a time'}</button>`
+    <button class="btn small" onclick="openMeeting('${escArg(next.meetingId)}')">${next.status==='scheduled'?'View details':'Pick a time'}</button>`
     : `<div style="flex:1"><h3>All ${meets.length} meetings complete.</h3><div class="sub">Finish your checklist and confirm training access — then you're fully on the floor.</div></div>`;
 }
 function findItem(itemId){
@@ -1205,15 +1231,15 @@ async function confirmLogin(){
 /* ---- employee: team ---- */
 function renderTeam(){
   $('#teamGrid').innerHTML = state.team.map(t=>`
-    <div class="member" role="button" tabindex="0" onclick="openMember('${t.id}')" onkeydown="if(event.key==='Enter')openMember('${t.id}')">
+    <div class="member" role="button" tabindex="0" onclick="openMember('${escArg(t.id)}')" onkeydown="if(event.key==='Enter')openMember('${escArg(t.id)}')">
       <div class="photo">
-        ${t.photoUrl?`<img src="${t.photoUrl}" alt="${t.name}">`:`<span class="mono">${t.initials}</span><span class="tag-cam">Headshot</span>`}
+        ${t.photoUrl?`<img src="${safeUrl(t.photoUrl)}" alt="${esc(t.name)}">`:`<span class="mono">${esc(t.initials)}</span><span class="tag-cam">Headshot</span>`}
       </div>
       <div class="body">
-        <h3>${t.name}</h3>
-        <div class="mrole">${t.role}</div>
-        <p>${t.bio}</p>
-        <div class="tags">${t.specialties.map(x=>`<span class="chip">${x}</span>`).join('')}</div>
+        <h3>${esc(t.name)}</h3>
+        <div class="mrole">${esc(t.role)}</div>
+        <p>${esc(t.bio)}</p>
+        <div class="tags">${t.specialties.map(x=>`<span class="chip">${esc(x)}</span>`).join('')}</div>
         <div class="more">View profile →</div>
       </div>
     </div>`).join('');
@@ -1227,24 +1253,24 @@ function openMember(id){
   const hostBlock = hosts.length ? `
     <hr class="hr">
     <h3>In your onboarding</h3>
-    <p class="sub">${first} hosts ${hosts.length>1?'these meetings':'this meeting'}:</p>
-    <div class="md-hosts">${hosts.map(m=>`<button class="btn ghost small" onclick="openMember_toMeeting('${m.id}')">Step ${m.roman} · ${m.title} →</button>`).join('')}</div>` : '';
+    <p class="sub">${esc(first)} hosts ${hosts.length>1?'these meetings':'this meeting'}:</p>
+    <div class="md-hosts">${hosts.map(m=>`<button class="btn ghost small" onclick="openMember_toMeeting('${escArg(m.id)}')">Step ${esc(m.roman)} · ${esc(m.title)} →</button>`).join('')}</div>` : '';
   $('#s-member').innerHTML = `
     <button class="back" onclick="go('s-team')">← Meet the shop</button>
     <div class="member-detail">
-      <div class="md-photo">${t.photoUrl?`<img src="${t.photoUrl}" alt="${t.name}">`:`<span class="mono">${t.initials}</span>`}</div>
+      <div class="md-photo">${t.photoUrl?`<img src="${safeUrl(t.photoUrl)}" alt="${esc(t.name)}">`:`<span class="mono">${esc(t.initials)}</span>`}</div>
       <div class="md-body">
         <div class="eyebrow" style="margin-bottom:6px">Artisan Barber</div>
-        <h1 class="display">${t.name}</h1>
-        <div class="mrole">${t.role}${t.experience?` · ${t.experience}`:''}</div>
-        <p>${t.bio}</p>
-        <div class="tags">${t.specialties.map(x=>`<span class="chip">${x}</span>`).join('')}</div>
+        <h1 class="display">${esc(t.name)}</h1>
+        <div class="mrole">${esc(t.role)}${t.experience?` · ${esc(t.experience)}`:''}</div>
+        <p>${esc(t.bio)}</p>
+        <div class="tags">${t.specialties.map(x=>`<span class="chip">${esc(x)}</span>`).join('')}</div>
       </div>
     </div>
     <div class="card" style="margin-top:20px">
       <h3>Specialties</h3>
-      <p class="sub">What ${first} is known for on the floor.</p>
-      <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:10px">${t.specialties.map(x=>`<span class="chip role">${x}</span>`).join('')}</div>
+      <p class="sub">What ${esc(first)} is known for on the floor.</p>
+      <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:10px">${t.specialties.map(x=>`<span class="chip role">${esc(x)}</span>`).join('')}</div>
       ${hostBlock}
     </div>`;
   go('s-member');
@@ -1258,11 +1284,11 @@ function openMember_toMeeting(meetingId){
 /* ---- admin: roster ---- */
 function renderRoster(){
   $('#rosterBody').innerHTML = state.employees.map(e=>`
-    <tr class="row" tabindex="0" onclick="openEmp('${e.id}')" onkeydown="if(event.key==='Enter')openEmp('${e.id}')">
-      <td><strong>${e.name}</strong><div class="who-role">${e.dayLabel}</div></td>
-      <td class="hide-m">${e.role}</td>
-      <td><span class="mini-bar"><i style="width:${e.progress}%"></i></span>${e.progress}%</td>
-      <td class="hide-m">${e.nextStep}</td>
+    <tr class="row" tabindex="0" onclick="openEmp('${escArg(e.id)}')" onkeydown="if(event.key==='Enter')openEmp('${escArg(e.id)}')">
+      <td><strong>${esc(e.name)}</strong><div class="who-role">${esc(e.dayLabel)}</div></td>
+      <td class="hide-m">${esc(e.role)}</td>
+      <td><span class="mini-bar"><i style="width:${Number(e.progress)||0}%"></i></span>${esc(e.progress)}%</td>
+      <td class="hide-m">${esc(e.nextStep)}</td>
       <td>${e.trainingAccess?'<span class="chip complete">Confirmed</span>':'<span class="chip">Pending</span>'}</td>
     </tr>`).join('');
   $('#statAccess').textContent = state.employees.filter(e=>!e.trainingAccess).length;
@@ -1273,23 +1299,23 @@ async function openEmp(empId){
   const rows = meets.map(m=>{
     let btns='';
     if(!m.applicable && m.roleOnly && !m.hasInstance){
-      btns = `<button class="btn ghost small" onclick="assignProgram('${empId}')">Assign to this role</button>`;
+      btns = `<button class="btn ghost small" onclick="assignProgram('${escArg(empId)}')">Assign to this role</button>`;
     } else if(m.status!=='complete'){
-      btns = `<button class="btn small" onclick="adminComplete('${empId}','${m.meetingId}')">Mark complete</button>`;
-      if(m.status==='pending' || m.status==='na') btns = `<button class="btn ghost small" onclick="adminAssignTime('${empId}','${m.meetingId}')">Assign time</button> ` + btns;
+      btns = `<button class="btn small" onclick="adminComplete('${escArg(empId)}','${escArg(m.meetingId)}')">Mark complete</button>`;
+      if(m.status==='pending' || m.status==='na') btns = `<button class="btn ghost small" onclick="adminAssignTime('${escArg(empId)}','${escArg(m.meetingId)}')">Assign time</button> ` + btns;
     }
     return `<div class="emp-meet">
-      <div class="nm"><div class="numeral">${m.roman}</div><div><strong style="font-size:14px">${m.shortTitle}</strong><div class="who-role">${m.roleOnly?'Role-based step':'Required for all'}</div></div></div>
+      <div class="nm"><div class="numeral">${esc(m.roman)}</div><div><strong style="font-size:14px">${esc(m.shortTitle)}</strong><div class="who-role">${m.roleOnly?'Role-based step':'Required for all'}</div></div></div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${statusChip(m.status)}${btns}</div>
     </div>`;
   }).join('');
   $('#a-employee').innerHTML = `
     <button class="back" onclick="go('a-overview')">← All employees</button>
     <div class="detail-head">
-      <div class="avatar" style="width:52px;height:52px;font-size:19px">${e.initials}</div>
+      <div class="avatar" style="width:52px;height:52px;font-size:19px">${esc(e.initials)}</div>
       <div>
-        <h1 class="display" style="font-size:clamp(22px,3.4vw,30px)">${e.name}</h1>
-        <div class="sub">${e.role} · ${e.dayLabel} · ${e.progress}% onboarded</div>
+        <h1 class="display" style="font-size:clamp(22px,3.4vw,30px)">${esc(e.name)}</h1>
+        <div class="sub">${esc(e.role)} · ${esc(e.dayLabel)} · ${esc(e.progress)}% onboarded</div>
       </div>
     </div>
     <div class="card"><h3>Meeting journey</h3>${rows}</div>
@@ -1297,16 +1323,16 @@ async function openEmp(empId){
       <h3>Training-platform access</h3>
       <p class="sub">Confirm access was issued and the employee got into the training site.</p>
       <div style="display:flex;gap:20px;margin-top:14px;flex-wrap:wrap">
-        <span class="switch ${e.trainingAccess?'on':''}" role="switch" aria-checked="${e.trainingAccess}" tabindex="0"
-          onclick="toggleAccess('${empId}')" onkeydown="if(event.key==='Enter')toggleAccess('${empId}')">
+        <span class="switch ${e.trainingAccess?'on':''}" role="switch" aria-checked="${e.trainingAccess?'true':'false'}" tabindex="0"
+          onclick="toggleAccess('${escArg(empId)}')" onkeydown="if(event.key==='Enter')toggleAccess('${escArg(empId)}')">
           <span class="track"></span> Access confirmed</span>
       </div>
     </div>
     <div class="card">
       <h3>Internal notes</h3>
       <p class="sub">Visible to admins only.</p>
-      <textarea class="notes" id="noteBox" style="margin-top:10px" placeholder="Add a note about ${e.name.split(' ')[0]}\u2026">${e.adminNotes||''}</textarea>
-      <div style="margin-top:10px"><button class="btn small" onclick="saveNote('${empId}')">Save note</button></div>
+      <textarea class="notes" id="noteBox" style="margin-top:10px" placeholder="Add a note about ${esc(String(e.name||'').split(' ')[0])}\u2026">${esc(e.adminNotes||'')}</textarea>
+      <div style="margin-top:10px"><button class="btn small" onclick="saveNote('${escArg(empId)}')">Save note</button></div>
     </div>`;
   go('a-employee');
 }
@@ -1334,23 +1360,23 @@ function renderSlots(){
   $('#slotCards').innerHTML = state.meetings.map(m=>{
     const slots = state.slots[m.id] || [];
     const hostOpts = ['Charlie · Owner','Bobby · Manager','Juan · Senior Stylist','Kris · Barber']
-      .map(h=>`<option ${m.defaultHost===h?'selected':''}>${h}</option>`).join('');
+      .map(h=>`<option ${m.defaultHost===h?'selected':''}>${esc(h)}</option>`).join('');
     return `<div class="card">
       <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
         <div class="nm" style="display:flex;gap:12px;align-items:center">
-          <div class="numeral" style="width:38px;height:38px;font-size:14px">${m.roman}</div>
-          <div><h3>${m.title}</h3><div class="sub">${m.roleOnly?'Assigned to relevant roles only':'Required for all new hires'}</div></div>
+          <div class="numeral" style="width:38px;height:38px;font-size:14px">${esc(m.roman)}</div>
+          <div><h3>${esc(m.title)}</h3><div class="sub">${m.roleOnly?'Assigned to relevant roles only':'Required for all new hires'}</div></div>
         </div>
         <div style="min-width:180px">
-          <label class="field-label" style="margin-top:0" for="host_${m.id}">Host</label>
-          <select class="field" id="host_${m.id}" onchange="setMeetingHost('${m.id}',this.value)">${hostOpts}</select>
+          <label class="field-label" style="margin-top:0" for="host_${esc(m.id)}">Host</label>
+          <select class="field" id="host_${esc(m.id)}" onchange="setMeetingHost('${escArg(m.id)}',this.value)">${hostOpts}</select>
         </div>
       </div>
       <label class="field-label">Available times</label>
       <div class="slots" style="margin-top:4px">
-        ${slots.map(s=>`<span class="slot" style="cursor:default">${s.when}</span>`).join('') || '<span class="sub">No times yet.</span>'}
+        ${slots.map(s=>`<span class="slot" style="cursor:default">${esc(s.when)}</span>`).join('') || '<span class="sub">No times yet.</span>'}
       </div>
-      <div style="margin-top:12px"><button class="btn ghost small" onclick="addSlot('${m.id}')">+ Add a time</button></div>
+      <div style="margin-top:12px"><button class="btn ghost small" onclick="addSlot('${escArg(m.id)}')">+ Add a time</button></div>
     </div>`;
   }).join('');
 }
@@ -1368,12 +1394,12 @@ async function setMeetingHost(meetingId, host){ await Store.updateMeeting(meetin
 function renderAdminTeam(){
   $('#teamAdmin').innerHTML = state.team.map(t=>`
     <div class="tm-row">
-      <div class="tm-thumb">${t.photoUrl?`<img src="${t.photoUrl}" alt="${t.name}">`:`<span class="mono">${t.initials}</span>`}</div>
-      <div class="tm-info"><strong>${t.name}</strong><div class="who-role">${t.role}${t.experience?' · '+t.experience:''} · ${t.photoUrl?'Photo set':'No photo yet'}</div></div>
+      <div class="tm-thumb">${t.photoUrl?`<img src="${safeUrl(t.photoUrl)}" alt="${esc(t.name)}">`:`<span class="mono">${esc(t.initials)}</span>`}</div>
+      <div class="tm-info"><strong>${esc(t.name)}</strong><div class="who-role">${esc(t.role)}${t.experience?' · '+esc(t.experience):''} · ${t.photoUrl?'Photo set':'No photo yet'}</div></div>
       <div class="tm-actions">
-        <button class="btn small" onclick="pickHeadshot('${t.id}')">${t.photoUrl?'Replace photo':'Upload headshot'}</button>
-        <button class="btn ghost small" onclick="openEditMember('${t.id}')">Edit</button>
-        <button class="btn ghost small" onclick="removeMember('${t.id}')">Remove</button>
+        <button class="btn small" onclick="pickHeadshot('${escArg(t.id)}')">${t.photoUrl?'Replace photo':'Upload headshot'}</button>
+        <button class="btn ghost small" onclick="openEditMember('${escArg(t.id)}')">Edit</button>
+        <button class="btn ghost small" onclick="removeMember('${escArg(t.id)}')">Remove</button>
       </div>
     </div>`).join('');
 }
@@ -1397,7 +1423,7 @@ function openEditMember(id){
   $('#mfName').value=t.name; $('#mfRole').value=t.role; $('#mfSince').value=t.experience||'';
   $('#mfTags').value=(t.specialties||[]).join(', '); $('#mfBio').value=t.bio||'';
   const pr=$('#mfPhotoRow');
-  if(t.photoUrl){ pr.style.display='block'; pr.innerHTML=`<button class="btn ghost small" onclick="removeHeadshot('${id}')">Remove current photo</button>`; }
+  if(t.photoUrl){ pr.style.display='block'; pr.innerHTML=`<button class="btn ghost small" onclick="removeHeadshot('${escArg(id)}')">Remove current photo</button>`; }
   else { pr.style.display='none'; pr.innerHTML=''; }
   $('#memberForm').style.display='block';
   $('#memberForm').scrollIntoView({behavior:'smooth',block:'center'}); $('#mfName').focus();
@@ -1438,7 +1464,7 @@ function onHeadshot(e){
     toast((t?t.name.split(' ')[0]:'Photo')+'\u2019s headshot updated');
     await refresh();
     if(editId===id){ const pr=$('#mfPhotoRow'); pr.style.display='block';
-      pr.innerHTML=`<button class="btn ghost small" onclick="removeHeadshot('${id}')">Remove current photo</button>`; }
+      pr.innerHTML=`<button class="btn ghost small" onclick="removeHeadshot('${escArg(id)}')">Remove current photo</button>`; }
   };
   reader.onerror=()=>{ toast('That image couldn\u2019t be read'); uploadTargetId=null; };
   reader.readAsDataURL(file);
