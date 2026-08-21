@@ -20,16 +20,18 @@ The tempting simplification is "a bounty is just a duty without an hour." It bre
 | --- | --- | --- |
 | Identified by | *(role, weekday, hour)* | *(bounty, period)* |
 | Lifetime | Recurs forever, unchanged | One instance per period, then a new one |
-| Completion | **None. The hour passes.** | Claimed → done, or missed |
+| Completion | Ticked per person **per day**, then the day resets | Claimed → done, or missed |
+| Retention | A rolling 14 days | Forever — the miss is the record |
 | Assigned to | A role | Claimed by one person at a time |
 
-A duty has no completion state because the hour *is* the state: at 3pm you are doing the 3pm
-things, and at 4pm that question is moot. A bounty has completion state because "did the
-quarterly deep-clean happen" is a question someone genuinely needs answered in November.
+Both are tickable, but they are ticked against different things and kept for different lengths of
+time. A duty's tick answers *"what is still outstanding on this shift"* and is worthless a
+fortnight later. A bounty's outcome answers *"did the quarterly deep-clean happen"* and is the
+whole point in November.
 
 Collapsing them forces one of two bad outcomes: bounties lose their instancing and you cannot
-tell a done bounty from a never-done one, or duties gain per-hour rows and the feature becomes a
-time clock (§4).
+tell a done bounty from a never-done one, or duties inherit permanent per-period history and the
+feature becomes an attendance record.
 
 ---
 
@@ -39,7 +41,9 @@ time clock (§4).
 | --- | --- | --- |
 | `duty_schedules` | `sch_` | One per role. Owns the standing duties and the day rules. |
 | `duty_standing` | `std_` | A duty true for the whole shift. Child of the schedule. |
-| `duty_blocks` | `blk_` | An hour-specific duty. Carries `hour` and `dayKey`. |
+| `duty_blocks` | `blk_` | One hour of a day. Carries `hour` and `dayKey`. |
+| `duty_items` | `dut_` | One duty line inside a block. A row, because it is tickable — see §4. |
+| `duty_checks` | — | `(employee, local date, duty item)`. The daily checklist. Rolling 14 days. |
 | `bounties` | `bty_` | A bounty definition: what, how long, how often, who may take it. |
 | `bounty_instances` | `bi_` | One per bounty per period. Holds the claim and the outcome. |
 
@@ -76,26 +80,63 @@ every block.
 
 ---
 
-## 4. The hourly box does not track completion
+## 4. The hourly box is also a daily checklist
 
-**Decision: reference only. No per-hour, per-person rows. There is no `duty_state` table.**
+**Decision: each duty is tickable, per person, per day. Reference *and* checklist.**
 
-The stated goal was *"so they always know what to do every hour"* — that is about knowing, not
-about proving. Adding a checkbox per hour changes what the feature is:
+### The reversal, recorded
 
-- It produces a per-employee minute-by-minute activity record, retained indefinitely and
-  discoverable, which is a different product with different obligations.
-- It creates a question with no good answer: **what does an unchecked 2pm mean at 6pm?** Not
-  done? Done but not clicked? Covered by someone else? Slow afternoon, nothing to do? Every
-  reading is wrong some of the time, and an admin looking at a wall of unchecked boxes learns
-  nothing except that people stop clicking after week two.
+This was first built reference-only. The argument was that *"so they always know what to do every
+hour"* is about knowing rather than proving, and that per-hour completion buys a per-employee
+activity record plus a question with no good answer: **what does an unchecked 2pm mean at 6pm?**
+Not done? Done but not clicked? Covered by someone else? Slow afternoon?
 
-This is the same call, for the same reasons, as the Resources decision not to keep per-employee
-read receipts (`RESOURCES-SCOPE.md` §7). Bounties carry the completion state, because a bounty
-is discrete, finite, and genuinely needs an answer.
+The owner overrode that, and the word used was *"also"* — the box keeps saying what the hour is
+**for**, and gains ticking on top. That is their call to make, and it is a defensible one: an
+opening and closing routine that nobody can confirm is a routine that quietly stops happening.
 
-Adding tracking later is a new table and a write path. Removing it later means deleting a
-history someone has started relying on. Cheap in one direction only.
+What follows is not a retreat from the original concern. It is the set of design choices that
+answer it, so the feature does the useful thing without becoming the harmful one.
+
+### What makes it a checklist and not a log
+
+**Every day starts clean.** Ticks are keyed `(employee, local date, duty item)`. There is no
+carry-over, no streak, no "you missed Tuesday". The unit of the thing is one shift.
+
+**The date is the *local* date.** A shift ending at 6pm in New York is already tomorrow in UTC;
+keying on UTC would clear the closing checklist halfway through the close.
+
+**A rolling 14-day retention window**, enforced on read (`DUTY_CHECK_DAYS`). The two questions
+this data can honestly answer are *"what is still outstanding right now"* and *"did the opening
+actually get done today"*, asked by the person closing. Neither needs last March. Keeping it
+forever converts a working tool into a permanent performance record that nobody asked for and
+everybody would eventually be judged by — and that is the version of this feature the original
+objection was really about.
+
+**Admin sees a count, never a name.** `GET /floor/coverage` aggregates across everyone holding
+the role: *9 of 14 ticked, the 6pm close is 0 of 5*. The shop's real question is "did the close
+get done". Answering it by person turns a checklist into a scoreboard, and a scoreboard gets
+gamed — people tick first and work second. **This is the load-bearing one**; if a later change
+adds a per-person admin view, it has undone the mitigation, not extended the feature.
+
+**Nothing becomes "missed".** An unticked duty at midnight simply stops existing as a question.
+Manufacturing a `missed` state for duties would recreate the exact problem — a permanent record
+of a box someone did not click — and is precisely the difference between a duty and a bounty.
+
+**Ticks are for you, and you can untick.** Unticking is a real undo of the same row, not a second
+row and not an audit entry.
+
+### Why duties became rows
+
+`duty_blocks.duties` was a JSON string array. Once something references an individual duty, an
+index into that array is not an identity: reorder or delete a line and yesterday's tick lands on
+a different duty. So `duty_items` is a table with real ids, and the checks carry a foreign key.
+
+Editing reconciles **by text**: reordering the lines keeps the ticks attached, and rewording a
+line produces a new duty with a clean tick — because an edited duty *is* a different duty.
+
+**Rejected:** keying checks by `(block, index)`; keying by a hash of the duty text; a `missed`
+state for duties; per-person completion visible to admin; indefinite retention.
 
 ---
 
@@ -207,16 +248,19 @@ mitigation, and it is deliberately not a disclaimer.
 
 **Prototype (this change)** — nav entries, the Today screen with live current-hour resolution,
 two seeded role schedules, standing/hour-specific split, closed days and one weekday override,
-a bounty board with claim/release/complete, period rollover with miss marking, and an admin
-editor for all of it.
+the daily checklist with per-duty ticks and role-level coverage, a bounty board with
+claim/release/complete, period rollover with miss marking, and an admin editor for all of it.
 
 **v1 backend** — server-derived roles and identity, real timezone handling (the prototype uses
-the browser's local time), an audit log on schedule edits, and instance generation on a
-scheduled job rather than lazily on read.
+the browser's local time), an audit log on schedule edits, retention enforced by a scheduled job
+rather than on read, and bounty instance generation likewise.
 
 **Later** — per-person deviations from a role schedule, shift assignment so the box knows who is
-actually working, bounty recurrence beyond the three periods, and photo proof on bounty
-completion.
+actually working and whose checklist it is, bounty recurrence beyond the three periods, and photo
+proof on bounty completion.
+
+**Deliberately not on any list:** per-person checklist history visible to an admin, and retention
+beyond the rolling window. Both are §4's mitigations, not missing features.
 
 ---
 

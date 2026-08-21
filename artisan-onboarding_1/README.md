@@ -33,8 +33,9 @@ Use the **Employee / Admin** toggle in the top-right to switch between them.
   expenses, and filing taxes. Optional reading; nothing here is assigned or tracked.
 - **Questions** — common onboarding FAQ.
 - **Today** — the hour-by-hour box for your role: what this hour is for, the duties that
-  are true all shift, what is coming next, and the **bounties** you can pick up when you
-  have time to spare. Nothing here is ticked off — see the note below.
+  are true all shift, what is still outstanding from earlier, what is coming next, and the
+  **bounties** you can pick up when you have time to spare. Each duty ticks off as you go
+  and resets overnight — see the note below.
 
 ### Admin (back of house)
 - **Overview** — roster of everyone currently onboarding with progress and next step.
@@ -132,11 +133,14 @@ checklist group) are computed rather than stored ad hoc, so the backend owns the
 - Uploaded headshots are held for the browser session only (base64 in memory); in
   production they upload to object storage — see the `photo` note in `API.md`.
 - Individual training modules are intentionally **not** managed here (see project scope).
-- **The hourly box records nothing.** It tells people what an hour is for; it does not
-  track whether they did it. An unchecked 2pm at 6pm means nothing anyone can act on, and
-  a checkbox per hour turns the feature into a per-employee activity log. Bounties carry
-  the completion state, because "did the quarterly deep-clean happen" has a real answer.
-  See `FLOOR-SCOPE.md` §4.
+- **The hourly box is also a daily checklist.** Each duty ticks off, per person, and every
+  day starts clean — there is no carry-over, no streak, and nothing ever becomes "missed".
+  Ticks are kept for a rolling **14 days**, because the questions they answer ("what is
+  still outstanding", "did the opening get done today") do not need last March, and keeping
+  them forever turns a working tool into a permanent performance record. Admin sees a
+  **count for the role, never a name** — the shop's question is "did the close get done",
+  and answering it by person makes it a scoreboard that gets gamed. See `FLOOR-SCOPE.md` §4,
+  which also records that this reverses the original reference-only decision and why.
 - **An hourly schedule is evidence of control.** For W-2 staff that is ordinary
   management. Pointed at workers engaged as 1099 contractors, the schedule itself becomes
   an exhibit in a misclassification analysis — which is why schedules attach to roles, so

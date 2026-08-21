@@ -222,13 +222,23 @@ ALTER TABLE meetings
 -- ============================================================================
 -- Floor: hourly duties and bounties
 --
--- THE BOUNDARY, and it is load-bearing: an hourly duty has NO completion state
--- and there is deliberately no duty_state table. The hour IS the state — at 3pm
--- you are doing the 3pm things, and at 4pm that question is moot. A checkbox per
--- hour turns this into a per-employee minute-by-minute activity record, and
--- creates a question with no good answer: what does an unchecked 2pm mean at
--- 6pm? Bounties carry completion state, because "did the quarterly deep-clean
--- happen" is a question someone genuinely needs answered. See FLOOR-SCOPE.md.
+-- The hourly box is BOTH: it says what an hour is for, and each duty ticks off
+-- as a daily checklist. What keeps the checklist from becoming a performance
+-- record is four things, and all four are load-bearing (FLOOR-SCOPE.md §4):
+--
+--   1. duty_checks is keyed by LOCAL DATE. Every day starts clean. There is no
+--      carry-over, no streak, and nothing ever becomes 'missed' — an unticked
+--      duty at midnight simply stops being a question.
+--   2. Retention is a rolling window (14 days). The questions this data can
+--      honestly answer are "what is outstanding right now" and "did the opening
+--      get done today". Neither needs last March.
+--   3. Admin reads a COUNT FOR THE ROLE, never a per-person breakdown. The
+--      shop's question is "did the close get done"; answering it by name turns
+--      a checklist into a scoreboard, and a scoreboard gets gamed.
+--   4. Unticking is an UPDATE of the same row, not an append.
+--
+-- Bounties keep permanent history instead, because "did the quarterly deep-clean
+-- happen" is a question someone needs answered in November.
 --
 -- Schedules are keyed by ROLE, not by person. Two concierges do the same job.
 -- ============================================================================
@@ -271,12 +281,39 @@ CREATE TABLE duty_blocks (
   day_key      duty_day_key NOT NULL DEFAULT 'default',
   hour         INT  NOT NULL,                    -- 0..23, the hour this governs
   label        TEXT NOT NULL,                    -- 'Open the desk'
-  duties       JSONB NOT NULL DEFAULT '[]'::jsonb,  -- string[]
   note         TEXT NOT NULL DEFAULT '',
   UNIQUE (schedule_id, day_key, hour),
   CONSTRAINT duty_block_hour CHECK (hour >= 0 AND hour < 24)
 );
 CREATE INDEX idx_duty_blocks_day ON duty_blocks(schedule_id, day_key, hour);
+
+-- ---- duty_items: one duty line, and the thing a tick points at -----------
+-- This is a TABLE and not a JSON array on duty_blocks because duty_checks
+-- references individual duties. An index into a JSON array is not an identity:
+-- reorder or delete a line and yesterday's tick lands on a different duty.
+CREATE TABLE duty_items (
+  id          TEXT PRIMARY KEY,                  -- 'dut_fd09_1'
+  block_id    TEXT NOT NULL REFERENCES duty_blocks(id) ON DELETE CASCADE,
+  text        TEXT NOT NULL,
+  sort_order  INT  NOT NULL DEFAULT 0,
+  CONSTRAINT duty_item_text CHECK (btrim(text) <> '')
+);
+CREATE INDEX idx_duty_items_block ON duty_items(block_id, sort_order);
+
+-- ---- duty_checks: the daily checklist -----------------------------------
+-- One row per person per LOCAL DATE per duty. on_date is a DATE, not a
+-- timestamp, and it is the shop's local date: a shift ending at 6pm in New York
+-- is already tomorrow in UTC, and keying on that clears the closing checklist
+-- halfway through the close.
+CREATE TABLE duty_checks (
+  employee_id   TEXT NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+  duty_item_id  TEXT NOT NULL REFERENCES duty_items(id) ON DELETE CASCADE,
+  on_date       DATE NOT NULL,
+  done          BOOLEAN NOT NULL DEFAULT false,
+  checked_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (employee_id, duty_item_id, on_date)
+);
+CREATE INDEX idx_duty_checks_date ON duty_checks(on_date);
 
 -- ---- bounties: the definition -------------------------------------------
 -- "Bounty" is a NAME, not a reward. No points, no ledger, no balance. Adding a
@@ -324,8 +361,24 @@ COMMIT;
 -- ============================================================================
 -- Floor implementation notes
 -- ----------------------------------------------------------------------------
--- * THERE IS NO duty_state TABLE, and adding one is a product decision, not a
---   schema gap. See the boundary note above and FLOOR-SCOPE.md section 4.
+-- * RETENTION ON duty_checks IS NOT OPTIONAL. The prototype trims to a rolling
+--   14 days on read; production wants a nightly
+--     DELETE FROM duty_checks WHERE on_date < current_date - INTERVAL '14 days'
+--   plus ON DELETE CASCADE from employees, which is already declared. Dropping
+--   the window turns a working checklist into a permanent per-employee
+--   performance record. See FLOOR-SCOPE.md section 4.
+--
+-- * DO NOT ADD A PER-PERSON ADMIN VIEW of duty_checks. The aggregate coverage
+--   read answers the shop's actual question ("did the close get done") without
+--   turning the checklist into a scoreboard people tick first and work second.
+--   This is a mitigation the feature depends on, not an unfinished screen.
+--
+-- * DUTIES ARE NEVER 'missed'. Bounties have that state; duties do not, and
+--   adding it recreates exactly what the daily reset exists to avoid.
+--
+-- * EDITING A BLOCK'S DUTIES reconciles BY TEXT, so reordering lines keeps the
+--   day's ticks attached while rewording a line yields a new duty_items row
+--   with a clean tick. An edited duty is a different duty.
 --
 -- * DAY RESOLUTION is three rules in order, for a weekday W:
 --     1. W in duty_schedules.closed_days           -> closed

@@ -297,9 +297,12 @@ Aggregate only. There is deliberately **no per-employee read receipt** — see
 
 ## Floor — hourly duties
 
-The boundary, and it is load-bearing: **an hourly duty has no completion state.**
-There is no `duty_state` table and no endpoint to tick an hour off. The hour is the
-state. See `FLOOR-SCOPE.md` §4 before adding one.
+The hourly box does two jobs: it says what an hour is *for*, and each duty ticks off
+as a **daily checklist**. Four things keep the checklist from becoming a performance
+record, and all four are load-bearing (`FLOOR-SCOPE.md` §4): ticks are keyed to the
+**local date** and every day starts clean, retention is a **rolling 14 days**, admin
+reads a **count for the role and never a per-person breakdown**, and a duty is never
+marked `missed`.
 
 Schedules are keyed by **role**, not by person.
 
@@ -350,7 +353,13 @@ one answer.
 Body `{ label?, note?, duties? }`. → `Store.updateDutyBlock(id, patch)`
 
 `duties` is a string array; blank entries are dropped, so an empty line in the editor's
-textarea does not become an empty bullet.
+textarea does not become an empty bullet. The response returns the duties as **rows**
+(`{ id, text, sortOrder }`), not strings.
+
+**Reconciliation is by text.** A line whose text is unchanged keeps its `duty_items.id`,
+so reordering the list keeps the day's ticks attached to the right duty. A reworded line
+becomes a new row with a clean tick — an edited duty *is* a different duty. Removed lines
+take their ticks with them.
 
 ### `DELETE /floor/blocks/:blockId`
 → `Store.deleteDutyBlock(id)`
@@ -397,6 +406,51 @@ am I doing at noon".
 `at` is a prototype-only test seam. In production resolve "now" in the **shop's**
 timezone, stored on the shop record — never in the client's, or a travelling admin and a
 DST boundary both produce the wrong hour.
+
+Each duty inside `blocks[].duties` is `{ id, text, sortOrder, done }`, where `done` is
+**this employee's** tick for **this local date**. `total` and `done` on the envelope count
+the whole day, not the current hour: a 10am duty finished at 11 still counts, and the
+person closing needs to see what the morning left outstanding.
+
+This read also trims `duty_checks` past the retention window — see below.
+
+### `PUT /floor/checks/:dutyItemId`
+Body `{ done }`. → `Store.setDutyCheck(employeeId, dutyItemId, done, at?)`
+
+One row per `(employee, local date, duty item)`. Unticking is an **update of the same
+row**, not an append and not an audit entry. `404` on an unknown duty item or employee —
+validate before writing, or a typo leaves a tick against nothing that both read paths
+then hide.
+
+`on_date` is the **local** date. A shift ending at 6pm in New York is already tomorrow in
+UTC; keying on that would clear the closing checklist halfway through the close.
+
+**Retention is a rolling window** (`DUTY_CHECK_DAYS`, 14). The prototype trims on read;
+production wants a nightly `DELETE ... WHERE on_date < current_date - INTERVAL '14 days'`.
+This is not a tidiness measure — without it the checklist becomes a permanent
+per-employee performance record.
+
+**A duty is never `missed`.** An unticked duty at midnight simply stops being a question.
+That state belongs to bounties, and adding it here recreates what the daily reset exists
+to avoid.
+
+### `GET /floor/coverage?role=`
+Today's completion for a role, **counted across everyone holding it**.
+→ `Store.getDayCoverage(role, at?)`
+
+```json
+{ "role":"Front Desk Concierge","onDate":"2026-08-21","closed":false,
+  "blocks":[{ "id":"blk_fd_09","hour":9,"label":"Open the desk","total":5,"done":5 }] }
+```
+
+**Deliberately not per person, and this is a mitigation the feature depends on.** The
+shop's real question is "did the close get done". Answering it by name turns a checklist
+into a scoreboard, and a scoreboard gets gamed — people tick first and work second. Do not
+add a per-person breakdown to this endpoint; doing so undoes the design rather than
+extending it.
+
+A closed day returns `closed: true` with no blocks, because zero-of-zero reads as a
+failure while "closed" reads as closed.
 
 ---
 

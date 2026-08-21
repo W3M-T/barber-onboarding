@@ -88,6 +88,20 @@ a{color:inherit}
 .hourlist li{padding:7px 0;border-bottom:1px solid var(--line);font-size:14px;display:flex;gap:12px}
 .hourlist li:last-child{border-bottom:none}
 .hourlist .h{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--brass);flex:none;min-width:58px;padding-top:2px}
+.dutylist{list-style:none;margin:0;padding:0}
+.dutylist .duty{display:flex;gap:11px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+.dutylist .duty:last-child{border-bottom:none}
+.dutylist .duty.done>span{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--brass)}
+.dutylist .duty .h{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--brass);margin-left:6px;text-decoration:none;display:inline-block}
+.tick{
+  flex:none;width:19px;height:19px;margin-top:1px;border:1px solid var(--line);border-radius:5px;
+  background:transparent;cursor:pointer;font-size:11px;line-height:1;color:transparent;
+  display:flex;align-items:center;justify-content:center;transition:background .12s,border-color .12s}
+.tick:hover{border-color:var(--brass)}
+.tick.on{background:var(--brass);border-color:var(--brass);color:#FBF8F1}
+.tick:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+.bar{display:inline-block;height:4px;border-radius:2px;background:var(--line);overflow:hidden;vertical-align:middle}
+.bar i{display:block;height:100%;background:var(--brass);border-radius:2px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .hr{border:none;border-top:1px solid var(--line);margin:18px 0}
 .btn{
@@ -729,7 +743,7 @@ body.admin .btn.danger{border-color:#D4796A;color:#D4796A}
       <h1 class="display">Hours &amp; bounties.</h1>
       <p class="lede">What each role is doing hour by hour, and the pool of work anyone can pick up when they have time.</p>
 
-      <div class="note" style="margin-top:16px"><strong>No hour is ticked off.</strong> The hourly box tells people what an hour is for — it does not record whether they did it. An unchecked 2pm at 6pm means nothing anyone can act on. Bounties carry the completion state, because “did the quarterly deep-clean happen” is a question with a real answer.</div>
+      <div class="note" style="margin-top:16px"><strong>Every day starts clean.</strong> Duties tick off as a daily checklist and reset overnight — no carry-over, no streaks, nothing is ever marked “missed”. Ticks are kept for two weeks, and you see a count for the role rather than a breakdown by person: the question worth asking is whether the close got done, not who didn’t tick it.</div>
 
       <div class="card" style="margin-top:16px">
         <h3>Schedules</h3>
@@ -1246,59 +1260,116 @@ const DB = {
      day ENTIRELY — default blocks do not leak in. FLOOR-SCOPE.md section 5. */
   dutyBlocks: [
     /* --- front desk, the ordinary day (Tue–Fri) --- */
-    { id:'blk_fd_09', scheduleId:'sch_frontdesk', dayKey:'default', hour:9,  label:'Open the desk', note:'',
-      duties:['Unlock and light the front','Count the drawer and log the opening float','Print the day’s book','Clear overnight voicemail and messages','Confirm which chairs are actually staffed today'] },
-    { id:'blk_fd_10', scheduleId:'sch_frontdesk', dayKey:'default', hour:10, label:'First rush', note:'',
-      duties:['Check in the 9:30s and 10s','Open the walk-in list','Give anyone waiting a real number, not “shouldn’t be long”'] },
-    { id:'blk_fd_11', scheduleId:'sch_frontdesk', dayKey:'default', hour:11, label:'Confirm tomorrow', note:'The quietest reliable window for outbound calls.',
-      duties:['Work tomorrow’s book — call, then text if no answer','Offer the waitlist anything that opens up','Log every confirmation in the book as you go'] },
-    { id:'blk_fd_12', scheduleId:'sch_frontdesk', dayKey:'default', hour:12, label:'Lunch cover', note:'',
-      duties:['Stagger the floor’s lunches so a chair is always live','Hold one chair for walk-ins','Eat when the desk is covered, not when you are hungry'] },
-    { id:'blk_fd_13', scheduleId:'sch_frontdesk', dayKey:'default', hour:13, label:'Reset and restock', note:'',
-      duties:['Towels, capes, neck strips','Retail shelf and card stock','Water and cups','Bins if they need it'] },
-    { id:'blk_fd_14', scheduleId:'sch_frontdesk', dayKey:'default', hour:14, label:'The quiet hour', note:'The slowest hour most days — this is bounty time.',
-      duties:['Pick up a bounty that fits the gap','Keep half an eye on the door'] },
-    { id:'blk_fd_15', scheduleId:'sch_frontdesk', dayKey:'default', hour:15, label:'School-out shift', note:'',
-      duties:['Kids appointments land now — keep the waiting area calm','Check Cathy has what she needs','Watch the wait time; it climbs fast in this hour'] },
-    { id:'blk_fd_16', scheduleId:'sch_frontdesk', dayKey:'default', hour:16, label:'Evening prep', note:'',
-      duties:['Confirm the 5s and 6s','Re-quote the walk-in wait honestly','Hand over anything unresolved before the rush'] },
-    { id:'blk_fd_17', scheduleId:'sch_frontdesk', dayKey:'default', hour:17, label:'Evening rush', note:'Busiest hour of an ordinary day. No back-office work in this hour.',
-      duties:['Desk stays on the floor','Check in fast, rebook at the chair not the desk','Keep the list honest — turn people away kindly rather than late'] },
-    { id:'blk_fd_18', scheduleId:'sch_frontdesk', dayKey:'default', hour:18, label:'Close the desk', note:'',
-      duties:['Last walk-in cutoff','Settle and count the drawer','Print tomorrow’s book','Leave a note for the morning about anything unfinished','Lights, lock, alarm'] },
+    { id:'blk_fd_09', scheduleId:'sch_frontdesk', dayKey:'default', hour:9,  label:'Open the desk', note:'' },
+    { id:'blk_fd_10', scheduleId:'sch_frontdesk', dayKey:'default', hour:10, label:'First rush', note:'' },
+    { id:'blk_fd_11', scheduleId:'sch_frontdesk', dayKey:'default', hour:11, label:'Confirm tomorrow', note:'The quietest reliable window for outbound calls.' },
+    { id:'blk_fd_12', scheduleId:'sch_frontdesk', dayKey:'default', hour:12, label:'Lunch cover', note:'' },
+    { id:'blk_fd_13', scheduleId:'sch_frontdesk', dayKey:'default', hour:13, label:'Reset and restock', note:'' },
+    { id:'blk_fd_14', scheduleId:'sch_frontdesk', dayKey:'default', hour:14, label:'The quiet hour', note:'The slowest hour most days — this is bounty time.' },
+    { id:'blk_fd_15', scheduleId:'sch_frontdesk', dayKey:'default', hour:15, label:'School-out shift', note:'' },
+    { id:'blk_fd_16', scheduleId:'sch_frontdesk', dayKey:'default', hour:16, label:'Evening prep', note:'' },
+    { id:'blk_fd_17', scheduleId:'sch_frontdesk', dayKey:'default', hour:17, label:'Evening rush', note:'Busiest hour of an ordinary day. No back-office work in this hour.' },
+    { id:'blk_fd_18', scheduleId:'sch_frontdesk', dayKey:'default', hour:18, label:'Close the desk', note:'' },
 
     /* --- front desk, Saturday: its own day, authored end to end --- */
-    { id:'blk_fd_sat_09', scheduleId:'sch_frontdesk', dayKey:'sat', hour:9,  label:'Saturday open', note:'Biggest day of the week. Two on the desk if the roster allows.',
-      duties:['Drawer counted before the door opens, not after','Book printed and on the desk','Walk-in list open from the first minute'] },
-    { id:'blk_fd_sat_10', scheduleId:'sch_frontdesk', dayKey:'sat', hour:10, label:'The walk-in wall', note:'',
-      duties:['Expect a queue — start the list early','Quote honest waits and repeat them out loud','Nobody stands without being spoken to'] },
-    { id:'blk_fd_sat_11', scheduleId:'sch_frontdesk', dayKey:'sat', hour:11, label:'Hold the line', note:'No confirmations, no admin, no bounties in this hour.',
-      duties:['The desk is on the floor','Keep the list moving and the waits current'] },
-    { id:'blk_fd_sat_12', scheduleId:'sch_frontdesk', dayKey:'sat', hour:12, label:'Rolling lunches', note:'',
-      duties:['Nobody leaves the desk unattended','Fifteen minutes each, taken in turn'] },
-    { id:'blk_fd_sat_13', scheduleId:'sch_frontdesk', dayKey:'sat', hour:13, label:'Peak', note:'',
-      duties:['Every chair full, list still honest','Rebook at the chair'] },
-    { id:'blk_fd_sat_14', scheduleId:'sch_frontdesk', dayKey:'sat', hour:14, label:'Second wind', note:'',
-      duties:['The list usually clears here — take walk-ins while you can','First chance to breathe: tidy the front'] },
-    { id:'blk_fd_sat_15', scheduleId:'sch_frontdesk', dayKey:'sat', hour:15, label:'Retail hour', note:'The week’s best selling window.',
-      duties:['Talk product at the chair, not at the till','Restock the shelf as it empties'] },
-    { id:'blk_fd_sat_16', scheduleId:'sch_frontdesk', dayKey:'sat', hour:16, label:'Wind down', note:'',
-      duties:['Close the walk-in list when the wait outruns the time left','Start the close while the floor finishes'] },
-    { id:'blk_fd_sat_17', scheduleId:'sch_frontdesk', dayKey:'sat', hour:17, label:'Saturday close', note:'',
-      duties:['Full close — drawer, book, lights, lock','We are shut Sunday and Monday: check the door card says so','Leave the front ready for Tuesday'] },
+    { id:'blk_fd_sat_09', scheduleId:'sch_frontdesk', dayKey:'sat', hour:9,  label:'Saturday open', note:'Biggest day of the week. Two on the desk if the roster allows.' },
+    { id:'blk_fd_sat_10', scheduleId:'sch_frontdesk', dayKey:'sat', hour:10, label:'The walk-in wall', note:'' },
+    { id:'blk_fd_sat_11', scheduleId:'sch_frontdesk', dayKey:'sat', hour:11, label:'Hold the line', note:'No confirmations, no admin, no bounties in this hour.' },
+    { id:'blk_fd_sat_12', scheduleId:'sch_frontdesk', dayKey:'sat', hour:12, label:'Rolling lunches', note:'' },
+    { id:'blk_fd_sat_13', scheduleId:'sch_frontdesk', dayKey:'sat', hour:13, label:'Peak', note:'' },
+    { id:'blk_fd_sat_14', scheduleId:'sch_frontdesk', dayKey:'sat', hour:14, label:'Second wind', note:'' },
+    { id:'blk_fd_sat_15', scheduleId:'sch_frontdesk', dayKey:'sat', hour:15, label:'Retail hour', note:'The week’s best selling window.' },
+    { id:'blk_fd_sat_16', scheduleId:'sch_frontdesk', dayKey:'sat', hour:16, label:'Wind down', note:'' },
+    { id:'blk_fd_sat_17', scheduleId:'sch_frontdesk', dayKey:'sat', hour:17, label:'Saturday close', note:'' },
 
     /* --- assistant stylist: fewer, wider blocks --- */
-    { id:'blk_as_09', scheduleId:'sch_assistant', dayKey:'default', hour:9,  label:'Open the floor', note:'',
-      duties:['Stations set and tools laid out','First load of towels on','Check which chairs you are covering today'] },
-    { id:'blk_as_11', scheduleId:'sch_assistant', dayKey:'default', hour:11, label:'Shadow and assist', note:'',
-      duties:['Shampoo, prep, hand off cleanly','Watch the cut you were asked to watch','Keep the station you are on ahead of the chair'] },
-    { id:'blk_as_13', scheduleId:'sch_assistant', dayKey:'default', hour:13, label:'Laundry and restock', note:'',
-      duties:['Towels through','Restock every station, not only yours','Tools disinfected and back where they live'] },
-    { id:'blk_as_15', scheduleId:'sch_assistant', dayKey:'default', hour:15, label:'Practice block', note:'Only when the floor is genuinely quiet. The floor comes first.',
-      duties:['Mannequin work, or shadow a senior chair','Ask for the thing you got stuck on last week'] },
-    { id:'blk_as_17', scheduleId:'sch_assistant', dayKey:'default', hour:17, label:'Close the floor', note:'',
-      duties:['Sweep down every station','Tools disinfected and put away','Towels started so the morning is not behind'] }
+    { id:'blk_as_09', scheduleId:'sch_assistant', dayKey:'default', hour:9,  label:'Open the floor', note:'' },
+    { id:'blk_as_11', scheduleId:'sch_assistant', dayKey:'default', hour:11, label:'Shadow and assist', note:'' },
+    { id:'blk_as_13', scheduleId:'sch_assistant', dayKey:'default', hour:13, label:'Laundry and restock', note:'' },
+    { id:'blk_as_15', scheduleId:'sch_assistant', dayKey:'default', hour:15, label:'Practice block', note:'Only when the floor is genuinely quiet. The floor comes first.' },
+    { id:'blk_as_17', scheduleId:'sch_assistant', dayKey:'default', hour:17, label:'Close the floor', note:'' }
   ],
+
+  /* Each duty is a ROW, not an array entry, because the daily checklist ticks
+     individual duties. An index into a JSON array is not an identity: reorder or
+     delete a line and yesterday's tick lands on a different duty. */
+  dutyItems: [
+    { id:'dut_fd09_1', blockId:'blk_fd_09', sortOrder:1, text:'Unlock and light the front' },
+    { id:'dut_fd09_2', blockId:'blk_fd_09', sortOrder:2, text:'Count the drawer and log the opening float' },
+    { id:'dut_fd09_3', blockId:'blk_fd_09', sortOrder:3, text:'Print the day’s book' },
+    { id:'dut_fd09_4', blockId:'blk_fd_09', sortOrder:4, text:'Clear overnight voicemail and messages' },
+    { id:'dut_fd09_5', blockId:'blk_fd_09', sortOrder:5, text:'Confirm which chairs are actually staffed today' },
+    { id:'dut_fd10_1', blockId:'blk_fd_10', sortOrder:1, text:'Check in the 9:30s and 10s' },
+    { id:'dut_fd10_2', blockId:'blk_fd_10', sortOrder:2, text:'Open the walk-in list' },
+    { id:'dut_fd10_3', blockId:'blk_fd_10', sortOrder:3, text:'Give anyone waiting a real number, not “shouldn’t be long”' },
+    { id:'dut_fd11_1', blockId:'blk_fd_11', sortOrder:1, text:'Work tomorrow’s book — call, then text if no answer' },
+    { id:'dut_fd11_2', blockId:'blk_fd_11', sortOrder:2, text:'Offer the waitlist anything that opens up' },
+    { id:'dut_fd11_3', blockId:'blk_fd_11', sortOrder:3, text:'Log every confirmation in the book as you go' },
+    { id:'dut_fd12_1', blockId:'blk_fd_12', sortOrder:1, text:'Stagger the floor’s lunches so a chair is always live' },
+    { id:'dut_fd12_2', blockId:'blk_fd_12', sortOrder:2, text:'Hold one chair for walk-ins' },
+    { id:'dut_fd12_3', blockId:'blk_fd_12', sortOrder:3, text:'Eat when the desk is covered, not when you are hungry' },
+    { id:'dut_fd13_1', blockId:'blk_fd_13', sortOrder:1, text:'Towels, capes, neck strips' },
+    { id:'dut_fd13_2', blockId:'blk_fd_13', sortOrder:2, text:'Retail shelf and card stock' },
+    { id:'dut_fd13_3', blockId:'blk_fd_13', sortOrder:3, text:'Water and cups' },
+    { id:'dut_fd13_4', blockId:'blk_fd_13', sortOrder:4, text:'Bins if they need it' },
+    { id:'dut_fd14_1', blockId:'blk_fd_14', sortOrder:1, text:'Pick up a bounty that fits the gap' },
+    { id:'dut_fd14_2', blockId:'blk_fd_14', sortOrder:2, text:'Keep half an eye on the door' },
+    { id:'dut_fd15_1', blockId:'blk_fd_15', sortOrder:1, text:'Kids appointments land now — keep the waiting area calm' },
+    { id:'dut_fd15_2', blockId:'blk_fd_15', sortOrder:2, text:'Check Cathy has what she needs' },
+    { id:'dut_fd15_3', blockId:'blk_fd_15', sortOrder:3, text:'Watch the wait time; it climbs fast in this hour' },
+    { id:'dut_fd16_1', blockId:'blk_fd_16', sortOrder:1, text:'Confirm the 5s and 6s' },
+    { id:'dut_fd16_2', blockId:'blk_fd_16', sortOrder:2, text:'Re-quote the walk-in wait honestly' },
+    { id:'dut_fd16_3', blockId:'blk_fd_16', sortOrder:3, text:'Hand over anything unresolved before the rush' },
+    { id:'dut_fd17_1', blockId:'blk_fd_17', sortOrder:1, text:'Desk stays on the floor' },
+    { id:'dut_fd17_2', blockId:'blk_fd_17', sortOrder:2, text:'Check in fast, rebook at the chair not the desk' },
+    { id:'dut_fd17_3', blockId:'blk_fd_17', sortOrder:3, text:'Keep the list honest — turn people away kindly rather than late' },
+    { id:'dut_fd18_1', blockId:'blk_fd_18', sortOrder:1, text:'Last walk-in cutoff' },
+    { id:'dut_fd18_2', blockId:'blk_fd_18', sortOrder:2, text:'Settle and count the drawer' },
+    { id:'dut_fd18_3', blockId:'blk_fd_18', sortOrder:3, text:'Print tomorrow’s book' },
+    { id:'dut_fd18_4', blockId:'blk_fd_18', sortOrder:4, text:'Leave a note for the morning about anything unfinished' },
+    { id:'dut_fd18_5', blockId:'blk_fd_18', sortOrder:5, text:'Lights, lock, alarm' },
+    { id:'dut_fdsat09_1', blockId:'blk_fd_sat_09', sortOrder:1, text:'Drawer counted before the door opens, not after' },
+    { id:'dut_fdsat09_2', blockId:'blk_fd_sat_09', sortOrder:2, text:'Book printed and on the desk' },
+    { id:'dut_fdsat09_3', blockId:'blk_fd_sat_09', sortOrder:3, text:'Walk-in list open from the first minute' },
+    { id:'dut_fdsat10_1', blockId:'blk_fd_sat_10', sortOrder:1, text:'Expect a queue — start the list early' },
+    { id:'dut_fdsat10_2', blockId:'blk_fd_sat_10', sortOrder:2, text:'Quote honest waits and repeat them out loud' },
+    { id:'dut_fdsat10_3', blockId:'blk_fd_sat_10', sortOrder:3, text:'Nobody stands without being spoken to' },
+    { id:'dut_fdsat11_1', blockId:'blk_fd_sat_11', sortOrder:1, text:'The desk is on the floor' },
+    { id:'dut_fdsat11_2', blockId:'blk_fd_sat_11', sortOrder:2, text:'Keep the list moving and the waits current' },
+    { id:'dut_fdsat12_1', blockId:'blk_fd_sat_12', sortOrder:1, text:'Nobody leaves the desk unattended' },
+    { id:'dut_fdsat12_2', blockId:'blk_fd_sat_12', sortOrder:2, text:'Fifteen minutes each, taken in turn' },
+    { id:'dut_fdsat13_1', blockId:'blk_fd_sat_13', sortOrder:1, text:'Every chair full, list still honest' },
+    { id:'dut_fdsat13_2', blockId:'blk_fd_sat_13', sortOrder:2, text:'Rebook at the chair' },
+    { id:'dut_fdsat14_1', blockId:'blk_fd_sat_14', sortOrder:1, text:'The list usually clears here — take walk-ins while you can' },
+    { id:'dut_fdsat14_2', blockId:'blk_fd_sat_14', sortOrder:2, text:'First chance to breathe: tidy the front' },
+    { id:'dut_fdsat15_1', blockId:'blk_fd_sat_15', sortOrder:1, text:'Talk product at the chair, not at the till' },
+    { id:'dut_fdsat15_2', blockId:'blk_fd_sat_15', sortOrder:2, text:'Restock the shelf as it empties' },
+    { id:'dut_fdsat16_1', blockId:'blk_fd_sat_16', sortOrder:1, text:'Close the walk-in list when the wait outruns the time left' },
+    { id:'dut_fdsat16_2', blockId:'blk_fd_sat_16', sortOrder:2, text:'Start the close while the floor finishes' },
+    { id:'dut_fdsat17_1', blockId:'blk_fd_sat_17', sortOrder:1, text:'Full close — drawer, book, lights, lock' },
+    { id:'dut_fdsat17_2', blockId:'blk_fd_sat_17', sortOrder:2, text:'We are shut Sunday and Monday: check the door card says so' },
+    { id:'dut_fdsat17_3', blockId:'blk_fd_sat_17', sortOrder:3, text:'Leave the front ready for Tuesday' },
+    { id:'dut_as09_1', blockId:'blk_as_09', sortOrder:1, text:'Stations set and tools laid out' },
+    { id:'dut_as09_2', blockId:'blk_as_09', sortOrder:2, text:'First load of towels on' },
+    { id:'dut_as09_3', blockId:'blk_as_09', sortOrder:3, text:'Check which chairs you are covering today' },
+    { id:'dut_as11_1', blockId:'blk_as_11', sortOrder:1, text:'Shampoo, prep, hand off cleanly' },
+    { id:'dut_as11_2', blockId:'blk_as_11', sortOrder:2, text:'Watch the cut you were asked to watch' },
+    { id:'dut_as11_3', blockId:'blk_as_11', sortOrder:3, text:'Keep the station you are on ahead of the chair' },
+    { id:'dut_as13_1', blockId:'blk_as_13', sortOrder:1, text:'Towels through' },
+    { id:'dut_as13_2', blockId:'blk_as_13', sortOrder:2, text:'Restock every station, not only yours' },
+    { id:'dut_as13_3', blockId:'blk_as_13', sortOrder:3, text:'Tools disinfected and back where they live' },
+    { id:'dut_as15_1', blockId:'blk_as_15', sortOrder:1, text:'Mannequin work, or shadow a senior chair' },
+    { id:'dut_as15_2', blockId:'blk_as_15', sortOrder:2, text:'Ask for the thing you got stuck on last week' },
+    { id:'dut_as17_1', blockId:'blk_as_17', sortOrder:1, text:'Sweep down every station' },
+    { id:'dut_as17_2', blockId:'blk_as_17', sortOrder:2, text:'Tools disinfected and put away' },
+    { id:'dut_as17_3', blockId:'blk_as_17', sortOrder:3, text:'Towels started so the morning is not behind' }
+  ],
+
+  /* Per-person, per-DAY ticks against duty items. Keyed by the local date, so
+     every day starts clean — that is what makes it a daily checklist rather
+     than a running log. Seeded empty: yesterday's ticks are nobody's business
+     and today's have not happened yet. Trimmed to DUTY_CHECK_DAYS on read. */
+  dutyChecks: [],
 
   /* ---- floor: bounties (tables: bounties / bounty_instances) ----
      "Bounty" is a NAME, not a reward — no points, no ledger, no balance.
@@ -1361,6 +1432,20 @@ const _asList = v => Array.isArray(v) ? v.map(String) : (v == null || v === '' ?
 let _nowOverride = null;
 function _now() { return _nowOverride ? new Date(_nowOverride) : new Date(); }
 function _setNow(d) { _nowOverride = d == null ? null : new Date(d); }
+
+/* The daily checklist is keyed by the LOCAL date, not by a UTC timestamp. A shift
+   that ends at 6pm in New York is already tomorrow in UTC, and keying on that
+   would clear the closing checklist halfway through the close. */
+function dateKey(d) {
+  const x = d || _now();
+  return `${x.getFullYear()}-${pad2(x.getMonth() + 1)}-${pad2(x.getDate())}`;
+}
+/* A rolling window, deliberately short. The checklist's job is within-day —
+   "what is still outstanding right now", and "did the opening actually get
+   done" asked by the person closing. Keeping it forever turns a working tool
+   into a permanent per-employee performance record nobody asked for and
+   everybody would eventually be judged by. See FLOOR-SCOPE.md section 4. */
+const DUTY_CHECK_DAYS = 14;
 
 const DAY_KEYS  = ['sun','mon','tue','wed','thu','fri','sat'];
 const DAY_NAMES = { sun:'Sunday', mon:'Monday', tue:'Tuesday', wed:'Wednesday', thu:'Thursday', fri:'Friday', sat:'Saturday' };
@@ -1771,44 +1856,101 @@ const Store = {
   async listDutyBlocks(scheduleId, dayKey) {                                                                      // GET /floor/schedules/:id/blocks?day=
     await _delay();
     return clone(DB.dutyBlocks.filter(b => b.scheduleId === scheduleId && (dayKey === undefined || b.dayKey === dayKey))
-      .slice().sort((a, b) => a.hour - b.hour));
+      .slice().sort((a, b) => a.hour - b.hour).map(b => ({ ...b, duties: _itemsOf(b.id) })));
   },
 
   /* The whole Today screen in one read: which day it is, whether the shop is
-     open, what is standing, which block governs right now, and what is next. */
-  async getFloorDay(role, at) {                                                                                   // GET /floor/today?role=
+     open, what is standing, which block governs right now, what is next, and
+     — for the signed-in employee on this date — which duties are ticked. */
+  async getFloorDay(role, at, empId) {                                                                            // GET /floor/today?role=
     await _delay();
     const now = at ? new Date(at) : _now();
     const schedule = _scheduleForRole(role);
     const dayKey = dayKeyOf(now);
+    const onDate = dateKey(now);
     const day = _resolveDay(schedule, dayKey);
     const standing = schedule
       ? DB.dutyStanding.filter(x => x.scheduleId === schedule.id).slice().sort(byOrder) : [];
 
+    _purgeOldChecks(now);
+    const withChecks = b => ({ ...b, duties: _itemsOf(b.id, empId, onDate) });
+    const blocks = day.blocks.map(withChecks);
+
     const out = {
-      role, dayKey, dayName: DAY_NAMES[dayKey], hour: now.getHours(),
+      role, dayKey, dayName: DAY_NAMES[dayKey], hour: now.getHours(), onDate,
       schedule: schedule ? clone(schedule) : null,
       closed: day.closed, reason: day.reason, source: day.source,
-      standing: clone(standing), blocks: clone(day.blocks),
-      currentBlock: null, nextBlock: null, position: 'closed'
+      standing: clone(standing), blocks: clone(blocks),
+      currentBlock: null, nextBlock: null, position: 'closed',
+      /* Progress over the WHOLE day, not the current hour: a duty from 10am
+         that you finish at 11 still counts, and the closing person needs to
+         see the morning's outstanding items, not just their own hour. */
+      total: 0, done: 0
     };
     if (day.closed) return out;
+
+    for (const b of blocks) {
+      out.total += b.duties.length;
+      out.done  += b.duties.filter(d => d.done).length;
+    }
 
     /* A block governs from its hour until the next block's hour; the last one
        governs to the end of its own hour. That is what lets a sparse schedule
        (9, 11, 13) answer "what am I doing at 12". */
-    const first = day.blocks[0].hour;
-    const end   = day.blocks[day.blocks.length - 1].hour + 1;
+    const first = blocks[0].hour;
+    const end   = blocks[blocks.length - 1].hour + 1;
     const h = now.getHours();
-    out.nextBlock = clone(day.blocks.find(b => b.hour > h) || null);
+    out.nextBlock = clone(blocks.find(b => b.hour > h) || null);
     if (h < first)      out.position = 'before-open';
     else if (h >= end)  { out.position = 'after-close'; out.nextBlock = null; }
     else {
       out.position = 'open';
-      const governing = day.blocks.filter(b => b.hour <= h).slice(-1)[0];
+      const governing = blocks.filter(b => b.hour <= h).slice(-1)[0];
       out.currentBlock = clone(governing || null);
     }
     return out;
+  },
+
+  /* ---- floor: the daily checklist ----
+     Per person, per LOCAL date, per duty item. Every day starts clean — that is
+     what makes it a checklist rather than a running log. */
+  async setDutyCheck(empId, dutyItemId, done, at) {                                                               // PUT /floor/checks/:dutyItemId
+    await _delay();
+    if (!DB.employees.some(e => e.id === empId)) throw new Error('employee not found');
+    /* Validate before writing, or a typo leaves a tick against nothing that
+       both read paths then hide — the same failure _ensureInstance had. */
+    if (!DB.dutyItems.some(d => d.id === dutyItemId)) throw new Error('duty item not found');
+    const on = dateKey(at ? new Date(at) : _now());
+    let row = DB.dutyChecks.find(c => c.employeeId === empId && c.dutyItemId === dutyItemId && c.onDate === on);
+    if (!row) {
+      row = { employeeId: empId, dutyItemId, onDate: on, done: !!done, checkedAt: _now().toISOString() };
+      DB.dutyChecks.push(row);
+    } else {
+      row.done = !!done;
+      row.checkedAt = _now().toISOString();
+    }
+    return clone(row);
+  },
+  /* What the role got through today, counted across everyone holding it.
+     Deliberately NOT per person: the shop's question is "did the close get
+     done", and answering it by name turns a checklist into a scoreboard. */
+  async getDayCoverage(role, at) {                                                                                // GET /floor/coverage?role=
+    await _delay();
+    const now = at ? new Date(at) : _now();
+    const schedule = _scheduleForRole(role);
+    const day = _resolveDay(schedule, dayKeyOf(now));
+    if (day.closed) return { role, onDate: dateKey(now), closed: true, blocks: [] };
+    const on = dateKey(now);
+    const staff = DB.employees.filter(e => e.role === role).map(e => e.id);
+    return {
+      role, onDate: on, closed: false,
+      blocks: day.blocks.map(b => {
+        const items = _itemsOf(b.id);
+        const done = items.filter(it => DB.dutyChecks.some(c =>
+          c.dutyItemId === it.id && c.onDate === on && c.done && staff.indexOf(c.employeeId) >= 0)).length;
+        return { id: b.id, hour: b.hour, label: b.label, total: items.length, done };
+      })
+    };
   },
 
   /* ---- floor: bounties ---- */
@@ -1884,8 +2026,8 @@ const Store = {
     const b = DB.dutyBlocks.find(x => x.id === blockId); if (!b) throw new Error('block not found');
     if (patch.label  !== undefined) b.label  = String(patch.label);
     if (patch.note   !== undefined) b.note   = String(patch.note);
-    if (patch.duties !== undefined) b.duties = _asList(patch.duties).filter(t => t.trim() !== '');
-    return clone(b);
+    if (patch.duties !== undefined) _setBlockItems(blockId, patch.duties);
+    return clone({ ...b, duties: _itemsOf(blockId) });
   },
   async addDutyBlock(scheduleId, dayKey, hour, data) {                                                            // POST /floor/schedules/:id/blocks
     await _delay();
@@ -1899,13 +2041,17 @@ const Store = {
       throw new Error('that hour already has a block');
     }
     const row = { id: newId('blk'), scheduleId, dayKey, hour: h,
-                  label: (data && data.label) || 'New hour', note: (data && data.note) || '',
-                  duties: _asList(data && data.duties).filter(t => t.trim() !== '') };
-    DB.dutyBlocks.push(row); return clone(row);
+                  label: (data && data.label) || 'New hour', note: (data && data.note) || '' };
+    DB.dutyBlocks.push(row);
+    _setBlockItems(row.id, (data && data.duties) || []);
+    return clone({ ...row, duties: _itemsOf(row.id) });
   },
   async deleteDutyBlock(blockId) {                                                                                // DELETE /floor/blocks/:id
     await _delay();
     const i = DB.dutyBlocks.findIndex(x => x.id === blockId); if (i >= 0) DB.dutyBlocks.splice(i, 1);
+    /* ON DELETE CASCADE, by hand: the items go, and so do the ticks against
+       them, or dutyChecks accumulates rows pointing at nothing. */
+    _setBlockItems(blockId, []);
     return { id: blockId, deleted: true };
   },
   /* Seeded from a COPY of the default day, so the admin edits rather than starts
@@ -1917,8 +2063,12 @@ const Store = {
     if (DB.dutyBlocks.some(b => b.scheduleId === scheduleId && b.dayKey === dayKey)) throw new Error('that day already has its own schedule');
     const base = DB.dutyBlocks.filter(b => b.scheduleId === scheduleId && b.dayKey === 'default').slice().sort((a, b) => a.hour - b.hour);
     const made = base.map(b => {
-      const row = { id: newId('blk'), scheduleId, dayKey, hour: b.hour, label: b.label, note: b.note, duties: b.duties.slice() };
-      DB.dutyBlocks.push(row); return row;
+      const row = { id: newId('blk'), scheduleId, dayKey, hour: b.hour, label: b.label, note: b.note };
+      DB.dutyBlocks.push(row);
+      /* New item rows, not the default's — editing the override must not reach
+         back into the default day, and a tick belongs to one or the other. */
+      _setBlockItems(row.id, _itemsOf(b.id).map(d => d.text));
+      return { ...row, duties: _itemsOf(row.id) };
     });
     return clone(made);
   },
@@ -1983,6 +2133,60 @@ const Store = {
     b.status = status; return clone(b);
   }
 };
+
+/* ---- floor: duty item helpers ---- */
+/* Items for a block, optionally carrying one person's ticks for one date. */
+function _itemsOf(blockId, empId, onDate) {
+  return DB.dutyItems.filter(d => d.blockId === blockId).slice().sort(byOrder).map(d => ({
+    id: d.id, blockId: d.blockId, sortOrder: d.sortOrder, text: d.text,
+    done: !!(empId && DB.dutyChecks.some(c =>
+      c.employeeId === empId && c.dutyItemId === d.id && c.onDate === onDate && c.done))
+  }));
+}
+/* Reconcile a block's duty lines against a list of texts.
+   Matching is BY TEXT, so reordering the list keeps today's ticks attached to
+   the right duty, while rewording a line correctly produces a new duty with a
+   clean tick — an edited duty is a different duty. */
+function _setBlockItems(blockId, texts) {
+  const wanted = _asList(texts).map(t => t.trim()).filter(t => t !== '');
+  const existing = DB.dutyItems.filter(d => d.blockId === blockId);
+  const spare = existing.slice();
+  const kept = [];
+
+  wanted.forEach((text, i) => {
+    const hit = spare.findIndex(d => d.text === text);
+    if (hit >= 0) {
+      const row = spare.splice(hit, 1)[0];
+      row.sortOrder = i + 1;
+      kept.push(row);
+    } else {
+      const row = { id: newId('dut'), blockId, sortOrder: i + 1, text };
+      DB.dutyItems.push(row);
+      kept.push(row);
+    }
+  });
+
+  /* Whatever is left over is gone, and its ticks go with it. */
+  for (const dead of spare) {
+    const i = DB.dutyItems.indexOf(dead);
+    if (i >= 0) DB.dutyItems.splice(i, 1);
+    for (let j = DB.dutyChecks.length - 1; j >= 0; j--) {
+      if (DB.dutyChecks[j].dutyItemId === dead.id) DB.dutyChecks.splice(j, 1);
+    }
+  }
+  return kept;
+}
+/* Drop ticks older than the rolling window. In production this is a nightly
+   job with a retention policy; doing it on read keeps the prototype honest
+   about the fact that the data does not accumulate forever. */
+function _purgeOldChecks(at) {
+  const cutoff = new Date(at || _now());
+  cutoff.setDate(cutoff.getDate() - DUTY_CHECK_DAYS);
+  const floor = dateKey(cutoff);
+  for (let i = DB.dutyChecks.length - 1; i >= 0; i--) {
+    if (DB.dutyChecks[i].onDate < floor) DB.dutyChecks.splice(i, 1);
+  }
+}
 
 /* ---- floor: instance helpers ---- */
 function _bountyInstance(id) {
@@ -2062,7 +2266,7 @@ const state = { content: {}, team: [], meetings: [], slots: {}, employees: [], e
   /* Two category lists, mirroring what two API calls with different auth return.
      The employee list is what a non-admin session would actually receive. */
   resources: { categories: [], allCategories: [], sections: {}, figures: {}, docs: {}, allDocs: {} },
-  floor: { today: null, board: [], schedules: [], allBounties: [] } };
+  floor: { today: null, board: [], schedules: [], allBounties: [], coverage: {} } };
 let mode = 'employee', current = 's-home', rescheduleId = null, editId = null, uploadTargetId = null;
 let resOpen = null, resOpenAdmin = null, editCatId = null, docTargetCatId = null, docReplaceId = null;
 let viewerUrl = null, viewerDoc = null;
@@ -2138,8 +2342,10 @@ async function refresh(){
      gets a real empty state rather than a blank screen — the demo user is an
      Assistant Stylist, and hiding that case would hide the one that matters. */
   const myRole = state.me.employee ? state.me.employee.role : null;
-  state.floor.today = myRole ? await Store.getFloorDay(myRole) : null;
-  state.floor.board = myRole ? await Store.listBountyBoard(myRole) : [];
+  state.floor.today    = myRole ? await Store.getFloorDay(myRole, null, CURRENT_USER) : null;
+  state.floor.board    = myRole ? await Store.listBountyBoard(myRole) : [];
+  state.floor.coverage = {};
+  for (const s of state.floor.schedules) state.floor.coverage[s.id] = await Store.getDayCoverage(s.role);
   renderAll();
 }
 function renderAll(){ syncIdentity(); renderRail(); renderChecklist(); renderHome(); renderTeam(); renderAdminTeam(); renderRoster(); renderSlots(); renderContentForm(); renderTrainingScreen(); renderResources(); renderResourcesAdmin(); renderFloorToday(); renderFloorAdmin(); renderNav(); }
@@ -3143,15 +3349,39 @@ function renderFloorToday(){
 
   host.innerHTML = `<div style="margin-top:6px">
     <div class="eyebrow">${esc(t.schedule.name)}</div>
-    <p class="fmeta" style="margin-bottom:14px">${dayLine}</p>
+    <p class="fmeta" style="margin-bottom:4px">${dayLine}</p>
+    ${t.closed ? '' : progressLine(t)}
+    <div style="height:10px"></div>
     ${t.closed ? emptyCard(t.reason === 'closed'
         ? 'Enjoy it. Your next shift picks up where the schedule says.'
         : 'Ask Charlie to fill this day in — an empty day is not the same as a day off.')
       : currentHourCard(t)}
     ${standingCard(t.standing)}
-    ${t.closed ? '' : restOfDay(t)}
+    ${t.closed ? '' : dayChecklist(t)}
     ${bountyBoard()}
   </div>`;
+}
+
+/* A duty line you can tick. The hour still says what it is FOR — the tick is
+   an addition, not a replacement. */
+function dutyLine(d, opts){
+  const o = opts || {};
+  return `<li class="duty ${d.done?'done':''}">
+    <button class="tick ${d.done?'on':''}" role="checkbox" aria-checked="${d.done}"
+      onclick="tickDuty('${escArg(d.id)}', ${d.done ? 'false' : 'true'})"
+      aria-label="${d.done?'Undo':'Done'}: ${esc(d.text)}">${d.done?'✓':''}</button>
+    <span>${esc(d.text)}${o.hour !== undefined ? ` <span class="h">${esc(fmtHour(o.hour))}</span>` : ''}</span>
+  </li>`;
+}
+
+function progressLine(t){
+  if(!t.total) return '';
+  const left = t.total - t.done;
+  const pct = Math.round((t.done / t.total) * 100);
+  return `<div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin-top:4px">
+      <span class="fmeta">${t.done} of ${t.total} ticked${left ? ` · ${left} left` : ' · all clear'}</span>
+      <span class="bar" style="flex:1;min-width:120px"><i style="width:${pct}%"></i></span>
+    </div>`;
 }
 
 function currentHourCard(t){
@@ -3173,7 +3403,7 @@ function currentHourCard(t){
     <div class="eyebrow">Right now · ${esc(fmtHour(b.hour))}</div>
     <h2 style="font-family:'Marcellus',serif;font-weight:400;font-size:26px;margin-top:4px">${esc(b.label)}</h2>
     ${b.note ? `<p class="sub" style="margin-top:6px">${esc(b.note)}</p>` : ''}
-    ${(b.duties||[]).length ? `<ul class="topic-list" style="margin-top:10px">${b.duties.map(d=>`<li>${esc(d)}</li>`).join('')}</ul>` : ''}
+    ${(b.duties||[]).length ? `<ul class="dutylist" style="margin-top:10px">${b.duties.map(d=>dutyLine(d)).join('')}</ul>` : ''}
     ${next ? `<p class="sub" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line)">Next, at ${esc(fmtHour(next.hour))} — ${esc(next.label)}.</p>` : ''}
   </div>`;
 }
@@ -3190,12 +3420,38 @@ function standingCard(standing){
     </span></li>`).join('')}</ul></div>`;
 }
 
-function restOfDay(t){
-  const later = t.blocks.filter(b => b.hour > t.hour);
-  if(!later.length) return '';
-  return `<div class="card" style="margin-top:14px"><h3>Still to come</h3>
-    <ul class="hourlist">${later.map(b=>`<li><span class="h">${esc(fmtHour(b.hour))}</span><span>${esc(b.label)}</span></li>`).join('')}</ul>
-  </div>`;
+/* The whole day, ticked or not. Not just the current hour: a 10am duty you
+   finish at 11 still counts, and the person closing needs to see what the
+   morning left outstanding. Outstanding items from earlier hours are surfaced
+   first, because that is the thing worth acting on. */
+function dayChecklist(t){
+  const past    = t.blocks.filter(b => b.hour <  t.hour);
+  const current = t.blocks.filter(b => b.hour === t.hour || (t.currentBlock && b.id === t.currentBlock.id));
+  const later   = t.blocks.filter(b => b.hour >  t.hour);
+  const behind  = past.filter(b => !current.some(c => c.id === b.id))
+                      .flatMap(b => (b.duties||[]).filter(d => !d.done).map(d => ({ d, hour:b.hour })));
+
+  const outstanding = behind.length
+    ? `<div class="card" style="margin-top:14px">
+        <h3>Still outstanding from earlier</h3>
+        <p class="sub">Not a telling-off — just what has not been ticked yet today.</p>
+        <ul class="dutylist" style="margin-top:8px">${behind.map(x=>dutyLine(x.d, { hour:x.hour })).join('')}</ul>
+      </div>`
+    : '';
+
+  const upcoming = later.length
+    ? `<div class="card" style="margin-top:14px"><h3>Still to come</h3>
+        ${later.map(b=>`<div style="padding:10px 0;border-bottom:1px solid var(--line)">
+          <div style="display:flex;gap:12px;align-items:baseline">
+            <span class="h" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--brass);min-width:58px">${esc(fmtHour(b.hour))}</span>
+            <strong style="font-size:14px">${esc(b.label)}</strong>
+          </div>
+          ${(b.duties||[]).length?`<ul class="dutylist" style="margin-top:6px;margin-left:70px">${b.duties.map(d=>dutyLine(d)).join('')}</ul>`:''}
+        </div>`).join('')}
+      </div>`
+    : '';
+
+  return outstanding + upcoming;
 }
 
 /* ---- employee: the bounty board ---- */
@@ -3256,6 +3512,11 @@ function nameOf(empId){
 }
 function setSizeFilter(v){ sizeFilter = Number(v) || 0; renderFloorToday(); }
 
+async function tickDuty(dutyItemId, done){
+  try { await Store.setDutyCheck(CURRENT_USER, dutyItemId, done); await refresh(); }
+  catch(err){ toast(err.message); }
+}
+
 async function claimB(id){
   try { await Store.claimBounty(id, CURRENT_USER); toast('Yours — put it back any time'); await refresh(); }
   catch(err){ toast(err.message); await refresh(); }
@@ -3301,7 +3562,9 @@ function schedulePanel(s){
   }).join('');
 
   return `<div style="margin-top:6px">
-    <label class="field-label">Closed days</label>
+    ${coverageToday(s)}
+
+    <label class="field-label" style="margin-top:18px">Closed days</label>
     <div style="display:flex;gap:6px;flex-wrap:wrap">${closedRow}</div>
 
     <label class="field-label" style="margin-top:18px">All shift, every shift</label>
@@ -3311,6 +3574,32 @@ function schedulePanel(s){
     <label class="field-label" style="margin-top:18px">Hour by hour</label>
     <div class="tabstrip" role="tablist" aria-label="Days">${dayTabs}</div>
     ${dayEditor(s, schDay)}
+  </div>`;
+}
+
+/* Today's coverage for the role, counted across everyone who holds it.
+   Deliberately NOT broken down by person: the shop's question is "did the close
+   get done", and answering it by name turns a working checklist into a
+   scoreboard people start gaming. FLOOR-SCOPE.md section 4. */
+function coverageToday(s){
+  const cov = (state.floor.coverage || {})[s.id];
+  if(!cov) return '';
+  if(cov.closed) return `<div class="note"><strong>Closed today.</strong> Nothing to cover.</div>`;
+  const total = cov.blocks.reduce((n,b)=>n+b.total, 0);
+  const done  = cov.blocks.reduce((n,b)=>n+b.done, 0);
+  const pct   = total ? Math.round(done/total*100) : 0;
+  return `<div class="card" style="margin-top:4px">
+    <h3>Today, so far</h3>
+    <p class="sub">Ticked by anyone working this role today — not broken down by person, on purpose.</p>
+    <div style="display:flex;gap:10px;align-items:baseline;margin-top:8px;flex-wrap:wrap">
+      <span class="fmeta">${done} of ${total}</span>
+      <span class="bar" style="flex:1;min-width:140px"><i style="width:${pct}%"></i></span>
+    </div>
+    <ul class="hourlist" style="margin-top:10px">${cov.blocks.map(b=>`<li>
+      <span class="h">${esc(fmtHour(b.hour))}</span>
+      <span style="flex:1">${esc(b.label)}</span>
+      <span class="fmeta">${b.total ? `${b.done}/${b.total}` : '—'}</span>
+    </li>`).join('')}</ul>
   </div>`;
 }
 
@@ -3365,8 +3654,8 @@ function blockEditor(b){
     </div>
     <label class="field-label" for="blkNote-${esc(b.id)}">Note <span style="text-transform:none;letter-spacing:0">(optional — why this hour is what it is)</span></label>
     <input class="field" id="blkNote-${esc(b.id)}" value="${esc(b.note||'')}">
-    <label class="field-label" for="blkDuties-${esc(b.id)}">Duties, one per line</label>
-    <textarea class="notes" id="blkDuties-${esc(b.id)}" rows="4">${esc((b.duties||[]).join('\n'))}</textarea>
+    <label class="field-label" for="blkDuties-${esc(b.id)}">Duties, one per line <span style="text-transform:none;letter-spacing:0">(each one is tickable on the day)</span></label>
+    <textarea class="notes" id="blkDuties-${esc(b.id)}" rows="4">${esc(_itemsOf(b.id).map(d => d.text).join('\n'))}</textarea>
     <div style="margin-top:10px"><button class="btn small" onclick="saveBlock('${escArg(b.id)}')">Save this hour</button></div>
   </div>`;
 }
