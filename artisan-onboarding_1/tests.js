@@ -147,7 +147,8 @@ function restoreDB() {
 }
 
 /* Dynamic screens are built by innerHTML and would otherwise leak between tests. */
-const DYNAMIC_SCREENS = ['#s-member', '#s-meeting', '#a-employee', '#resPanel', '#resPanelAdmin', '#resTabs', '#resTabsAdmin'];
+const DYNAMIC_SCREENS = ['#s-member', '#s-meeting', '#a-employee', '#resPanel', '#resPanelAdmin', '#resTabs', '#resTabsAdmin',
+                         '#floorToday', '#schTabs', '#schPanel', '#btyAdmin'];
 
 async function resetApp() {
   restoreDB();
@@ -159,6 +160,13 @@ async function resetApp() {
   editCatId = null;
   docTargetCatId = null;
   docReplaceId = null;
+  schOpen = null;
+  schDay = 'default';
+  editBountyId = null;
+  sizeFilter = 0;
+  /* Floor resolution reads _now(). A test that stubs it must not leak that
+     stub into the next test, or the failure lands somewhere unrelated. */
+  _setNow(null);
   /* Revokes any live object URL and unsets the scroll lock the overlay sets. */
   closeViewer();
   for (const sel of DYNAMIC_SCREENS) { const el = q(sel); if (el) el.innerHTML = ''; }
@@ -4061,15 +4069,17 @@ suite('render · navigation', () => {
 
   test('employee nav renders one button per entry plus its section header', () => {
     deepEq(qa('#nav .navbtn').map(b => text(b)),
-      ['Home', 'Meet the shop', 'My checklist', 'Meetings', 'Training access', 'Resources', 'Questions'],
+      ['Home', 'Meet the shop', 'My checklist', 'Meetings', 'Training access', 'Resources', 'Questions', 'Today'],
       'employee nav should list every NAV.employee entry in declared order');
-    deepEq(qa('#nav .nav-label').map(l => text(l)), ['Onboarding', 'Reference'],
-      'employee nav groups the reference sections under their own header');
+    /* Floor is its own header on purpose: onboarding ends, the hourly box does
+       not. See FLOOR-SCOPE.md section 8. */
+    deepEq(qa('#nav .nav-label').map(l => text(l)), ['Onboarding', 'Reference', 'Floor'],
+      'employee nav groups the reference and floor sections under their own headers');
   });
 
   test('each nav button carries the screen id it navigates to', () => {
     deepEq(qa('#nav .navbtn').map(b => handlerArg(b, 'go')),
-      ['s-home', 's-team', 's-checklist', 's-meetings', 's-training', 's-resources', 's-help'],
+      ['s-home', 's-team', 's-checklist', 's-meetings', 's-training', 's-resources', 's-help', 's-floor'],
       'every nav button should be wired to go() with its own screen id');
   });
 
@@ -4103,7 +4113,7 @@ suite('render · navigation', () => {
   test('admin mode swaps the whole nav for the admin entries', () => {
     setMode('admin');
     deepEq(qa('#nav .navbtn').map(b => text(b)),
-      ['Overview', 'Team & photos', 'Meeting times', 'Content', 'Resources'],
+      ['Overview', 'Team & photos', 'Meeting times', 'Content', 'Resources', 'Floor ops'],
       'admin nav should list every NAV.admin entry in declared order');
     deepEq(qa('#nav .nav-label').map(l => text(l)), ['Manage'],
       'admin nav should render its own section header');
@@ -7058,6 +7068,1100 @@ suite('Resources · escaping', () => {
     selectResourceTab('rc_shop', 'emp');
     const bad = qa('#resPanel a').find(a => (a.getAttribute('href') || '').startsWith('javascript:'));
     notOk(bad, 'a javascript: href reached the page');
+  });
+});
+
+/* ===================== floor: hourly duties + bounties =================== */
+
+/* Aug 2026 anchors used throughout. Fri 21st is an ordinary day for both
+   seeded schedules, Sat 22nd is the front desk's overridden day, and Mon 24th
+   is closed. Everything below pins _now() rather than trusting the clock. */
+const FRI = (h, m) => new Date(2026, 7, 21, h, m || 0);   // Friday 21 August 2026
+const SAT = (h, m) => new Date(2026, 7, 22, h, m || 0);   // Saturday
+const SUN = (h, m) => new Date(2026, 7, 23, h, m || 0);   // Sunday   — closed
+const MON = (h, m) => new Date(2026, 7, 24, h, m || 0);   // Monday   — closed
+
+suite('seed · floor referential integrity', () => {
+
+  test('every standing duty points at a real schedule', () => {
+    const ids = new Set(DB.dutySchedules.map(s => s.id));
+    for (const r of DB.dutyStanding) ok(ids.has(r.scheduleId), `${r.id} points at missing schedule ${r.scheduleId}`);
+  });
+
+  test('every duty block points at a real schedule', () => {
+    const ids = new Set(DB.dutySchedules.map(s => s.id));
+    for (const b of DB.dutyBlocks) ok(ids.has(b.scheduleId), `${b.id} points at missing schedule ${b.scheduleId}`);
+  });
+
+  test('one block per schedule per day per hour', () => {
+    const seen = new Set();
+    for (const b of DB.dutyBlocks) {
+      const key = `${b.scheduleId}|${b.dayKey}|${b.hour}`;
+      notOk(seen.has(key), `two blocks claim ${key} — "what am I doing at that hour" must have one answer`);
+      seen.add(key);
+    }
+  });
+
+  test('every block hour is a real hour and every day key is a real day', () => {
+    for (const b of DB.dutyBlocks) {
+      ok(Number.isInteger(b.hour) && b.hour >= 0 && b.hour < 24, `${b.id} has hour ${b.hour}`);
+      ok(b.dayKey === 'default' || DAY_KEYS.indexOf(b.dayKey) >= 0, `${b.id} has day key ${b.dayKey}`);
+    }
+  });
+
+  test('every schedule role is a role somebody actually holds', () => {
+    const roles = new Set(DB.employees.map(e => e.role));
+    for (const s of DB.dutySchedules) ok(roles.has(s.role), `${s.id} is for "${s.role}", which no employee holds`);
+  });
+
+  test('schedule roles are unique — one schedule per role', () => {
+    const seen = new Set();
+    for (const s of DB.dutySchedules) { notOk(seen.has(s.role), `two schedules for ${s.role}`); seen.add(s.role); }
+  });
+
+  test('closed days are real weekday keys', () => {
+    for (const s of DB.dutySchedules) {
+      for (const d of s.closedDays) has(DAY_KEYS, d, `${s.id} lists closed day "${d}"`);
+    }
+  });
+
+  test('every bounty instance points at a real bounty', () => {
+    const ids = new Set(DB.bounties.map(b => b.id));
+    for (const i of DB.bountyInstances) ok(ids.has(i.bountyId), `${i.id} points at missing bounty ${i.bountyId}`);
+  });
+
+  test('one instance per bounty per period', () => {
+    const seen = new Set();
+    for (const i of DB.bountyInstances) {
+      const key = i.bountyId + '|' + i.periodKey;
+      notOk(seen.has(key), `two instances for ${key}`);
+      seen.add(key);
+    }
+  });
+
+  test('every instance satisfies the state shape the schema checks', () => {
+    for (const i of DB.bountyInstances) {
+      if (i.state === 'open')    { eq(i.claimedBy, null, `${i.id} is open but claimed`); eq(i.completedBy, null, `${i.id} is open but completed`); }
+      if (i.state === 'claimed') { ok(i.claimedBy, `${i.id} is claimed by nobody`); eq(i.completedBy, null, `${i.id} is claimed but completed`); }
+      if (i.state === 'done')    ok(i.completedAt, `${i.id} is done with no completion time`);
+      /* A claim is not a commitment: a miss must not carry someone's name. */
+      if (i.state === 'missed')  { eq(i.claimedBy, null, `${i.id} is missed but still names a claimant`); eq(i.completedBy, null, `${i.id} is missed but completed`); }
+    }
+  });
+
+  test('every claimant and completer is a real employee', () => {
+    const ids = new Set(DB.employees.map(e => e.id));
+    for (const i of DB.bountyInstances) {
+      if (i.claimedBy)   ok(ids.has(i.claimedBy),   `${i.id} claimed by unknown ${i.claimedBy}`);
+      if (i.completedBy) ok(ids.has(i.completedBy), `${i.id} completed by unknown ${i.completedBy}`);
+    }
+  });
+
+  test('every bounty has a usable size and a known period', () => {
+    for (const b of DB.bounties) {
+      ok(Number.isInteger(b.sizeMin) && b.sizeMin > 0 && b.sizeMin <= 480, `${b.id} has size ${b.sizeMin}`);
+      has(['weekly', 'monthly', 'quarterly'], b.period, `${b.id} has period "${b.period}"`);
+    }
+  });
+
+  test('every role a bounty is scoped to is a role somebody holds', () => {
+    const roles = new Set(DB.employees.map(e => e.role));
+    for (const b of DB.bounties) {
+      for (const r of b.roles) ok(roles.has(r), `${b.id} is scoped to "${r}", which no employee holds`);
+    }
+  });
+
+  test('floor rows carry the documented id prefixes', () => {
+    for (const s of DB.dutySchedules)  match(s.id, /^sch_/, `${s.id} should be sch_`);
+    for (const r of DB.dutyStanding)   match(r.id, /^std_/, `${r.id} should be std_`);
+    for (const b of DB.dutyBlocks)     match(b.id, /^blk_/, `${b.id} should be blk_`);
+    for (const b of DB.bounties)       match(b.id, /^bty_/, `${b.id} should be bty_`);
+    for (const i of DB.bountyInstances) match(i.id, /^bi_/, `${i.id} should be bi_`);
+  });
+
+  test('the authored seed carries only historical instances, so it never guesses what week it is', () => {
+    /* Only the bi_seed* rows are authored. The harness snapshots DB after the
+       first refresh(), and that refresh already opened the current period
+       lazily — those generated rows are expected, and are what the rollover
+       tests below act on. */
+    const authored = DB.bountyInstances.filter(i => /^bi_seed/.test(i.id));
+    gt(authored.length, 0, 'the seed should carry some history');
+    for (const i of authored) {
+      const b = DB.bounties.find(x => x.id === i.bountyId);
+      neq(i.periodKey, periodKeyFor(b.period, new Date()), `${i.id} is authored into the current period`);
+    }
+  });
+
+  test('boot opens the current period rather than leaving the board empty', () => {
+    const generated = DB.bountyInstances.filter(i => !/^bi_seed/.test(i.id));
+    gt(generated.length, 0, 'the first read should have materialised this period');
+    for (const i of generated) {
+      const b = DB.bounties.find(x => x.id === i.bountyId);
+      eq(i.periodKey, periodKeyFor(b.period, new Date()), `${i.id} should be keyed to the period it was opened in`);
+    }
+  });
+});
+
+suite('floor · period keys', () => {
+
+  test('1 January 2026 is a Thursday, so it belongs to its own year’s week 1', () => {
+    eq(periodKeyFor('weekly', new Date(2026, 0, 1)), '2026-W01');
+  });
+
+  test('1 January 2027 is a Friday, so it belongs to 2026’s final week', () => {
+    /* The classic ISO trap: the calendar year and the ISO year disagree. */
+    eq(periodKeyFor('weekly', new Date(2027, 0, 1)), '2026-W53');
+  });
+
+  test('a week spanning a month boundary keeps one key', () => {
+    const monday = periodKeyFor('weekly', new Date(2026, 7, 31));   // Mon 31 Aug
+    const tuesday = periodKeyFor('weekly', new Date(2026, 8, 1));   // Tue 1 Sep
+    eq(tuesday, monday, 'one week must not split across two period keys');
+  });
+
+  test('every day of one week resolves to the same key', () => {
+    const keys = new Set();
+    for (let d = 17; d <= 23; d++) keys.add(periodKeyFor('weekly', new Date(2026, 7, d)));
+    len(Array.from(keys), 1, 'Mon–Sun of one week should share a key');
+  });
+
+  test('monthly and quarterly keys are zero-padded and quarter-aligned', () => {
+    eq(periodKeyFor('monthly',   new Date(2026, 0, 9)),  '2026-01');
+    eq(periodKeyFor('monthly',   new Date(2026, 7, 21)), '2026-08');
+    eq(periodKeyFor('quarterly', new Date(2026, 0, 1)),  '2026-Q1');
+    eq(periodKeyFor('quarterly', new Date(2026, 7, 21)), '2026-Q3');
+    eq(periodKeyFor('quarterly', new Date(2026, 11, 31)),'2026-Q4');
+  });
+
+  test('an unknown period is refused rather than silently keyed', () => {
+    let threw = false;
+    try { periodKeyFor('fortnightly', new Date(2026, 7, 21)); } catch (e) { threw = true; }
+    ok(threw, 'an unknown period should throw, not produce a key nothing else will match');
+  });
+
+  test('the key moves when the period does, and only then', () => {
+    const a = periodKeyFor('weekly', FRI(9));
+    eq(periodKeyFor('weekly', FRI(23)), a, 'later the same day is the same week');
+    eq(periodKeyFor('weekly', SAT(9)),  a, 'the next day is still the same week');
+    neq(periodKeyFor('weekly', new Date(2026, 7, 25)), a, 'the following Tuesday is a new week');
+  });
+});
+
+suite('floor · day resolution', () => {
+
+  test('an ordinary day uses the default blocks', async () => {
+    const day = await Store.getFloorDay('Front Desk Concierge', FRI(11));
+    eq(day.closed, false);
+    eq(day.source, 'default', 'Friday should follow the "most days" schedule');
+    eq(day.dayName, 'Friday');
+  });
+
+  test('an overridden day replaces the default entirely — nothing leaks in', async () => {
+    const day = await Store.getFloorDay('Front Desk Concierge', SAT(11));
+    eq(day.source, 'sat', 'Saturday has its own blocks');
+    const defaults = DB.dutyBlocks.filter(b => b.scheduleId === 'sch_frontdesk' && b.dayKey === 'default');
+    const ids = day.blocks.map(b => b.id);
+    for (const d of defaults) lacks(ids, d.id, `default block ${d.id} leaked into the Saturday override`);
+    for (const b of day.blocks) eq(b.dayKey, 'sat', `${b.id} should be a Saturday block`);
+  });
+
+  test('a closed day is closed, with a reason', async () => {
+    for (const at of [MON(11), SUN(11)]) {
+      const day = await Store.getFloorDay('Front Desk Concierge', at);
+      eq(day.closed, true, `${day.dayName} should be closed`);
+      eq(day.reason, 'closed');
+      len(day.blocks, 0, 'a closed day has no blocks');
+      eq(day.currentBlock, null);
+    }
+  });
+
+  test('a role with no schedule is reported, not silently empty', async () => {
+    const day = await Store.getFloorDay('Master Stylist · Manager', FRI(11));
+    eq(day.schedule, null);
+    eq(day.closed, true);
+    eq(day.reason, 'no-schedule', 'the caller must be able to tell "no schedule" from "day off"');
+  });
+
+  test('standing duties survive a day override — they are standing', async () => {
+    const ordinary = await Store.getFloorDay('Front Desk Concierge', FRI(11));
+    const saturday = await Store.getFloorDay('Front Desk Concierge', SAT(11));
+    gt(ordinary.standing.length, 0, 'the front desk has standing duties');
+    deepEq(saturday.standing.map(s => s.id), ordinary.standing.map(s => s.id),
+      'an override changes the hours, never the standing duties');
+  });
+
+  test('creating an override copies the default day as a starting point', async () => {
+    const before = (await Store.getFloorDay('Assistant Stylist', FRI(11))).blocks.map(b => b.label);
+    await Store.createDayOverride('sch_assistant', 'fri');
+    const after = await Store.getFloorDay('Assistant Stylist', FRI(11));
+    eq(after.source, 'fri', 'Friday should now be its own day');
+    deepEq(after.blocks.map(b => b.label), before, 'the override starts as a copy, so the admin edits rather than starts blank');
+    const ids = new Set(DB.dutyBlocks.filter(b => b.dayKey === 'default' && b.scheduleId === 'sch_assistant').map(b => b.id));
+    for (const b of after.blocks) notOk(ids.has(b.id), 'the copy must be new rows, not the default rows re-labelled');
+  });
+
+  test('editing an overridden day leaves the default day alone', async () => {
+    await Store.createDayOverride('sch_assistant', 'fri');
+    const fri = await Store.getFloorDay('Assistant Stylist', FRI(9));
+    await Store.updateDutyBlock(fri.blocks[0].id, { label: 'Friday only' });
+    const thu = await Store.getFloorDay('Assistant Stylist', new Date(2026, 7, 20, 9, 0));
+    eq(thu.source, 'default');
+    neq(thu.blocks[0].label, 'Friday only', 'the default day must not follow an override edit');
+  });
+
+  test('dropping an override returns the day to the default', async () => {
+    await Store.createDayOverride('sch_assistant', 'fri');
+    await Store.clearDayOverride('sch_assistant', 'fri');
+    const day = await Store.getFloorDay('Assistant Stylist', FRI(11));
+    eq(day.source, 'default', 'the day should follow "most days" again');
+    len(DB.dutyBlocks.filter(b => b.scheduleId === 'sch_assistant' && b.dayKey === 'fri'), 0, 'the override rows should be gone');
+  });
+
+  test('an override cannot be created twice', async () => {
+    await Store.createDayOverride('sch_assistant', 'fri');
+    await throwsAsync(() => Store.createDayOverride('sch_assistant', 'fri'), 'a second override for one day should be refused');
+  });
+
+  test('closing a day wins over an override that exists for it', async () => {
+    await Store.setScheduleClosedDays('sch_frontdesk', ['mon', 'sun', 'sat']);
+    const day = await Store.getFloorDay('Front Desk Concierge', SAT(11));
+    eq(day.closed, true, 'closed is checked before the override');
+    eq(day.reason, 'closed');
+    gt(DB.dutyBlocks.filter(b => b.dayKey === 'sat').length, 0, 'closing a day must not delete its blocks');
+  });
+
+  test('a day with nothing authored reads as closed for a different reason', async () => {
+    for (let i = DB.dutyBlocks.length - 1; i >= 0; i--) {
+      if (DB.dutyBlocks[i].scheduleId === 'sch_assistant') DB.dutyBlocks.splice(i, 1);
+    }
+    const day = await Store.getFloorDay('Assistant Stylist', FRI(11));
+    eq(day.closed, true);
+    eq(day.reason, 'no-blocks', '"nothing authored" is not the same as "day off" and the UI says so');
+  });
+});
+
+suite('floor · which hour is now', () => {
+
+  test('before the first block the day has not started', async () => {
+    const day = await Store.getFloorDay('Front Desk Concierge', FRI(7));
+    eq(day.position, 'before-open');
+    eq(day.currentBlock, null);
+    ok(day.nextBlock, 'it should still say what is coming');
+    eq(day.nextBlock.hour, 9);
+  });
+
+  test('an hourly schedule names the block for the hour', async () => {
+    const day = await Store.getFloorDay('Front Desk Concierge', FRI(14, 30));
+    eq(day.position, 'open');
+    eq(day.currentBlock.hour, 14);
+    eq(day.currentBlock.label, 'The quiet hour');
+    eq(day.nextBlock.hour, 15, 'and what follows it');
+  });
+
+  test('a sparse schedule keeps the last block governing until the next one starts', async () => {
+    /* The assistant has blocks at 9, 11, 13, 15, 17 — noon has to answer with
+       the 11 o'clock block, not with nothing. */
+    const noon = await Store.getFloorDay('Assistant Stylist', FRI(12, 15));
+    eq(noon.currentBlock.hour, 11, 'noon is governed by the 11 o’clock block');
+    eq(noon.nextBlock.hour, 13);
+  });
+
+  test('the last block governs to the end of its own hour, then the day is done', async () => {
+    const late  = await Store.getFloorDay('Assistant Stylist', FRI(17, 59));
+    eq(late.currentBlock.hour, 17, 'the last block still governs at 17:59');
+    eq(late.nextBlock, null, 'there is nothing after it');
+    const after = await Store.getFloorDay('Assistant Stylist', FRI(18, 0));
+    eq(after.position, 'after-close');
+    eq(after.currentBlock, null);
+    eq(after.nextBlock, null);
+  });
+
+  test('the Saturday override supplies its own current hour', async () => {
+    const day = await Store.getFloorDay('Front Desk Concierge', SAT(14, 10));
+    eq(day.currentBlock.label, 'Second wind', 'Saturday at 2pm is not Friday at 2pm');
+    eq(day.currentBlock.dayKey, 'sat');
+  });
+
+  test('every hour of an open day resolves to exactly one block', async () => {
+    const day = await Store.getFloorDay('Front Desk Concierge', FRI(9));
+    const first = day.blocks[0].hour, last = day.blocks[day.blocks.length - 1].hour;
+    for (let h = first; h <= last; h++) {
+      const at = await Store.getFloorDay('Front Desk Concierge', FRI(h));
+      eq(at.position, 'open', `${h}:00 should be inside the day`);
+      ok(at.currentBlock, `${h}:00 should have a governing block`);
+      lte(at.currentBlock.hour, h, `${h}:00 should be governed by a block at or before it`);
+    }
+  });
+
+  test('reading “now” goes through the injectable clock, not the real one', async () => {
+    _setNow(SAT(11, 0));
+    const day = await Store.getFloorDay('Front Desk Concierge');
+    eq(day.dayName, 'Saturday', 'getFloorDay with no date should use _now()');
+    eq(day.currentBlock.dayKey, 'sat');
+  });
+});
+
+suite('floor · bounty periods and rollover', () => {
+
+  test('the first read of a period opens an instance', async () => {
+    _setNow(FRI(14));
+    const board = await Store.listBountyBoard('Front Desk Concierge');
+    gt(board.length, 0, 'the front desk should have bounties');
+    for (const b of board) {
+      eq(b.instance.periodKey, periodKeyFor(b.period, FRI(14)), `${b.id} should be keyed to the current period`);
+      eq(b.instance.state, 'open');
+    }
+  });
+
+  test('reading twice in one period reuses the instance rather than opening another', async () => {
+    _setNow(FRI(14));
+    const first  = await Store.listBountyBoard('Front Desk Concierge');
+    const second = await Store.listBountyBoard('Front Desk Concierge');
+    deepEq(second.map(b => b.instance.id), first.map(b => b.instance.id), 'one period, one instance');
+  });
+
+  test('an unfinished bounty is marked missed when its period rolls over', async () => {
+    _setNow(FRI(14));
+    const before = (await Store.listBountyBoard('Front Desk Concierge')).find(b => b.id === 'bty_shelves');
+    const oldId = before.instance.id;
+
+    _setNow(new Date(2026, 7, 28, 14, 0));            // a week later
+    const after = (await Store.listBountyBoard('Front Desk Concierge')).find(b => b.id === 'bty_shelves');
+    neq(after.instance.id, oldId, 'a new period gets a new instance');
+    eq(DB.bountyInstances.find(i => i.id === oldId).state, 'missed',
+      'the previous period’s instance should be closed out, not left dangling');
+    eq(after.instance.state, 'open');
+  });
+
+  test('a miss drops the claimant — a claim is not a commitment', async () => {
+    _setNow(FRI(14));
+    const b = (await Store.listBountyBoard('Front Desk Concierge')).find(x => x.id === 'bty_shelves');
+    await Store.claimBounty(b.instance.id, 'emp_maya');
+    eq(DB.bountyInstances.find(i => i.id === b.instance.id).claimedBy, 'emp_maya');
+
+    _setNow(new Date(2026, 7, 28, 14, 0));
+    await Store.listBountyBoard('Front Desk Concierge');
+    const rolled = DB.bountyInstances.find(i => i.id === b.instance.id);
+    eq(rolled.state, 'missed');
+    eq(rolled.claimedBy, null, 'a missed period must not leave a permanent mark with someone’s name on it');
+  });
+
+  test('a completed bounty is never rewritten by a rollover', async () => {
+    const done = DB.bountyInstances.find(i => i.id === 'bi_seed1');
+    eq(done.state, 'done');
+    _setNow(new Date(2026, 9, 2, 14, 0));             // months later
+    await Store.listBountyBoard('Front Desk Concierge');
+    const after = DB.bountyInstances.find(i => i.id === 'bi_seed1');
+    eq(after.state, 'done', 'history is the record — it does not get overwritten');
+    eq(after.completedBy, 'emp_maya');
+  });
+
+  test('instances are never deleted, so the misses stay visible', async () => {
+    const before = DB.bountyInstances.length;
+    _setNow(FRI(14));            await Store.listBountyBoard('Front Desk Concierge');
+    _setNow(new Date(2026, 7, 28)); await Store.listBountyBoard('Front Desk Concierge');
+    _setNow(new Date(2026, 8, 4));  await Store.listBountyBoard('Front Desk Concierge');
+    gte(DB.bountyInstances.length, before, 'rollover only ever adds rows');
+    ok(DB.bountyInstances.some(i => i.state === 'missed'), 'and a miss survives to be seen');
+  });
+
+  test('monthly and quarterly bounties do not roll over with the week', async () => {
+    _setNow(FRI(14));
+    const first = (await Store.listBountyBoard('Assistant Stylist')).find(b => b.period === 'quarterly');
+    ok(first, 'the assistant should see an open-to-anyone quarterly bounty');
+    _setNow(new Date(2026, 7, 28, 14, 0));            // a week later, same quarter
+    const same = (await Store.listBountyBoard('Assistant Stylist')).find(b => b.id === first.id);
+    eq(same.instance.id, first.instance.id, 'a quarterly bounty should not turn over weekly');
+  });
+});
+
+suite('floor · claiming', () => {
+
+  async function firstOpen(role) {
+    _setNow(FRI(14));
+    const board = await Store.listBountyBoard(role || 'Front Desk Concierge');
+    return board.find(b => b.instance.state === 'open');
+  }
+
+  test('claiming locks the bounty to one person', async () => {
+    const b = await firstOpen();
+    const inst = await Store.claimBounty(b.instance.id, 'emp_maya');
+    eq(inst.state, 'claimed');
+    eq(inst.claimedBy, 'emp_maya');
+    ok(inst.claimedAt, 'a claim is stamped');
+  });
+
+  test('a second person cannot take a claimed bounty', async () => {
+    const b = await firstOpen();
+    await Store.claimBounty(b.instance.id, 'emp_maya');
+    await throwsAsync(() => Store.claimBounty(b.instance.id, 'emp_jordan'),
+      'two people on the same shelf is exactly the waste the lock exists to prevent');
+  });
+
+  test('re-claiming your own is harmless', async () => {
+    const b = await firstOpen();
+    await Store.claimBounty(b.instance.id, 'emp_maya');
+    const again = await Store.claimBounty(b.instance.id, 'emp_maya');
+    eq(again.claimedBy, 'emp_maya');
+  });
+
+  test('releasing puts it back and records nothing against the person', async () => {
+    const b = await firstOpen();
+    await Store.claimBounty(b.instance.id, 'emp_maya');
+    const back = await Store.releaseBounty(b.instance.id, 'emp_maya');
+    eq(back.state, 'open');
+    eq(back.claimedBy, null, 'no residue');
+    eq(back.claimedAt, null);
+  });
+
+  test('only the holder can release a claim', async () => {
+    const b = await firstOpen();
+    await Store.claimBounty(b.instance.id, 'emp_maya');
+    await throwsAsync(() => Store.releaseBounty(b.instance.id, 'emp_jordan'));
+  });
+
+  test('releasing something nobody holds is refused', async () => {
+    const b = await firstOpen();
+    await throwsAsync(() => Store.releaseBounty(b.instance.id, 'emp_maya'));
+  });
+
+  test('completing an unclaimed bounty claims it on the way', async () => {
+    const b = await firstOpen();
+    const done = await Store.completeBounty(b.instance.id, 'emp_maya');
+    eq(done.state, 'done');
+    eq(done.completedBy, 'emp_maya');
+    eq(done.claimedBy, 'emp_maya', 'doing it without claiming it first is normal, and should still record who');
+  });
+
+  test('you cannot complete what someone else is holding', async () => {
+    const b = await firstOpen();
+    await Store.claimBounty(b.instance.id, 'emp_maya');
+    await throwsAsync(() => Store.completeBounty(b.instance.id, 'emp_jordan'));
+  });
+
+  test('a done bounty cannot be claimed or re-done', async () => {
+    const b = await firstOpen();
+    await Store.completeBounty(b.instance.id, 'emp_maya');
+    await throwsAsync(() => Store.claimBounty(b.instance.id, 'emp_jordan'));
+    await throwsAsync(() => Store.completeBounty(b.instance.id, 'emp_jordan'));
+  });
+
+  test('a closed period cannot be claimed', async () => {
+    await throwsAsync(() => Store.claimBounty('bi_seed2', 'emp_maya'), 'bi_seed2 is a missed period');
+  });
+
+  test('an unknown instance or employee is refused, not written', async () => {
+    const b = await firstOpen();
+    await throwsAsync(() => Store.claimBounty('bi_nope', 'emp_maya'));
+    await throwsAsync(() => Store.claimBounty(b.instance.id, 'emp_nope'));
+    eq(DB.bountyInstances.find(i => i.id === b.instance.id).state, 'open', 'a refused claim must not half-write');
+  });
+});
+
+suite('floor · who sees which bounty', () => {
+
+  test('a role-scoped bounty reaches only that role', async () => {
+    _setNow(FRI(14));
+    const desk = (await Store.listBountyBoard('Front Desk Concierge')).map(b => b.id);
+    const asst = (await Store.listBountyBoard('Assistant Stylist')).map(b => b.id);
+    has(desk, 'bty_shelves', 'the desk sees its own bounties');
+    lacks(asst, 'bty_shelves', 'a desk-scoped bounty must not reach the assistant');
+  });
+
+  test('an unscoped bounty reaches everyone', async () => {
+    _setNow(FRI(14));
+    for (const role of ['Front Desk Concierge', 'Assistant Stylist']) {
+      const ids = (await Store.listBountyBoard(role)).map(b => b.id);
+      has(ids, 'bty_supplies', `${role} should see the open-to-anyone bounties`);
+    }
+  });
+
+  test('an archived bounty leaves the board without deleting its history', async () => {
+    _setNow(FRI(14));
+    await Store.listBountyBoard('Front Desk Concierge');
+    const before = DB.bountyInstances.filter(i => i.bountyId === 'bty_shelves').length;
+    await Store.setBountyStatus('bty_shelves', 'archived');
+    const ids = (await Store.listBountyBoard('Front Desk Concierge')).map(b => b.id);
+    lacks(ids, 'bty_shelves', 'an archived bounty is off the board');
+    eq(DB.bountyInstances.filter(i => i.bountyId === 'bty_shelves').length, before, 'its history stays');
+    has((await Store.listBounties(true)).map(b => b.id), 'bty_shelves', 'and admin can still see it');
+  });
+
+  test('an archived bounty stops opening new periods', async () => {
+    await Store.setBountyStatus('bty_shelves', 'archived');
+    _setNow(new Date(2026, 10, 6, 14, 0));
+    await Store.listBountyBoard('Front Desk Concierge');
+    const nov = DB.bountyInstances.filter(i => i.bountyId === 'bty_shelves' && i.periodKey.indexOf('2026-W4') === 0);
+    len(nov, 0, 'an archived bounty should not keep generating instances nobody can do');
+  });
+});
+
+suite('floor · admin edits', () => {
+
+  test('two blocks cannot claim the same hour', async () => {
+    await throwsAsync(() => Store.addDutyBlock('sch_frontdesk', 'default', 9, { label: 'Clash' }),
+      '9am is already taken on the default day');
+  });
+
+  test('the same hour on a different day is fine', async () => {
+    const row = await Store.addDutyBlock('sch_frontdesk', 'sat', 20, { label: 'Late Saturday' });
+    eq(row.dayKey, 'sat');
+    eq(row.hour, 20);
+  });
+
+  test('an impossible hour is refused', async () => {
+    for (const h of [-1, 24, 9.5, 'nine']) {
+      await throwsAsync(() => Store.addDutyBlock('sch_assistant', 'default', h, { label: 'x' }), `hour ${h} should be refused`);
+    }
+  });
+
+  test('blank duty lines are dropped rather than stored as empty bullets', async () => {
+    const b = await Store.updateDutyBlock('blk_fd_09', { duties: ['Real duty', '', '   ', 'Another'] });
+    deepEq(b.duties.map(d => d.text), ['Real duty', 'Another'], 'an empty line in the textarea is not a duty');
+    deepEq(b.duties.map(d => d.sortOrder), [1, 2], 'and the survivors are renumbered');
+  });
+
+  test('closed days are filtered to real weekdays', async () => {
+    const s = await Store.setScheduleClosedDays('sch_frontdesk', ['mon', 'funday', 'sat']);
+    deepEq(s.closedDays, ['mon', 'sat'], 'an unknown day should be dropped, not stored');
+  });
+
+  test('a bounty needs a title, a known period and a real size', async () => {
+    await throwsAsync(() => Store.addBounty({ title: '   ', sizeMin: 30 }));
+    await throwsAsync(() => Store.addBounty({ title: 'X', period: 'fortnightly', sizeMin: 30 }));
+    for (const size of [0, -5, 999, 'soon', undefined]) {
+      await throwsAsync(() => Store.addBounty({ title: 'X', period: 'weekly', sizeMin: size }), `size ${size} should be refused`);
+    }
+  });
+
+  test('a new bounty lands on the board of the roles it names', async () => {
+    await Store.addBounty({ title: 'Polish the mirrors', period: 'weekly', sizeMin: 15, roles: ['Assistant Stylist'] });
+    _setNow(FRI(14));
+    const asst = (await Store.listBountyBoard('Assistant Stylist')).map(b => b.title);
+    const desk = (await Store.listBountyBoard('Front Desk Concierge')).map(b => b.title);
+    has(asst, 'Polish the mirrors');
+    lacks(desk, 'Polish the mirrors');
+  });
+
+  test('the caller’s array is copied, not stored by reference', async () => {
+    const roles = ['Assistant Stylist'];
+    const b = await Store.addBounty({ title: 'Copy check', period: 'weekly', sizeMin: 15, roles });
+    roles.push('Front Desk Concierge');
+    const stored = DB.bounties.find(x => x.id === b.id);
+    len(stored.roles, 1, 'a later push by the caller must not edit the database');
+  });
+
+  test('a standing duty needs a label', async () => {
+    await throwsAsync(() => Store.addStandingDuty('sch_frontdesk', { label: '  ' }));
+  });
+
+  test('editing an unknown row is refused rather than creating one', async () => {
+    await throwsAsync(() => Store.updateDutyBlock('blk_nope', { label: 'x' }));
+    await throwsAsync(() => Store.addDutyBlock('sch_nope', 'default', 9, {}));
+    await throwsAsync(() => Store.addStandingDuty('sch_nope', { label: 'x' }));
+    await throwsAsync(() => Store.updateBounty('bty_nope', { title: 'x' }));
+    await throwsAsync(() => Store.setBountyStatus('bty_shelves', 'sideways'));
+  });
+});
+
+suite('render · floor today', () => {
+
+  test('the signed-in employee sees their own role’s schedule', async () => {
+    _setNow(FRI(11, 30));
+    await refresh();
+    go('s-floor');
+    const t = text('#floorToday');
+    has(t, 'Assistant stylist', 'Jordan is an Assistant Stylist and should see that schedule');
+    has(t, 'Shadow and assist', 'and the block governing 11:30');
+  });
+
+  test('standing duties appear once, not copied into every hour', async () => {
+    _setNow(FRI(11, 30));
+    await refresh();
+    go('s-floor');
+    const body = html('#floorToday');
+    const needle = 'Stations swept and stocked between every guest';
+    const count = body.split(needle).length - 1;
+    eq(count, 1, 'a standing duty belongs above the hours, exactly once');
+  });
+
+  test('a closed day says so instead of showing an empty grid', async () => {
+    _setNow(MON(11));
+    await refresh();
+    go('s-floor');
+    const t = text('#floorToday');
+    has(t, 'closed', 'Monday should read as closed');
+    lacks(t, 'Shadow and assist', 'no hours on a closed day');
+  });
+
+  test('a role with no schedule gets an explanation and still gets the board', async () => {
+    for (let i = DB.dutySchedules.length - 1; i >= 0; i--) {
+      if (DB.dutySchedules[i].id === 'sch_assistant') DB.dutySchedules.splice(i, 1);
+    }
+    _setNow(FRI(11));
+    await refresh();
+    go('s-floor');
+    const t = text('#floorToday');
+    has(t, 'No hourly schedule', 'the empty state should name the gap');
+    has(t, 'Bounties', 'and the bounty board still applies');
+  });
+
+  test('the board shows the bounties open to this role and hides the rest', async () => {
+    _setNow(FRI(11));
+    await refresh();
+    go('s-floor');
+    const t = text('#floorToday');
+    has(t, 'Count the supply cupboard', 'open to anyone');
+    lacks(t, 'Clear the voicemail backlog', 'scoped to the front desk');
+  });
+
+  test('the size filter narrows the board to what fits', async () => {
+    _setNow(FRI(11));
+    await refresh();
+    go('s-floor');
+    setSizeFilter(20);
+    const t = text('#floorToday');
+    lacks(t, 'Count the supply cupboard', 'an hour-long bounty does not fit twenty minutes');
+    setSizeFilter(0);
+    has(text('#floorToday'), 'Count the supply cupboard', 'clearing the filter brings it back');
+  });
+
+  test('claiming from the board moves the row into your name', async () => {
+    _setNow(FRI(11));
+    await refresh();
+    go('s-floor');
+    const btn = qa('#floorToday button').find(b => text(b) === 'Claim');
+    ok(btn, 'an open bounty should offer a claim');
+    click(btn);
+    await new Promise(r => setTimeout(r, 0));
+    await refresh();
+    has(text('#floorToday'), 'Yours', 'the claimed row should read as yours');
+  });
+
+  test('the hour and what follows it are both shown', async () => {
+    _setNow(FRI(9, 15));
+    await refresh();
+    go('s-floor');
+    const t = text('#floorToday');
+    has(t, 'Open the floor', 'the governing block');
+    has(t, 'Shadow and assist', 'and the one after it');
+  });
+});
+
+suite('render · floor admin', () => {
+
+  test('the admin screen lists one tab per role schedule', async () => {
+    setMode('admin');
+    go('a-floor');
+    const tabs = qa('#schTabs [role="tab"]').map(b => text(b));
+    deepEq(tabs, ['Front Desk Concierge', 'Assistant Stylist'], 'one tab per schedule, in order');
+  });
+
+  test('a day that follows the default says so and offers an override', async () => {
+    setMode('admin');
+    go('a-floor');
+    selectSchTab('sch_frontdesk');
+    selectSchDay('tue');
+    const t = text('#schPanel');
+    has(t, 'follows the', 'Tuesday follows the default');
+    has(t, 'own schedule', 'and can be given its own');
+  });
+
+  test('an overridden day is marked in the day strip', async () => {
+    setMode('admin');
+    go('a-floor');
+    selectSchTab('sch_frontdesk');
+    const sat = qa('#schPanel [role="tab"]').find(b => b.getAttribute('data-day') === 'sat');
+    ok(sat, 'Saturday should be in the strip');
+    has(html(sat), 'own', 'and flagged as having its own schedule');
+  });
+
+  test('a closed day is not offered as an editable day', async () => {
+    setMode('admin');
+    go('a-floor');
+    selectSchTab('sch_frontdesk');
+    const days = qa('#schPanel [role="tab"]').map(b => b.getAttribute('data-day'));
+    lacks(days, 'mon', 'Monday is closed and should not be in the day strip');
+    has(days, 'default', 'the default day always is');
+  });
+
+  test('the admin bounty list shows the done and missed counts', async () => {
+    setMode('admin');
+    go('a-floor');
+    const t = text('#btyAdmin');
+    has(t, 'Deep clean the retail shelves');
+    has(t, 'done', 'each bounty carries its record');
+    has(t, 'missed');
+  });
+
+  test('an archived bounty is visible to admin and labelled', async () => {
+    await Store.setBountyStatus('bty_towels', 'archived');
+    await refresh();
+    setMode('admin');
+    go('a-floor');
+    has(text('#btyAdmin'), 'Archived', 'admin sees archived bounties, marked as such');
+  });
+});
+
+suite('floor · output encoding', () => {
+
+  test('an hour label with markup in it is escaped on the employee screen', async () => {
+    await Store.updateDutyBlock('blk_as_11', { label: '<img src=x onerror="window.__XSS__=1">' });
+    _setNow(FRI(11, 30));
+    await refresh();
+    go('s-floor');
+    lacks(html('#floorToday'), '<img src=x', 'an admin-authored label must not become markup');
+    notOk(window.__XSS__, 'and must not execute');
+  });
+
+  test('a duty line with markup in it is escaped', async () => {
+    await Store.updateDutyBlock('blk_as_11', { duties: ['<script>window.__XSS__=1</script>'] });
+    _setNow(FRI(11, 30));
+    await refresh();
+    go('s-floor');
+    lacks(html('#floorToday'), '<script>window.__XSS__', 'a duty is text, not markup');
+    notOk(window.__XSS__);
+  });
+
+  test('an apostrophe in a bounty title does not break the claim button', async () => {
+    const b = await Store.addBounty({ title: "O'Brien's shelf", period: 'weekly', sizeMin: 10, roles: [] });
+    _setNow(FRI(11));
+    await refresh();
+    go('s-floor');
+    has(text('#floorToday'), "O'Brien's shelf", 'the name should render as written');
+    const btn = qa('#floorToday button').find(x => text(x) === 'Claim');
+    ok(btn, 'and the row should still offer a working claim button');
+    click(btn);
+    await new Promise(r => setTimeout(r, 0));
+    ok(true, 'clicking must not throw a syntax error from the inline handler');
+    neq(b.id, undefined);
+  });
+
+  test('a standing duty with markup is escaped in the admin editor too', async () => {
+    await Store.addStandingDuty('sch_frontdesk', { label: '<b>bold</b>', detail: "it's fine" });
+    await refresh();
+    setMode('admin');
+    go('a-floor');
+    selectSchTab('sch_frontdesk');
+    lacks(html('#schPanel'), '<b>bold</b>', 'the admin screen escapes the same way the employee screen does');
+    has(text('#schPanel'), '<b>bold</b>', 'and shows it as the literal text it is');
+  });
+});
+
+suite('floor · duty items', () => {
+
+  test('every duty item points at a real block', () => {
+    const ids = new Set(DB.dutyBlocks.map(b => b.id));
+    for (const d of DB.dutyItems) ok(ids.has(d.blockId), `${d.id} points at missing block ${d.blockId}`);
+  });
+
+  test('every block has at least one duty, and every duty has text', () => {
+    for (const b of DB.dutyBlocks) {
+      gt(DB.dutyItems.filter(d => d.blockId === b.id).length, 0, `${b.id} has no duties`);
+    }
+    for (const d of DB.dutyItems) ok(String(d.text).trim() !== '', `${d.id} has empty text`);
+  });
+
+  test('duty items carry the documented prefix and unique ids', () => {
+    const seen = new Set();
+    for (const d of DB.dutyItems) {
+      match(d.id, /^dut_/, `${d.id} should be dut_`);
+      notOk(seen.has(d.id), `duplicate duty id ${d.id}`);
+      seen.add(d.id);
+    }
+  });
+
+  test('sort order is 1..n within each block, with no gaps or ties', () => {
+    for (const b of DB.dutyBlocks) {
+      const orders = DB.dutyItems.filter(d => d.blockId === b.id).map(d => d.sortOrder).sort((x, y) => x - y);
+      deepEq(orders, orders.map((_, i) => i + 1), `${b.id} has a broken sort order`);
+    }
+  });
+
+  test('every check points at a duty item that exists', () => {
+    const ids = new Set(DB.dutyItems.map(d => d.id));
+    for (const c of DB.dutyChecks) ok(ids.has(c.dutyItemId), `a check points at missing item ${c.dutyItemId}`);
+  });
+});
+
+suite('floor · the daily checklist', () => {
+
+  async function items(role, at) {
+    const day = await Store.getFloorDay(role || 'Assistant Stylist', at || FRI(11), 'emp_jordan');
+    return day.blocks.flatMap(b => b.duties);
+  }
+
+  test('a duty starts unticked and ticks for the person who ticked it', async () => {
+    const [first] = await items();
+    notOk(first.done, 'nothing is ticked to begin with');
+    await Store.setDutyCheck('emp_jordan', first.id, true, FRI(11));
+    const after = (await items()).find(d => d.id === first.id);
+    ok(after.done, 'the tick should come back on the next read');
+  });
+
+  test('unticking is a real undo, not a second row', async () => {
+    const [first] = await items();
+    await Store.setDutyCheck('emp_jordan', first.id, true,  FRI(11));
+    await Store.setDutyCheck('emp_jordan', first.id, false, FRI(11));
+    const after = (await items()).find(d => d.id === first.id);
+    notOk(after.done);
+    len(DB.dutyChecks.filter(c => c.dutyItemId === first.id && c.employeeId === 'emp_jordan' && c.onDate === '2026-08-21'),
+      1, 'one row per person per day per duty');
+  });
+
+  test('one person’s ticks are not another’s', async () => {
+    const [first] = await items();
+    await Store.setDutyCheck('emp_maya', first.id, true, FRI(11));
+    const mine = (await items()).find(d => d.id === first.id);
+    notOk(mine.done, 'Maya ticking it must not tick it for Jordan');
+  });
+
+  test('every day starts clean — that is what makes it daily', async () => {
+    const [first] = await items();
+    await Store.setDutyCheck('emp_jordan', first.id, true, FRI(11));
+    ok((await items('Assistant Stylist', FRI(15))).find(d => d.id === first.id).done, 'still ticked later the same day');
+    const nextDay = await Store.getFloorDay('Assistant Stylist', new Date(2026, 7, 25, 11, 0), 'emp_jordan');
+    const same = nextDay.blocks.flatMap(b => b.duties).find(d => d.id === first.id);
+    notOk(same.done, 'Tuesday must not inherit Friday’s ticks');
+  });
+
+  test('the day’s progress counts every hour, not just the current one', async () => {
+    const before = await Store.getFloorDay('Assistant Stylist', FRI(11), 'emp_jordan');
+    gt(before.total, 0, 'the day has duties');
+    eq(before.done, 0);
+    /* tick something from a LATER hour — progress is the whole day */
+    const later = before.blocks.find(b => b.hour === 17).duties[0];
+    await Store.setDutyCheck('emp_jordan', later.id, true, FRI(11));
+    const after = await Store.getFloorDay('Assistant Stylist', FRI(11), 'emp_jordan');
+    eq(after.done, 1, 'a later hour’s tick still counts toward the day');
+    eq(after.total, before.total);
+  });
+
+  test('a duty from an earlier hour can still be ticked later in the day', async () => {
+    const day = await Store.getFloorDay('Assistant Stylist', FRI(16), 'emp_jordan');
+    const morning = day.blocks.find(b => b.hour === 9).duties[0];
+    await Store.setDutyCheck('emp_jordan', morning.id, true, FRI(16));
+    const after = await Store.getFloorDay('Assistant Stylist', FRI(16), 'emp_jordan');
+    ok(after.blocks.find(b => b.hour === 9).duties[0].done, 'you finish the 10am thing at 11 and it counts');
+  });
+
+  test('a tick against an unknown duty or employee is refused, not written', async () => {
+    await throwsAsync(() => Store.setDutyCheck('emp_jordan', 'dut_nope', true, FRI(11)));
+    const [first] = await items();
+    await throwsAsync(() => Store.setDutyCheck('emp_nope', first.id, true, FRI(11)));
+    len(DB.dutyChecks.filter(c => c.dutyItemId === 'dut_nope'), 0, 'a refused tick must not half-write');
+    len(DB.dutyChecks.filter(c => c.employeeId === 'emp_nope'), 0);
+  });
+
+  test('the checklist is keyed to the LOCAL date, so an evening shift is still today', async () => {
+    /* 6pm in a UTC-negative zone is already tomorrow in UTC. Keying on that
+       would clear the closing checklist halfway through the close. */
+    eq(dateKey(new Date(2026, 7, 21, 18, 30)), '2026-08-21');
+    eq(dateKey(new Date(2026, 7, 21, 23, 59)), '2026-08-21');
+    eq(dateKey(new Date(2026, 7, 22, 0, 1)),   '2026-08-22');
+  });
+});
+
+suite('floor · checks survive the right edits and not the wrong ones', () => {
+
+  test('reordering the duty lines keeps today’s ticks attached', async () => {
+    const block = await Store.updateDutyBlock('blk_as_09', { duties: ['One', 'Two', 'Three'] });
+    const two = block.duties.find(d => d.text === 'Two');
+    await Store.setDutyCheck('emp_jordan', two.id, true, FRI(11));
+
+    const after = await Store.updateDutyBlock('blk_as_09', { duties: ['Three', 'Two', 'One'] });
+    const twoAgain = after.duties.find(d => d.text === 'Two');
+    eq(twoAgain.id, two.id, 'a reordered line is the same duty and keeps its id');
+    const day = await Store.getFloorDay('Assistant Stylist', FRI(11), 'emp_jordan');
+    ok(day.blocks.find(b => b.id === 'blk_as_09').duties.find(d => d.text === 'Two').done,
+      'and keeps the tick — reordering is not rewording');
+  });
+
+  test('rewording a line makes it a new duty with a clean tick', async () => {
+    const block = await Store.updateDutyBlock('blk_as_09', { duties: ['Sweep the floor'] });
+    const before = block.duties[0];
+    await Store.setDutyCheck('emp_jordan', before.id, true, FRI(11));
+
+    const after = await Store.updateDutyBlock('blk_as_09', { duties: ['Sweep the floor and the back room'] });
+    neq(after.duties[0].id, before.id, 'an edited duty is a different duty');
+    const day = await Store.getFloorDay('Assistant Stylist', FRI(11), 'emp_jordan');
+    notOk(day.blocks.find(b => b.id === 'blk_as_09').duties[0].done, 'and starts unticked');
+  });
+
+  test('editing one line does not disturb the ticks on its neighbours', async () => {
+    const block = await Store.updateDutyBlock('blk_as_09', { duties: ['Keep me', 'Change me'] });
+    const keep = block.duties.find(d => d.text === 'Keep me');
+    await Store.setDutyCheck('emp_jordan', keep.id, true, FRI(11));
+    await Store.updateDutyBlock('blk_as_09', { duties: ['Keep me', 'Changed'] });
+    const day = await Store.getFloorDay('Assistant Stylist', FRI(11), 'emp_jordan');
+    ok(day.blocks.find(b => b.id === 'blk_as_09').duties.find(d => d.text === 'Keep me').done,
+      'the untouched line keeps its tick');
+  });
+
+  test('removing a duty takes its ticks with it', async () => {
+    const block = await Store.updateDutyBlock('blk_as_09', { duties: ['Doomed', 'Survivor'] });
+    const doomed = block.duties.find(d => d.text === 'Doomed');
+    await Store.setDutyCheck('emp_jordan', doomed.id, true, FRI(11));
+    await Store.updateDutyBlock('blk_as_09', { duties: ['Survivor'] });
+    len(DB.dutyChecks.filter(c => c.dutyItemId === doomed.id), 0, 'no ticks left pointing at nothing');
+    len(DB.dutyItems.filter(d => d.id === doomed.id), 0);
+  });
+
+  test('deleting a block cascades to its duties and their ticks', async () => {
+    const day = await Store.getFloorDay('Assistant Stylist', FRI(11), 'emp_jordan');
+    const block = day.blocks[0];
+    await Store.setDutyCheck('emp_jordan', block.duties[0].id, true, FRI(11));
+    await Store.deleteDutyBlock(block.id);
+    len(DB.dutyItems.filter(d => d.blockId === block.id), 0, 'the items go');
+    for (const d of block.duties) len(DB.dutyChecks.filter(c => c.dutyItemId === d.id), 0, 'and the ticks with them');
+  });
+
+  test('a day override gets its own duty rows, so a tick belongs to one day only', async () => {
+    const made = await Store.createDayOverride('sch_assistant', 'fri');
+    const defaultIds = new Set(DB.dutyItems.filter(d =>
+      DB.dutyBlocks.some(b => b.id === d.blockId && b.dayKey === 'default')).map(d => d.id));
+    for (const b of made) {
+      gt(b.duties.length, 0, 'the copy carries the duties');
+      for (const d of b.duties) notOk(defaultIds.has(d.id), 'the override must not share item rows with the default');
+    }
+  });
+
+  test('ticks do not accumulate forever', async () => {
+    const [first] = (await Store.getFloorDay('Assistant Stylist', FRI(11), 'emp_jordan')).blocks[0].duties;
+    /* a tick from well outside the retention window */
+    DB.dutyChecks.push({ employeeId:'emp_jordan', dutyItemId:first.id, onDate:'2026-01-04', done:true, checkedAt:'2026-01-04T10:00:00.000Z' });
+    await Store.getFloorDay('Assistant Stylist', FRI(11), 'emp_jordan');
+    len(DB.dutyChecks.filter(c => c.onDate === '2026-01-04'), 0,
+      'a working checklist is not a permanent performance record — see FLOOR-SCOPE.md section 4');
+  });
+
+  test('the retention window keeps recent days', async () => {
+    const [first] = (await Store.getFloorDay('Assistant Stylist', FRI(11), 'emp_jordan')).blocks[0].duties;
+    DB.dutyChecks.push({ employeeId:'emp_jordan', dutyItemId:first.id, onDate:'2026-08-20', done:true, checkedAt:'2026-08-20T10:00:00.000Z' });
+    await Store.getFloorDay('Assistant Stylist', FRI(11), 'emp_jordan');
+    len(DB.dutyChecks.filter(c => c.onDate === '2026-08-20'), 1, 'yesterday is still inside the window');
+  });
+});
+
+suite('floor · coverage is a count, not a scoreboard', () => {
+
+  test('coverage counts ticks from anyone holding the role', async () => {
+    const day = await Store.getFloorDay('Assistant Stylist', FRI(11), 'emp_jordan');
+    const block = day.blocks[0];
+    await Store.setDutyCheck('emp_jordan', block.duties[0].id, true, FRI(11));
+    await Store.setDutyCheck('emp_sam',    block.duties[1].id, true, FRI(11));
+    const cov = await Store.getDayCoverage('Assistant Stylist', FRI(11));
+    const row = cov.blocks.find(b => b.id === block.id);
+    eq(row.done, 2, 'two different people ticking two duties is two done');
+  });
+
+  test('coverage never names anybody', async () => {
+    const day = await Store.getFloorDay('Assistant Stylist', FRI(11), 'emp_jordan');
+    await Store.setDutyCheck('emp_jordan', day.blocks[0].duties[0].id, true, FRI(11));
+    const cov = await Store.getDayCoverage('Assistant Stylist', FRI(11));
+    const blob = JSON.stringify(cov);
+    lacks(blob, 'emp_jordan', 'the shop asks "did it get done", not "who did not do it"');
+    lacks(blob, 'Jordan');
+  });
+
+  test('a tick by someone in a different role does not count toward this one', async () => {
+    const day = await Store.getFloorDay('Assistant Stylist', FRI(11), 'emp_jordan');
+    const block = day.blocks[0];
+    /* Maya is Front Desk, so her tick against an assistant duty is not this
+       role's coverage even though the row exists. */
+    await Store.setDutyCheck('emp_maya', block.duties[0].id, true, FRI(11));
+    const cov = await Store.getDayCoverage('Assistant Stylist', FRI(11));
+    eq(cov.blocks.find(b => b.id === block.id).done, 0);
+  });
+
+  test('coverage on a closed day says closed rather than zero', async () => {
+    const cov = await Store.getDayCoverage('Assistant Stylist', MON(11));
+    eq(cov.closed, true);
+    len(cov.blocks, 0, 'zero-of-zero would read as a failure; closed reads as closed');
+  });
+});
+
+suite('render · the daily checklist', () => {
+
+  test('the current hour renders a tick control per duty', async () => {
+    _setNow(FRI(11, 30));
+    await refresh();
+    go('s-floor');
+    const ticks = qa('#floorToday .tick');
+    gt(ticks.length, 0, 'duties should be tickable');
+    for (const t of ticks) eq(t.getAttribute('role'), 'checkbox', 'and announced as checkboxes');
+    eq(ticks[0].getAttribute('aria-checked'), 'false');
+  });
+
+  test('clicking a tick marks the duty and survives the re-render', async () => {
+    _setNow(FRI(11, 30));
+    await refresh();
+    go('s-floor');
+    click(qa('#floorToday .tick')[0]);
+    await new Promise(r => setTimeout(r, 0));
+    await refresh();
+    const first = qa('#floorToday .tick')[0];
+    eq(first.getAttribute('aria-checked'), 'true', 'the tick should still be set after a refresh');
+    ok(first.classList.contains('on'));
+  });
+
+  test('the day’s progress is shown and moves when you tick', async () => {
+    _setNow(FRI(11, 30));
+    await refresh();
+    go('s-floor');
+    has(text('#floorToday'), 'ticked', 'the screen should say how much is done');
+    const before = text('#floorToday');
+    click(qa('#floorToday .tick')[0]);
+    await new Promise(r => setTimeout(r, 0));
+    await refresh();
+    neq(text('#floorToday'), before, 'the count should move');
+  });
+
+  test('outstanding items from earlier hours are surfaced, not buried', async () => {
+    _setNow(FRI(16, 0));
+    await refresh();
+    go('s-floor');
+    has(text('#floorToday'), 'Still outstanding from earlier',
+      'the thing worth acting on is what the morning left');
+  });
+
+  test('once everything earlier is ticked, the outstanding block disappears', async () => {
+    _setNow(FRI(16, 0));
+    await refresh();
+    const day = await Store.getFloorDay('Assistant Stylist', FRI(16), 'emp_jordan');
+    for (const b of day.blocks.filter(x => x.hour < 16)) {
+      for (const d of b.duties) await Store.setDutyCheck('emp_jordan', d.id, true, FRI(16));
+    }
+    await refresh();
+    go('s-floor');
+    lacks(text('#floorToday'), 'Still outstanding from earlier', 'nothing outstanding, nothing shown');
+  });
+
+  test('a closed day shows no ticks at all', async () => {
+    _setNow(MON(11));
+    await refresh();
+    go('s-floor');
+    len(qa('#floorToday .tick'), 0, 'there is nothing to tick on a day off');
+  });
+
+  test('the admin sees today’s coverage without a name attached to it', async () => {
+    _setNow(FRI(11, 30));
+    await refresh();
+    setMode('admin');
+    go('a-floor');
+    selectSchTab('sch_assistant');
+    const t = text('#schPanel');
+    has(t, 'Today, so far', 'the admin gets a coverage summary');
+    lacks(t, 'Jordan', 'and it does not name anyone');
+  });
+
+  test('a duty with markup in it is still escaped once tickable', async () => {
+    await Store.updateDutyBlock('blk_as_11', { duties: ['<img src=x onerror="window.__XSS__=1">'] });
+    _setNow(FRI(11, 30));
+    await refresh();
+    go('s-floor');
+    lacks(html('#floorToday'), '<img src=x', 'a duty is text, in the label and in the aria-label');
+    notOk(window.__XSS__);
   });
 });
 

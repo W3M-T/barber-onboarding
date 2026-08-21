@@ -83,6 +83,25 @@ a{color:inherit}
 .card + .card{margin-top:14px}
 .card h3{font-size:15px;font-weight:600;margin-bottom:6px}
 .card .sub{font-size:13px;color:var(--muted)}
+.fmeta{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;color:var(--muted)}
+.hourlist{list-style:none;margin:10px 0 0 0;padding:0}
+.hourlist li{padding:7px 0;border-bottom:1px solid var(--line);font-size:14px;display:flex;gap:12px}
+.hourlist li:last-child{border-bottom:none}
+.hourlist .h{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--brass);flex:none;min-width:58px;padding-top:2px}
+.dutylist{list-style:none;margin:0;padding:0}
+.dutylist .duty{display:flex;gap:11px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+.dutylist .duty:last-child{border-bottom:none}
+.dutylist .duty.done>span{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--brass)}
+.dutylist .duty .h{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--brass);margin-left:6px;text-decoration:none;display:inline-block}
+.tick{
+  flex:none;width:19px;height:19px;margin-top:1px;border:1px solid var(--line);border-radius:5px;
+  background:transparent;cursor:pointer;font-size:11px;line-height:1;color:transparent;
+  display:flex;align-items:center;justify-content:center;transition:background .12s,border-color .12s}
+.tick:hover{border-color:var(--brass)}
+.tick.on{background:var(--brass);border-color:var(--brass);color:#FBF8F1}
+.tick:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+.bar{display:inline-block;height:4px;border-radius:2px;background:var(--line);overflow:hidden;vertical-align:middle}
+.bar i{display:block;height:100%;background:var(--brass);border-radius:2px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .hr{border:none;border-top:1px solid var(--line);margin:18px 0}
 .btn{
@@ -555,6 +574,14 @@ body.admin .btn.danger{border-color:#D4796A;color:#D4796A}
       <div id="resPanel" role="tabpanel" tabindex="0"></div>
     </section>
 
+    <!-- ============ EMPLOYEE · TODAY (FLOOR) ============ -->
+    <section class="screen" id="s-floor">
+      <div class="eyebrow">Floor</div>
+      <h1 class="display">Today.</h1>
+      <p class="lede">What this hour is for, and what to pick up when you have time to spare.</p>
+      <div id="floorToday"></div>
+    </section>
+
     <!-- ============ EMPLOYEE · HELP ============ -->
     <section class="screen" id="s-help">
       <div class="eyebrow">Questions</div>
@@ -708,6 +735,48 @@ body.admin .btn.danger{border-color:#D4796A;color:#D4796A}
 
       <div class="tabstrip" id="resTabsAdmin" role="tablist" aria-label="Resource categories"></div>
       <div id="resPanelAdmin" role="tabpanel" tabindex="0"></div>
+    </section>
+
+    <!-- ============ ADMIN · FLOOR OPS ============ -->
+    <section class="screen" id="a-floor">
+      <div class="eyebrow">Floor</div>
+      <h1 class="display">Hours &amp; bounties.</h1>
+      <p class="lede">What each role is doing hour by hour, and the pool of work anyone can pick up when they have time.</p>
+
+      <div class="note" style="margin-top:16px"><strong>Every day starts clean.</strong> Duties tick off as a daily checklist and reset overnight — no carry-over, no streaks, nothing is ever marked “missed”. Ticks are kept for two weeks, and you see a count for the role rather than a breakdown by person: the question worth asking is whether the close got done, not who didn’t tick it.</div>
+
+      <div class="card" style="margin-top:16px">
+        <h3>Schedules</h3>
+        <p class="sub">One per role. Two concierges do the same job — a per-person schedule is two copies that drift.</p>
+        <div class="tabstrip" id="schTabs" role="tablist" aria-label="Role schedules"></div>
+        <div id="schPanel" role="tabpanel" tabindex="0"></div>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <h3>Bounties</h3>
+        <p class="sub">Weekly, monthly and quarterly work, picked up whenever there is time. A size is required — “when you have a spare moment” is unusable without one.</p>
+        <div style="margin-top:10px"><button class="btn small" onclick="openAddBounty()">+ Add a bounty</button></div>
+        <div class="card" id="btyForm" style="display:none;margin-top:12px">
+          <h3 id="btyFormTitle">Add a bounty</h3>
+          <label class="field-label" for="btyTitle">Title</label>
+          <input class="field" id="btyTitle" placeholder="e.g. Deep clean the retail shelves">
+          <label class="field-label" for="btyDetail">What it involves</label>
+          <textarea class="notes" id="btyDetail" rows="3" placeholder="Enough detail that someone can do it without coming to find you."></textarea>
+          <label class="field-label" for="btyPeriod">How often</label>
+          <select class="field" id="btyPeriod">
+            <option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option>
+          </select>
+          <label class="field-label" for="btySize">Rough size <span style="text-transform:none;letter-spacing:0">(minutes — required, it is how people find one that fits)</span></label>
+          <input class="field" id="btySize" type="number" min="1" max="480" step="5" value="30">
+          <label class="field-label" for="btyRoles">Who can take it</label>
+          <select class="field" id="btyRoles"><option value="">Anyone on the floor</option></select>
+          <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+            <button class="btn small" onclick="saveBounty()">Save</button>
+            <button class="btn ghost small" onclick="closeBountyForm()">Cancel</button>
+          </div>
+        </div>
+        <div id="btyAdmin" style="margin-top:10px"></div>
+      </div>
     </section>
 
   </main>
@@ -1146,6 +1215,199 @@ const DB = {
       title:'Pay schedule 2026', description:'Draft — not yet published to employees.',
       fileName:'pay-schedule-2026.pdf', downloadName:'pay-schedule-2026.pdf', mimeType:'application/pdf',
       byteSize:2826, version:1, openCount:0, updatedOn:'2026-07-28', url:null, dataUrl:'data:application/pdf;base64,JVBERi0xLjQKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUl0gL0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAvTWVkaWFCb3ggWzAgMCA2MTIgNzkyXSAvUmVzb3VyY2VzIDw8IC9Gb250IDw8IC9GMSA1IDAgUiAvRjIgNiAwIFIgPj4gPj4gL0NvbnRlbnRzIDQgMCBSID4+CmVuZG9iago0IDAgb2JqCjw8IC9MZW5ndGggMjE3NCA+PgpzdHJlYW0KQlQgL0YyIDE2IFRmIDU2IDc2MCBUZCAoUXVhcnRlcmx5IHNldC1hc2lkZSB3b3Jrc2hlZXQpIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA3MzIgVGQgKEFydGlzYW4gQmFyYmVyIC0gcmVmZXJlbmNlIG1hdGVyaWFsLiBOb3QgdGF4IGFkdmljZS4pIFRqIEVUCkJUIC9GMiAxMSBUZiA1NiA3MDIgVGQgKDEuIFdoYXQgY2FtZSBpbiB0aGlzIHF1YXJ0ZXIpIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA2ODcgVGQgKCAgIENhcmQgc2V0dGxlbWVudHMgXChncm9zcywgYmVmb3JlIHByb2Nlc3NvciBmZWVzXCkgLi4uLi4uLi4uICRfX19fX19fX19fKSBUaiBFVApCVCAvRjEgMTAgVGYgNTYgNjcyIFRkICggICBDYXNoIGNvbGxlY3RlZCAuLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLiAkX19fX19fX19fXykgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDY1NyBUZCAoICAgUGF5bWVudC1hcHAgdHJhbnNmZXJzIGZyb20gY2xpZW50cyAuLi4uLi4uLi4uLi4uLi4uLi4uLi4gJF9fX19fX19fX18pIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA2NDIgVGQgKCAgIFRpcHMgXChjYXNoIGFuZCBjYXJkXCkgLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4gJF9fX19fX19fX18pIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA2MjcgVGQgKCAgIEEuIFRPVEFMIFJFQ0VJUFRTIC4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uICRfX19fX19fX19fKSBUaiBFVApCVCAvRjIgMTEgVGYgNTYgNTk3IFRkICgyLiBXaGF0IHdlbnQgb3V0IHRoaXMgcXVhcnRlcikgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDU4MiBUZCAoICAgQm9vdGggLyBjaGFpciByZW50IC4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4gJF9fX19fX19fX18pIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA1NjcgVGQgKCAgIFByb2R1Y3QgYW5kIHN1cHBsaWVzIC4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uICRfX19fX19fX19fKSBUaiBFVApCVCAvRjEgMTAgVGYgNTYgNTUyIFRkICggICBUb29scyBhbmQgZXF1aXBtZW50IC4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLiAkX19fX19fX19fXykgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDUzNyBUZCAoICAgTGljZW5jZSwgaW5zdXJhbmNlLCBjb250aW51aW5nIGVkdWNhdGlvbiAuLi4uLi4uLi4uLi4uLi4gJF9fX19fX19fX18pIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA1MjIgVGQgKCAgIFByb2Nlc3NpbmcgZmVlcywgYm9va2luZyBzb2Z0d2FyZSwgcGhvbmUgc2hhcmUgLi4uLi4uLi4uICRfX19fX19fX19fKSBUaiBFVApCVCAvRjEgMTAgVGYgNTYgNTA3IFRkICggICBCdXNpbmVzcyBtaWxlYWdlOiBfX19fX18gbWlsZXMgeCByYXRlIC4uLi4uLi4uLi4uLi4uLi4uLi4gJF9fX19fX19fX18pIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiA0OTIgVGQgKCAgIEIuIFRPVEFMIEVYUEVOU0VTIC4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uICRfX19fX19fX19fKSBUaiBFVApCVCAvRjIgMTEgVGYgNTYgNDYyIFRkICgzLiBUaGUgbnVtYmVyIHRoYXQgbWF0dGVycykgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDQ0NyBUZCAoICAgQy4gTkVUIFwoQSBtaW51cyBCXCkgLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLiAkX19fX19fX19fXykgVGogRVQKQlQgL0YxIDEwIFRmIDU2IDQxNyBUZCAoICAgU2V0IGFzaWRlIGZyb20gQywgbm90IGZyb20gQS4gQSBpcyBub3QgeW91ciBpbmNvbWUuKSBUaiBFVApCVCAvRjEgMTAgVGYgNTYgNDAyIFRkICggICBELiBTZXQtYXNpZGUgJSBcKHNlZSAnU2V0dGluZyBtb25leSBhc2lkZSdcKSAuLi4uLi4uLi4uLi4uIF9fX19fXyUpIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiAzODcgVGQgKCAgIEUuIE1PVkUgVE8gVEFYIEFDQ09VTlQgXChDIHggRFwpIC4uLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4gJF9fX19fX19fX18pIFRqIEVUCkJUIC9GMiAxMSBUZiA1NiAzNTcgVGQgKDQuIERhdGVzKSBUaiBFVApCVCAvRjEgMTAgVGYgNTYgMzQyIFRkICggICBGZWRlcmFsIEZvcm0gMTA0MC1FUyBhbmQgTmV3IFlvcmsgRm9ybSBJVC0yMTA1IGFyZSBkdWUpIFRqIEVUCkJUIC9GMSAxMCBUZiA1NiAzMjcgVGQgKCAgIDE1IEFwcmlsLCAxNSBKdW5lLCAxNSBTZXB0ZW1iZXIsIGFuZCAxNSBKYW51YXJ5LikgVGogRVQKZW5kc3RyZWFtCmVuZG9iago1IDAgb2JqCjw8IC9UeXBlIC9Gb250IC9TdWJ0eXBlIC9UeXBlMSAvQmFzZUZvbnQgL0hlbHZldGljYSA+PgplbmRvYmoKNiAwIG9iago8PCAvVHlwZSAvRm9udCAvU3VidHlwZSAvVHlwZTEgL0Jhc2VGb250IC9IZWx2ZXRpY2EtQm9sZCA+PgplbmRvYmoKeHJlZgowIDcKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDA5IDAwMDAwIG4gCjAwMDAwMDAwNTggMDAwMDAgbiAKMDAwMDAwMDExNSAwMDAwMCBuIAowMDAwMDAwMjUxIDAwMDAwIG4gCjAwMDAwMDI0NzcgMDAwMDAgbiAKMDAwMDAwMjU0NyAwMDAwMCBuIAp0cmFpbGVyCjw8IC9TaXplIDcgL1Jvb3QgMSAwIFIgPj4Kc3RhcnR4cmVmCjI2MjIKJSVFT0YK' }
+  ],
+
+  /* ---- floor: hourly duties (tables: duty_schedules / duty_standing / duty_blocks) ----
+     Schedules are keyed by ROLE, not by person: two concierges do the same job,
+     and a per-person schedule means authoring it twice and watching the copies
+     drift. There is deliberately NO per-hour completion state — see
+     FLOOR-SCOPE.md section 4. */
+  dutySchedules: [
+    { id:'sch_frontdesk', sortOrder:1, role:'Front Desk Concierge', name:'Front desk — the hour by hour',
+      blurb:'The desk sets the tone for the whole floor. This is what each hour is for.',
+      closedDays:['mon','sun'] },
+    { id:'sch_assistant', sortOrder:2, role:'Assistant Stylist', name:'Assistant stylist — the hour by hour',
+      blurb:'Lighter than the desk, because most of your hour belongs to whichever chair needs you.',
+      closedDays:['mon','sun'] }
+  ],
+
+  /* True for the whole shift. Shown once, above the current hour — never copied
+     into every block, which is how eight copies of one duty drift apart. */
+  dutyStanding: [
+    { id:'std_greet',   scheduleId:'sch_frontdesk', sortOrder:1, label:'Greet every arrival inside fifteen seconds',
+      detail:'Even if you are on the phone. Eye contact and a raised finger counts — being ignored does not.' },
+    { id:'std_book',    scheduleId:'sch_frontdesk', sortOrder:2, label:'Keep the book accurate as it changes',
+      detail:'Every change goes in when it happens, not at the end of the hour.' },
+    { id:'std_phone',   scheduleId:'sch_frontdesk', sortOrder:3, label:'Answer within three rings',
+      detail:'Take a message rather than a guess. A wrong answer costs more than a callback.' },
+    { id:'std_front',   scheduleId:'sch_frontdesk', sortOrder:4, label:'One lap of the waiting area every half hour',
+      detail:'Magazines squared, cups cleared, water topped up.' },
+    { id:'std_retail',  scheduleId:'sch_frontdesk', sortOrder:5, label:'Retail shelf faced and fronted',
+      detail:'It is the thing people look at while they wait.' },
+    { id:'std_floor',   scheduleId:'sch_frontdesk', sortOrder:6, label:'Know who is on the floor and who is running behind',
+      detail:'You cannot quote an honest wait if you do not know.' },
+
+    { id:'std_station', scheduleId:'sch_assistant', sortOrder:1, label:'Stations swept and stocked between every guest',
+      detail:'Before the next guest sits, not before the next guest arrives.' },
+    { id:'std_bowls',   scheduleId:'sch_assistant', sortOrder:2, label:'Bowls clean, towels warm and stocked', detail:'' },
+    { id:'std_watch',   scheduleId:'sch_assistant', sortOrder:3, label:'Watch the floor — step in before you are asked',
+      detail:'Noticing is most of the job.' },
+    { id:'std_ask',     scheduleId:'sch_assistant', sortOrder:4, label:'Ask for the cut you do not know how to do yet',
+      detail:'Nobody here minds the question. Everybody minds the guess.' }
+  ],
+
+  /* dayKey 'default' is the day most days look like. A weekday key overrides that
+     day ENTIRELY — default blocks do not leak in. FLOOR-SCOPE.md section 5. */
+  dutyBlocks: [
+    /* --- front desk, the ordinary day (Tue–Fri) --- */
+    { id:'blk_fd_09', scheduleId:'sch_frontdesk', dayKey:'default', hour:9,  label:'Open the desk', note:'' },
+    { id:'blk_fd_10', scheduleId:'sch_frontdesk', dayKey:'default', hour:10, label:'First rush', note:'' },
+    { id:'blk_fd_11', scheduleId:'sch_frontdesk', dayKey:'default', hour:11, label:'Confirm tomorrow', note:'The quietest reliable window for outbound calls.' },
+    { id:'blk_fd_12', scheduleId:'sch_frontdesk', dayKey:'default', hour:12, label:'Lunch cover', note:'' },
+    { id:'blk_fd_13', scheduleId:'sch_frontdesk', dayKey:'default', hour:13, label:'Reset and restock', note:'' },
+    { id:'blk_fd_14', scheduleId:'sch_frontdesk', dayKey:'default', hour:14, label:'The quiet hour', note:'The slowest hour most days — this is bounty time.' },
+    { id:'blk_fd_15', scheduleId:'sch_frontdesk', dayKey:'default', hour:15, label:'School-out shift', note:'' },
+    { id:'blk_fd_16', scheduleId:'sch_frontdesk', dayKey:'default', hour:16, label:'Evening prep', note:'' },
+    { id:'blk_fd_17', scheduleId:'sch_frontdesk', dayKey:'default', hour:17, label:'Evening rush', note:'Busiest hour of an ordinary day. No back-office work in this hour.' },
+    { id:'blk_fd_18', scheduleId:'sch_frontdesk', dayKey:'default', hour:18, label:'Close the desk', note:'' },
+
+    /* --- front desk, Saturday: its own day, authored end to end --- */
+    { id:'blk_fd_sat_09', scheduleId:'sch_frontdesk', dayKey:'sat', hour:9,  label:'Saturday open', note:'Biggest day of the week. Two on the desk if the roster allows.' },
+    { id:'blk_fd_sat_10', scheduleId:'sch_frontdesk', dayKey:'sat', hour:10, label:'The walk-in wall', note:'' },
+    { id:'blk_fd_sat_11', scheduleId:'sch_frontdesk', dayKey:'sat', hour:11, label:'Hold the line', note:'No confirmations, no admin, no bounties in this hour.' },
+    { id:'blk_fd_sat_12', scheduleId:'sch_frontdesk', dayKey:'sat', hour:12, label:'Rolling lunches', note:'' },
+    { id:'blk_fd_sat_13', scheduleId:'sch_frontdesk', dayKey:'sat', hour:13, label:'Peak', note:'' },
+    { id:'blk_fd_sat_14', scheduleId:'sch_frontdesk', dayKey:'sat', hour:14, label:'Second wind', note:'' },
+    { id:'blk_fd_sat_15', scheduleId:'sch_frontdesk', dayKey:'sat', hour:15, label:'Retail hour', note:'The week’s best selling window.' },
+    { id:'blk_fd_sat_16', scheduleId:'sch_frontdesk', dayKey:'sat', hour:16, label:'Wind down', note:'' },
+    { id:'blk_fd_sat_17', scheduleId:'sch_frontdesk', dayKey:'sat', hour:17, label:'Saturday close', note:'' },
+
+    /* --- assistant stylist: fewer, wider blocks --- */
+    { id:'blk_as_09', scheduleId:'sch_assistant', dayKey:'default', hour:9,  label:'Open the floor', note:'' },
+    { id:'blk_as_11', scheduleId:'sch_assistant', dayKey:'default', hour:11, label:'Shadow and assist', note:'' },
+    { id:'blk_as_13', scheduleId:'sch_assistant', dayKey:'default', hour:13, label:'Laundry and restock', note:'' },
+    { id:'blk_as_15', scheduleId:'sch_assistant', dayKey:'default', hour:15, label:'Practice block', note:'Only when the floor is genuinely quiet. The floor comes first.' },
+    { id:'blk_as_17', scheduleId:'sch_assistant', dayKey:'default', hour:17, label:'Close the floor', note:'' }
+  ],
+
+  /* Each duty is a ROW, not an array entry, because the daily checklist ticks
+     individual duties. An index into a JSON array is not an identity: reorder or
+     delete a line and yesterday's tick lands on a different duty. */
+  dutyItems: [
+    { id:'dut_fd09_1', blockId:'blk_fd_09', sortOrder:1, text:'Unlock and light the front' },
+    { id:'dut_fd09_2', blockId:'blk_fd_09', sortOrder:2, text:'Count the drawer and log the opening float' },
+    { id:'dut_fd09_3', blockId:'blk_fd_09', sortOrder:3, text:'Print the day’s book' },
+    { id:'dut_fd09_4', blockId:'blk_fd_09', sortOrder:4, text:'Clear overnight voicemail and messages' },
+    { id:'dut_fd09_5', blockId:'blk_fd_09', sortOrder:5, text:'Confirm which chairs are actually staffed today' },
+    { id:'dut_fd10_1', blockId:'blk_fd_10', sortOrder:1, text:'Check in the 9:30s and 10s' },
+    { id:'dut_fd10_2', blockId:'blk_fd_10', sortOrder:2, text:'Open the walk-in list' },
+    { id:'dut_fd10_3', blockId:'blk_fd_10', sortOrder:3, text:'Give anyone waiting a real number, not “shouldn’t be long”' },
+    { id:'dut_fd11_1', blockId:'blk_fd_11', sortOrder:1, text:'Work tomorrow’s book — call, then text if no answer' },
+    { id:'dut_fd11_2', blockId:'blk_fd_11', sortOrder:2, text:'Offer the waitlist anything that opens up' },
+    { id:'dut_fd11_3', blockId:'blk_fd_11', sortOrder:3, text:'Log every confirmation in the book as you go' },
+    { id:'dut_fd12_1', blockId:'blk_fd_12', sortOrder:1, text:'Stagger the floor’s lunches so a chair is always live' },
+    { id:'dut_fd12_2', blockId:'blk_fd_12', sortOrder:2, text:'Hold one chair for walk-ins' },
+    { id:'dut_fd12_3', blockId:'blk_fd_12', sortOrder:3, text:'Eat when the desk is covered, not when you are hungry' },
+    { id:'dut_fd13_1', blockId:'blk_fd_13', sortOrder:1, text:'Towels, capes, neck strips' },
+    { id:'dut_fd13_2', blockId:'blk_fd_13', sortOrder:2, text:'Retail shelf and card stock' },
+    { id:'dut_fd13_3', blockId:'blk_fd_13', sortOrder:3, text:'Water and cups' },
+    { id:'dut_fd13_4', blockId:'blk_fd_13', sortOrder:4, text:'Bins if they need it' },
+    { id:'dut_fd14_1', blockId:'blk_fd_14', sortOrder:1, text:'Pick up a bounty that fits the gap' },
+    { id:'dut_fd14_2', blockId:'blk_fd_14', sortOrder:2, text:'Keep half an eye on the door' },
+    { id:'dut_fd15_1', blockId:'blk_fd_15', sortOrder:1, text:'Kids appointments land now — keep the waiting area calm' },
+    { id:'dut_fd15_2', blockId:'blk_fd_15', sortOrder:2, text:'Check Cathy has what she needs' },
+    { id:'dut_fd15_3', blockId:'blk_fd_15', sortOrder:3, text:'Watch the wait time; it climbs fast in this hour' },
+    { id:'dut_fd16_1', blockId:'blk_fd_16', sortOrder:1, text:'Confirm the 5s and 6s' },
+    { id:'dut_fd16_2', blockId:'blk_fd_16', sortOrder:2, text:'Re-quote the walk-in wait honestly' },
+    { id:'dut_fd16_3', blockId:'blk_fd_16', sortOrder:3, text:'Hand over anything unresolved before the rush' },
+    { id:'dut_fd17_1', blockId:'blk_fd_17', sortOrder:1, text:'Desk stays on the floor' },
+    { id:'dut_fd17_2', blockId:'blk_fd_17', sortOrder:2, text:'Check in fast, rebook at the chair not the desk' },
+    { id:'dut_fd17_3', blockId:'blk_fd_17', sortOrder:3, text:'Keep the list honest — turn people away kindly rather than late' },
+    { id:'dut_fd18_1', blockId:'blk_fd_18', sortOrder:1, text:'Last walk-in cutoff' },
+    { id:'dut_fd18_2', blockId:'blk_fd_18', sortOrder:2, text:'Settle and count the drawer' },
+    { id:'dut_fd18_3', blockId:'blk_fd_18', sortOrder:3, text:'Print tomorrow’s book' },
+    { id:'dut_fd18_4', blockId:'blk_fd_18', sortOrder:4, text:'Leave a note for the morning about anything unfinished' },
+    { id:'dut_fd18_5', blockId:'blk_fd_18', sortOrder:5, text:'Lights, lock, alarm' },
+    { id:'dut_fdsat09_1', blockId:'blk_fd_sat_09', sortOrder:1, text:'Drawer counted before the door opens, not after' },
+    { id:'dut_fdsat09_2', blockId:'blk_fd_sat_09', sortOrder:2, text:'Book printed and on the desk' },
+    { id:'dut_fdsat09_3', blockId:'blk_fd_sat_09', sortOrder:3, text:'Walk-in list open from the first minute' },
+    { id:'dut_fdsat10_1', blockId:'blk_fd_sat_10', sortOrder:1, text:'Expect a queue — start the list early' },
+    { id:'dut_fdsat10_2', blockId:'blk_fd_sat_10', sortOrder:2, text:'Quote honest waits and repeat them out loud' },
+    { id:'dut_fdsat10_3', blockId:'blk_fd_sat_10', sortOrder:3, text:'Nobody stands without being spoken to' },
+    { id:'dut_fdsat11_1', blockId:'blk_fd_sat_11', sortOrder:1, text:'The desk is on the floor' },
+    { id:'dut_fdsat11_2', blockId:'blk_fd_sat_11', sortOrder:2, text:'Keep the list moving and the waits current' },
+    { id:'dut_fdsat12_1', blockId:'blk_fd_sat_12', sortOrder:1, text:'Nobody leaves the desk unattended' },
+    { id:'dut_fdsat12_2', blockId:'blk_fd_sat_12', sortOrder:2, text:'Fifteen minutes each, taken in turn' },
+    { id:'dut_fdsat13_1', blockId:'blk_fd_sat_13', sortOrder:1, text:'Every chair full, list still honest' },
+    { id:'dut_fdsat13_2', blockId:'blk_fd_sat_13', sortOrder:2, text:'Rebook at the chair' },
+    { id:'dut_fdsat14_1', blockId:'blk_fd_sat_14', sortOrder:1, text:'The list usually clears here — take walk-ins while you can' },
+    { id:'dut_fdsat14_2', blockId:'blk_fd_sat_14', sortOrder:2, text:'First chance to breathe: tidy the front' },
+    { id:'dut_fdsat15_1', blockId:'blk_fd_sat_15', sortOrder:1, text:'Talk product at the chair, not at the till' },
+    { id:'dut_fdsat15_2', blockId:'blk_fd_sat_15', sortOrder:2, text:'Restock the shelf as it empties' },
+    { id:'dut_fdsat16_1', blockId:'blk_fd_sat_16', sortOrder:1, text:'Close the walk-in list when the wait outruns the time left' },
+    { id:'dut_fdsat16_2', blockId:'blk_fd_sat_16', sortOrder:2, text:'Start the close while the floor finishes' },
+    { id:'dut_fdsat17_1', blockId:'blk_fd_sat_17', sortOrder:1, text:'Full close — drawer, book, lights, lock' },
+    { id:'dut_fdsat17_2', blockId:'blk_fd_sat_17', sortOrder:2, text:'We are shut Sunday and Monday: check the door card says so' },
+    { id:'dut_fdsat17_3', blockId:'blk_fd_sat_17', sortOrder:3, text:'Leave the front ready for Tuesday' },
+    { id:'dut_as09_1', blockId:'blk_as_09', sortOrder:1, text:'Stations set and tools laid out' },
+    { id:'dut_as09_2', blockId:'blk_as_09', sortOrder:2, text:'First load of towels on' },
+    { id:'dut_as09_3', blockId:'blk_as_09', sortOrder:3, text:'Check which chairs you are covering today' },
+    { id:'dut_as11_1', blockId:'blk_as_11', sortOrder:1, text:'Shampoo, prep, hand off cleanly' },
+    { id:'dut_as11_2', blockId:'blk_as_11', sortOrder:2, text:'Watch the cut you were asked to watch' },
+    { id:'dut_as11_3', blockId:'blk_as_11', sortOrder:3, text:'Keep the station you are on ahead of the chair' },
+    { id:'dut_as13_1', blockId:'blk_as_13', sortOrder:1, text:'Towels through' },
+    { id:'dut_as13_2', blockId:'blk_as_13', sortOrder:2, text:'Restock every station, not only yours' },
+    { id:'dut_as13_3', blockId:'blk_as_13', sortOrder:3, text:'Tools disinfected and back where they live' },
+    { id:'dut_as15_1', blockId:'blk_as_15', sortOrder:1, text:'Mannequin work, or shadow a senior chair' },
+    { id:'dut_as15_2', blockId:'blk_as_15', sortOrder:2, text:'Ask for the thing you got stuck on last week' },
+    { id:'dut_as17_1', blockId:'blk_as_17', sortOrder:1, text:'Sweep down every station' },
+    { id:'dut_as17_2', blockId:'blk_as_17', sortOrder:2, text:'Tools disinfected and put away' },
+    { id:'dut_as17_3', blockId:'blk_as_17', sortOrder:3, text:'Towels started so the morning is not behind' }
+  ],
+
+  /* Per-person, per-DAY ticks against duty items. Keyed by the local date, so
+     every day starts clean — that is what makes it a daily checklist rather
+     than a running log. Seeded empty: yesterday's ticks are nobody's business
+     and today's have not happened yet. Trimmed to DUTY_CHECK_DAYS on read. */
+  dutyChecks: [],
+
+  /* ---- floor: bounties (tables: bounties / bounty_instances) ----
+     "Bounty" is a NAME, not a reward — no points, no ledger, no balance.
+     sizeMin is required: "whenever you have spare time" only works if you can
+     tell which ones fit the time you actually have. */
+  bounties: [
+    { id:'bty_shelves',   sortOrder:1, title:'Deep clean the retail shelves', period:'weekly',    sizeMin:45, status:'active', roles:['Front Desk Concierge'],
+      detail:'Everything off, shelf wiped down, product faced and fronted. Pull anything expired, damaged or discontinued and leave it on the desk with a note.' },
+    { id:'bty_voicemail', sortOrder:2, title:'Clear the voicemail backlog', period:'weekly',      sizeMin:20, status:'active', roles:['Front Desk Concierge'],
+      detail:'Everything older than a day. Return it or log it — an unheard message is worse than a slow one.' },
+    { id:'bty_noshow',    sortOrder:3, title:'Call the week’s no-shows', period:'weekly',     sizeMin:30, status:'active', roles:['Front Desk Concierge'],
+      detail:'Offer them a slot. No guilt, no lecture — the point is to get them back in a chair, not to make them explain themselves.' },
+    { id:'bty_reviews',   sortOrder:4, title:'Answer the month’s online reviews', period:'monthly', sizeMin:45, status:'active', roles:['Front Desk Concierge'],
+      detail:'Every review, good and bad. Short, warm, signed by a person. Anything that needs the owner goes to Charlie instead of getting a holding reply.' },
+    { id:'bty_supplies',  sortOrder:5, title:'Count the supply cupboard', period:'monthly',       sizeMin:60, status:'active', roles:[],
+      detail:'Full count against the order sheet. Flag anything that will not last the month — running out of neck strips on a Saturday is a whole day’s problem.' },
+    { id:'bty_photos',    sortOrder:6, title:'Refresh the waiting-area photo wall', period:'quarterly', sizeMin:120, status:'active', roles:[],
+      detail:'Swap in recent work. Ask before you post anyone’s face — a client who said yes in March has not said yes forever.' },
+    { id:'bty_towels',    sortOrder:7, title:'Retire the worn towels and capes', period:'quarterly', sizeMin:30, status:'active', roles:[],
+      detail:'Anything thin, stained or fraying goes. Count what is left and tell Charlie what to reorder.' },
+    { id:'bty_kit',       sortOrder:8, title:'Rebuild the first-aid and spill kit', period:'quarterly', sizeMin:25, status:'active', roles:[],
+      detail:'Check every expiry date. Restock gloves, plasters, eyewash and the blood spill kit. This is the one nobody notices until it matters.' }
+  ],
+
+  /* Historical instances only. The current period's instances are created on
+     first read, so the seed does not have to guess what week it is. A missed one
+     is never rewritten — the miss IS the record. */
+  bountyInstances: [
+    { id:'bi_seed1', bountyId:'bty_shelves',   periodKey:'2026-W33', state:'done',
+      claimedBy:'emp_maya', claimedAt:'2026-08-13T14:02:00.000Z', completedBy:'emp_maya', completedAt:'2026-08-13T14:51:00.000Z' },
+    { id:'bi_seed2', bountyId:'bty_voicemail', periodKey:'2026-W33', state:'missed',
+      claimedBy:null, claimedAt:null, completedBy:null, completedAt:null },
+    { id:'bi_seed3', bountyId:'bty_supplies',  periodKey:'2026-07',  state:'done',
+      claimedBy:'emp_leo',  claimedAt:'2026-07-24T11:10:00.000Z', completedBy:'emp_leo',  completedAt:'2026-07-24T12:05:00.000Z' },
+    { id:'bi_seed4', bountyId:'bty_reviews',   periodKey:'2026-07',  state:'missed',
+      claimedBy:null, claimedAt:null, completedBy:null, completedAt:null },
+    { id:'bi_seed5', bountyId:'bty_photos',    periodKey:'2026-Q2',  state:'done',
+      claimedBy:'emp_maya', claimedAt:'2026-06-18T15:30:00.000Z', completedBy:'emp_maya', completedAt:'2026-06-18T17:22:00.000Z' }
   ]
 };
 
@@ -1160,6 +1422,86 @@ const byOrder = (a, b) => (a.sortOrder || 0) - (b.sortOrder || 0);
    later push by the caller silently edits the database. Non-arrays are
    normalised so one bad value cannot take the whole render pass down. */
 const _asList = v => Array.isArray(v) ? v.map(String) : (v == null || v === '' ? [] : [String(v)]);
+
+/* ---- floor: time ----
+   Everything that depends on "now" goes through _now(). Reading new Date()
+   inside the resolution logic would make the current-hour tests pass at 2pm and
+   fail at midnight, and the rollover tests pass eleven weeks out of twelve.
+   Tests replace this; production replaces it with the SHOP's timezone, because
+   the browser's local zone is the travelling admin's, not the shop's. */
+let _nowOverride = null;
+function _now() { return _nowOverride ? new Date(_nowOverride) : new Date(); }
+function _setNow(d) { _nowOverride = d == null ? null : new Date(d); }
+
+/* The daily checklist is keyed by the LOCAL date, not by a UTC timestamp. A shift
+   that ends at 6pm in New York is already tomorrow in UTC, and keying on that
+   would clear the closing checklist halfway through the close. */
+function dateKey(d) {
+  const x = d || _now();
+  return `${x.getFullYear()}-${pad2(x.getMonth() + 1)}-${pad2(x.getDate())}`;
+}
+/* A rolling window, deliberately short. The checklist's job is within-day —
+   "what is still outstanding right now", and "did the opening actually get
+   done" asked by the person closing. Keeping it forever turns a working tool
+   into a permanent per-employee performance record nobody asked for and
+   everybody would eventually be judged by. See FLOOR-SCOPE.md section 4. */
+const DUTY_CHECK_DAYS = 14;
+
+const DAY_KEYS  = ['sun','mon','tue','wed','thu','fri','sat'];
+const DAY_NAMES = { sun:'Sunday', mon:'Monday', tue:'Tuesday', wed:'Wednesday', thu:'Thursday', fri:'Friday', sat:'Saturday' };
+const dayKeyOf = d => DAY_KEYS[d.getDay()];
+
+/* ISO 8601 week: the week containing the first Thursday, so 1 January can
+   legitimately belong to the previous year's final week. Getting this wrong
+   silently splits one week's bounty across two period keys. */
+function isoWeek(date) {
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  /* Shift to the Thursday of this week — that Thursday's year IS the ISO year. */
+  d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
+  const isoYear = d.getFullYear();
+  const jan4 = new Date(isoYear, 0, 4);
+  const week1Thu = new Date(jan4);
+  week1Thu.setDate(jan4.getDate() + 3 - ((jan4.getDay() + 6) % 7));
+  const week = 1 + Math.round((d - week1Thu) / (7 * 24 * 3600 * 1000));
+  return { isoYear, week };
+}
+
+/* Period keys are DERIVED, never typed. One period, one key, one answer.
+   pad2() is the existing helper further down — function declarations hoist. */
+function periodKeyFor(period, date) {
+  const d = date || _now();
+  if (period === 'weekly')    { const { isoYear, week } = isoWeek(d); return `${isoYear}-W${pad2(week)}`; }
+  if (period === 'monthly')   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
+  if (period === 'quarterly') return `${d.getFullYear()}-Q${Math.floor(d.getMonth() / 3) + 1}`;
+  throw new Error('unknown bounty period: ' + period);
+}
+const PERIOD_LABEL = { weekly:'This week', monthly:'This month', quarterly:'This quarter' };
+
+/* ---- floor: day resolution ----
+   Three rules, in order, for weekday W. FLOOR-SCOPE.md section 5.
+     1. W in closedDays          -> closed
+     2. blocks with dayKey === W -> those blocks ARE the day
+     3. otherwise                -> the 'default' blocks
+   A weekday override replaces the day entirely; default blocks never leak in,
+   because "why didn't my default 2pm show up" is a rule nobody can hold in
+   their head. Standing duties are unaffected — they are standing. */
+function _scheduleForRole(role) {
+  return DB.dutySchedules.find(s => s.role === role) || null;
+}
+function _resolveDay(schedule, dayKey) {
+  if (!schedule) return { dayKey, closed:true, reason:'no-schedule', source:null, blocks:[] };
+  if (_asList(schedule.closedDays).indexOf(dayKey) >= 0) {
+    return { dayKey, closed:true, reason:'closed', source:null, blocks:[] };
+  }
+  const own = DB.dutyBlocks.filter(b => b.scheduleId === schedule.id && b.dayKey === dayKey);
+  const source = own.length ? dayKey : 'default';
+  const blocks = (own.length ? own : DB.dutyBlocks.filter(b => b.scheduleId === schedule.id && b.dayKey === 'default'))
+    .slice().sort((a, b) => a.hour - b.hour);
+  /* A day with nothing authored is closed too, but for a different reason — the
+     UI says so rather than showing an empty grid and letting people guess. */
+  if (!blocks.length) return { dayKey, closed:true, reason:'no-blocks', source:null, blocks:[] };
+  return { dayKey, closed:false, reason:null, source, blocks };
+}
 
 function _applicableMeetings(emp) {
   return DB.meetings.filter(m => !m.roleOnly || emp.eligibleForAsp).slice().sort(byOrder);
@@ -1489,8 +1831,388 @@ const Store = {
     if (patch.welcomeMessage !== undefined) DB.content.welcomeMessage = patch.welcomeMessage;
     if (patch.trainingUrl !== undefined) DB.content.trainingUrl = patch.trainingUrl;
     return clone(DB.content);
+  },
+
+  /* ---- floor: hourly duties (reads) ----
+     There is no completion state here and no duty_state table. The hour IS the
+     state. See FLOOR-SCOPE.md section 4 before adding a checkbox. */
+  async listDutySchedules() {                                                                                     // GET /floor/schedules
+    await _delay();
+    return clone(DB.dutySchedules.slice().sort(byOrder).map(s => ({
+      ...s,
+      standingCount: DB.dutyStanding.filter(x => x.scheduleId === s.id).length,
+      overrideDays: Array.from(new Set(DB.dutyBlocks.filter(b => b.scheduleId === s.id && b.dayKey !== 'default').map(b => b.dayKey)))
+    })));
+  },
+  async getDutySchedule(role) {                                                                                   // GET /floor/schedules/:role
+    await _delay();
+    const s = _scheduleForRole(role);
+    return s ? clone(s) : null;
+  },
+  async listStandingDuties(scheduleId) {                                                                          // GET /floor/schedules/:id/standing
+    await _delay();
+    return clone(DB.dutyStanding.filter(x => x.scheduleId === scheduleId).slice().sort(byOrder));
+  },
+  async listDutyBlocks(scheduleId, dayKey) {                                                                      // GET /floor/schedules/:id/blocks?day=
+    await _delay();
+    return clone(DB.dutyBlocks.filter(b => b.scheduleId === scheduleId && (dayKey === undefined || b.dayKey === dayKey))
+      .slice().sort((a, b) => a.hour - b.hour).map(b => ({ ...b, duties: _itemsOf(b.id) })));
+  },
+
+  /* The whole Today screen in one read: which day it is, whether the shop is
+     open, what is standing, which block governs right now, what is next, and
+     — for the signed-in employee on this date — which duties are ticked. */
+  async getFloorDay(role, at, empId) {                                                                            // GET /floor/today?role=
+    await _delay();
+    const now = at ? new Date(at) : _now();
+    const schedule = _scheduleForRole(role);
+    const dayKey = dayKeyOf(now);
+    const onDate = dateKey(now);
+    const day = _resolveDay(schedule, dayKey);
+    const standing = schedule
+      ? DB.dutyStanding.filter(x => x.scheduleId === schedule.id).slice().sort(byOrder) : [];
+
+    _purgeOldChecks(now);
+    const withChecks = b => ({ ...b, duties: _itemsOf(b.id, empId, onDate) });
+    const blocks = day.blocks.map(withChecks);
+
+    const out = {
+      role, dayKey, dayName: DAY_NAMES[dayKey], hour: now.getHours(), onDate,
+      schedule: schedule ? clone(schedule) : null,
+      closed: day.closed, reason: day.reason, source: day.source,
+      standing: clone(standing), blocks: clone(blocks),
+      currentBlock: null, nextBlock: null, position: 'closed',
+      /* Progress over the WHOLE day, not the current hour: a duty from 10am
+         that you finish at 11 still counts, and the closing person needs to
+         see the morning's outstanding items, not just their own hour. */
+      total: 0, done: 0
+    };
+    if (day.closed) return out;
+
+    for (const b of blocks) {
+      out.total += b.duties.length;
+      out.done  += b.duties.filter(d => d.done).length;
+    }
+
+    /* A block governs from its hour until the next block's hour; the last one
+       governs to the end of its own hour. That is what lets a sparse schedule
+       (9, 11, 13) answer "what am I doing at 12". */
+    const first = blocks[0].hour;
+    const end   = blocks[blocks.length - 1].hour + 1;
+    const h = now.getHours();
+    out.nextBlock = clone(blocks.find(b => b.hour > h) || null);
+    if (h < first)      out.position = 'before-open';
+    else if (h >= end)  { out.position = 'after-close'; out.nextBlock = null; }
+    else {
+      out.position = 'open';
+      const governing = blocks.filter(b => b.hour <= h).slice(-1)[0];
+      out.currentBlock = clone(governing || null);
+    }
+    return out;
+  },
+
+  /* ---- floor: the daily checklist ----
+     Per person, per LOCAL date, per duty item. Every day starts clean — that is
+     what makes it a checklist rather than a running log. */
+  async setDutyCheck(empId, dutyItemId, done, at) {                                                               // PUT /floor/checks/:dutyItemId
+    await _delay();
+    if (!DB.employees.some(e => e.id === empId)) throw new Error('employee not found');
+    /* Validate before writing, or a typo leaves a tick against nothing that
+       both read paths then hide — the same failure _ensureInstance had. */
+    if (!DB.dutyItems.some(d => d.id === dutyItemId)) throw new Error('duty item not found');
+    const on = dateKey(at ? new Date(at) : _now());
+    let row = DB.dutyChecks.find(c => c.employeeId === empId && c.dutyItemId === dutyItemId && c.onDate === on);
+    if (!row) {
+      row = { employeeId: empId, dutyItemId, onDate: on, done: !!done, checkedAt: _now().toISOString() };
+      DB.dutyChecks.push(row);
+    } else {
+      row.done = !!done;
+      row.checkedAt = _now().toISOString();
+    }
+    return clone(row);
+  },
+  /* What the role got through today, counted across everyone holding it.
+     Deliberately NOT per person: the shop's question is "did the close get
+     done", and answering it by name turns a checklist into a scoreboard. */
+  async getDayCoverage(role, at) {                                                                                // GET /floor/coverage?role=
+    await _delay();
+    const now = at ? new Date(at) : _now();
+    const schedule = _scheduleForRole(role);
+    const day = _resolveDay(schedule, dayKeyOf(now));
+    if (day.closed) return { role, onDate: dateKey(now), closed: true, blocks: [] };
+    const on = dateKey(now);
+    const staff = DB.employees.filter(e => e.role === role).map(e => e.id);
+    return {
+      role, onDate: on, closed: false,
+      blocks: day.blocks.map(b => {
+        const items = _itemsOf(b.id);
+        const done = items.filter(it => DB.dutyChecks.some(c =>
+          c.dutyItemId === it.id && c.onDate === on && c.done && staff.indexOf(c.employeeId) >= 0)).length;
+        return { id: b.id, hour: b.hour, label: b.label, total: items.length, done };
+      })
+    };
+  },
+
+  /* ---- floor: bounties ---- */
+  async listBounties(includeArchived = false) {                                                                   // GET /floor/bounties[?include=all]
+    await _delay();
+    return clone(DB.bounties.filter(b => includeArchived || b.status === 'active').slice().sort(byOrder));
+  },
+  /* The board for one person: current-period instances only, role-filtered.
+     Rollover happens here because the prototype has no scheduled job — see the
+     note in schema.sql. */
+  async listBountyBoard(role, at) {                                                                               // GET /floor/bounties/board?role=
+    await _delay();
+    const now = at ? new Date(at) : _now();
+    return clone(DB.bounties
+      .filter(b => b.status === 'active')
+      .filter(b => !_asList(b.roles).length || _asList(b.roles).indexOf(role) >= 0)
+      .slice().sort(byOrder)
+      .map(b => {
+        const inst = _ensureBountyInstance(b, now);
+        return { ...b, periodLabel: PERIOD_LABEL[b.period], instance: { ...inst } };
+      }));
+  },
+  async listBountyHistory(bountyId, limit = 8) {                                                                  // GET /floor/bounties/:id/instances
+    await _delay();
+    return clone(DB.bountyInstances.filter(i => i.bountyId === bountyId)
+      .slice().sort((a, b) => (a.periodKey < b.periodKey ? 1 : -1)).slice(0, limit));
+  },
+
+  async claimBounty(instanceId, empId) {                                                                          // POST /floor/bounties/instances/:id/claim
+    await _delay();
+    const inst = _bountyInstance(instanceId);
+    const emp = DB.employees.find(e => e.id === empId); if (!emp) throw new Error('employee not found');
+    if (inst.state === 'done')    throw new Error('that bounty is already done');
+    if (inst.state === 'missed')  throw new Error('that period has closed');
+    /* A soft lock, and the whole point of it: two people deep-cleaning the same
+       shelf is exactly the waste bounties exist to prevent. */
+    if (inst.state === 'claimed' && inst.claimedBy !== empId) throw new Error('someone else has claimed that one');
+    inst.state = 'claimed'; inst.claimedBy = empId; inst.claimedAt = _now().toISOString();
+    return clone(inst);
+  },
+  async releaseBounty(instanceId, empId) {                                                                        // POST /floor/bounties/instances/:id/release
+    await _delay();
+    const inst = _bountyInstance(instanceId);
+    if (inst.state !== 'claimed') throw new Error('that bounty is not claimed');
+    if (inst.claimedBy !== empId) throw new Error('only the person holding a claim can release it');
+    /* Releasing records NOTHING against the person. Treating a claim as a
+       promise just teaches people not to claim, which costs the coordination
+       the lock exists to provide. */
+    inst.state = 'open'; inst.claimedBy = null; inst.claimedAt = null;
+    return clone(inst);
+  },
+  async completeBounty(instanceId, empId) {                                                                       // POST /floor/bounties/instances/:id/complete
+    await _delay();
+    const inst = _bountyInstance(instanceId);
+    const emp = DB.employees.find(e => e.id === empId); if (!emp) throw new Error('employee not found');
+    if (inst.state === 'done')   throw new Error('that bounty is already done');
+    if (inst.state === 'missed') throw new Error('that period has closed');
+    if (inst.state === 'claimed' && inst.claimedBy !== empId) throw new Error('someone else has claimed that one');
+    inst.state = 'done'; inst.completedBy = empId; inst.completedAt = _now().toISOString();
+    if (!inst.claimedBy) { inst.claimedBy = empId; inst.claimedAt = inst.completedAt; }
+    return clone(inst);
+  },
+
+  /* ---- floor: admin mutations ---- */
+  async setScheduleClosedDays(scheduleId, days) {                                                                 // PATCH /floor/schedules/:id { closedDays }
+    await _delay();
+    const s = DB.dutySchedules.find(x => x.id === scheduleId); if (!s) throw new Error('schedule not found');
+    const valid = _asList(days).filter(d => DAY_KEYS.indexOf(d) >= 0);
+    s.closedDays = valid; return clone(s);
+  },
+  async updateDutyBlock(blockId, patch) {                                                                         // PATCH /floor/blocks/:id
+    await _delay();
+    const b = DB.dutyBlocks.find(x => x.id === blockId); if (!b) throw new Error('block not found');
+    if (patch.label  !== undefined) b.label  = String(patch.label);
+    if (patch.note   !== undefined) b.note   = String(patch.note);
+    if (patch.duties !== undefined) _setBlockItems(blockId, patch.duties);
+    return clone({ ...b, duties: _itemsOf(blockId) });
+  },
+  async addDutyBlock(scheduleId, dayKey, hour, data) {                                                            // POST /floor/schedules/:id/blocks
+    await _delay();
+    const s = DB.dutySchedules.find(x => x.id === scheduleId); if (!s) throw new Error('schedule not found');
+    if (DAY_KEYS.indexOf(dayKey) < 0 && dayKey !== 'default') throw new Error('unknown day');
+    const h = Number(hour);
+    if (!Number.isInteger(h) || h < 0 || h > 23) throw new Error('hour must be 0–23');
+    /* UNIQUE (schedule_id, day_key, hour). One block per hour per day, or "what
+       am I doing at 2pm" stops having one answer. */
+    if (DB.dutyBlocks.some(b => b.scheduleId === scheduleId && b.dayKey === dayKey && b.hour === h)) {
+      throw new Error('that hour already has a block');
+    }
+    const row = { id: newId('blk'), scheduleId, dayKey, hour: h,
+                  label: (data && data.label) || 'New hour', note: (data && data.note) || '' };
+    DB.dutyBlocks.push(row);
+    _setBlockItems(row.id, (data && data.duties) || []);
+    return clone({ ...row, duties: _itemsOf(row.id) });
+  },
+  async deleteDutyBlock(blockId) {                                                                                // DELETE /floor/blocks/:id
+    await _delay();
+    const i = DB.dutyBlocks.findIndex(x => x.id === blockId); if (i >= 0) DB.dutyBlocks.splice(i, 1);
+    /* ON DELETE CASCADE, by hand: the items go, and so do the ticks against
+       them, or dutyChecks accumulates rows pointing at nothing. */
+    _setBlockItems(blockId, []);
+    return { id: blockId, deleted: true };
+  },
+  /* Seeded from a COPY of the default day, so the admin edits rather than starts
+     blank — the cost of a whole-day override is the reason this exists. */
+  async createDayOverride(scheduleId, dayKey) {                                                                   // POST /floor/schedules/:id/days/:day
+    await _delay();
+    const s = DB.dutySchedules.find(x => x.id === scheduleId); if (!s) throw new Error('schedule not found');
+    if (DAY_KEYS.indexOf(dayKey) < 0) throw new Error('unknown day');
+    if (DB.dutyBlocks.some(b => b.scheduleId === scheduleId && b.dayKey === dayKey)) throw new Error('that day already has its own schedule');
+    const base = DB.dutyBlocks.filter(b => b.scheduleId === scheduleId && b.dayKey === 'default').slice().sort((a, b) => a.hour - b.hour);
+    const made = base.map(b => {
+      const row = { id: newId('blk'), scheduleId, dayKey, hour: b.hour, label: b.label, note: b.note };
+      DB.dutyBlocks.push(row);
+      /* New item rows, not the default's — editing the override must not reach
+         back into the default day, and a tick belongs to one or the other. */
+      _setBlockItems(row.id, _itemsOf(b.id).map(d => d.text));
+      return { ...row, duties: _itemsOf(row.id) };
+    });
+    return clone(made);
+  },
+  async clearDayOverride(scheduleId, dayKey) {                                                                    // DELETE /floor/schedules/:id/days/:day
+    await _delay();
+    for (let i = DB.dutyBlocks.length - 1; i >= 0; i--) {
+      const b = DB.dutyBlocks[i];
+      if (b.scheduleId === scheduleId && b.dayKey === dayKey) DB.dutyBlocks.splice(i, 1);
+    }
+    return { scheduleId, dayKey, cleared: true };
+  },
+  async addStandingDuty(scheduleId, data) {                                                                       // POST /floor/schedules/:id/standing
+    await _delay();
+    const s = DB.dutySchedules.find(x => x.id === scheduleId); if (!s) throw new Error('schedule not found');
+    const label = String((data && data.label) || '').trim();
+    if (!label) throw new Error('a standing duty needs a label');
+    const max = DB.dutyStanding.filter(x => x.scheduleId === scheduleId).reduce((n, x) => Math.max(n, x.sortOrder || 0), 0);
+    const row = { id: newId('std'), scheduleId, sortOrder: max + 1, label, detail: String((data && data.detail) || '') };
+    DB.dutyStanding.push(row); return clone(row);
+  },
+  async deleteStandingDuty(id) {                                                                                  // DELETE /floor/standing/:id
+    await _delay();
+    const i = DB.dutyStanding.findIndex(x => x.id === id); if (i >= 0) DB.dutyStanding.splice(i, 1);
+    return { id, deleted: true };
+  },
+  async addBounty(data) {                                                                                         // POST /floor/bounties
+    await _delay();
+    const title = String((data && data.title) || '').trim();
+    if (!title) throw new Error('a bounty needs a title');
+    const period = (data && data.period) || 'weekly';
+    if (['weekly','monthly','quarterly'].indexOf(period) < 0) throw new Error('unknown period');
+    /* Required, not optional: "whenever you have spare time" is unusable if you
+       cannot tell which bounties fit the time you actually have. */
+    const sizeMin = Number(data && data.sizeMin);
+    if (!Number.isInteger(sizeMin) || sizeMin <= 0 || sizeMin > 480) throw new Error('size must be 1–480 minutes');
+    const max = DB.bounties.reduce((n, b) => Math.max(n, b.sortOrder || 0), 0);
+    const row = { id: newId('bty'), sortOrder: max + 1, title, detail: String((data && data.detail) || ''),
+                  period, sizeMin, status:'active', roles: _asList(data && data.roles) };
+    DB.bounties.push(row); return clone(row);
+  },
+  async updateBounty(id, patch) {                                                                                 // PATCH /floor/bounties/:id
+    await _delay();
+    const b = DB.bounties.find(x => x.id === id); if (!b) throw new Error('bounty not found');
+    if (patch.title  !== undefined) b.title  = String(patch.title);
+    if (patch.detail !== undefined) b.detail = String(patch.detail);
+    if (patch.roles  !== undefined) b.roles  = _asList(patch.roles);
+    if (patch.sizeMin !== undefined) {
+      const n = Number(patch.sizeMin);
+      if (!Number.isInteger(n) || n <= 0 || n > 480) throw new Error('size must be 1–480 minutes');
+      b.sizeMin = n;
+    }
+    if (patch.period !== undefined) {
+      if (['weekly','monthly','quarterly'].indexOf(patch.period) < 0) throw new Error('unknown period');
+      b.period = patch.period;
+    }
+    return clone(b);
+  },
+  async setBountyStatus(id, status) {                                                                             // PATCH /floor/bounties/:id { status }
+    await _delay();
+    const b = DB.bounties.find(x => x.id === id); if (!b) throw new Error('bounty not found');
+    if (['active','archived'].indexOf(status) < 0) throw new Error('unknown status');
+    b.status = status; return clone(b);
   }
 };
+
+/* ---- floor: duty item helpers ---- */
+/* Items for a block, optionally carrying one person's ticks for one date. */
+function _itemsOf(blockId, empId, onDate) {
+  return DB.dutyItems.filter(d => d.blockId === blockId).slice().sort(byOrder).map(d => ({
+    id: d.id, blockId: d.blockId, sortOrder: d.sortOrder, text: d.text,
+    done: !!(empId && DB.dutyChecks.some(c =>
+      c.employeeId === empId && c.dutyItemId === d.id && c.onDate === onDate && c.done))
+  }));
+}
+/* Reconcile a block's duty lines against a list of texts.
+   Matching is BY TEXT, so reordering the list keeps today's ticks attached to
+   the right duty, while rewording a line correctly produces a new duty with a
+   clean tick — an edited duty is a different duty. */
+function _setBlockItems(blockId, texts) {
+  const wanted = _asList(texts).map(t => t.trim()).filter(t => t !== '');
+  const existing = DB.dutyItems.filter(d => d.blockId === blockId);
+  const spare = existing.slice();
+  const kept = [];
+
+  wanted.forEach((text, i) => {
+    const hit = spare.findIndex(d => d.text === text);
+    if (hit >= 0) {
+      const row = spare.splice(hit, 1)[0];
+      row.sortOrder = i + 1;
+      kept.push(row);
+    } else {
+      const row = { id: newId('dut'), blockId, sortOrder: i + 1, text };
+      DB.dutyItems.push(row);
+      kept.push(row);
+    }
+  });
+
+  /* Whatever is left over is gone, and its ticks go with it. */
+  for (const dead of spare) {
+    const i = DB.dutyItems.indexOf(dead);
+    if (i >= 0) DB.dutyItems.splice(i, 1);
+    for (let j = DB.dutyChecks.length - 1; j >= 0; j--) {
+      if (DB.dutyChecks[j].dutyItemId === dead.id) DB.dutyChecks.splice(j, 1);
+    }
+  }
+  return kept;
+}
+/* Drop ticks older than the rolling window. In production this is a nightly
+   job with a retention policy; doing it on read keeps the prototype honest
+   about the fact that the data does not accumulate forever. */
+function _purgeOldChecks(at) {
+  const cutoff = new Date(at || _now());
+  cutoff.setDate(cutoff.getDate() - DUTY_CHECK_DAYS);
+  const floor = dateKey(cutoff);
+  for (let i = DB.dutyChecks.length - 1; i >= 0; i--) {
+    if (DB.dutyChecks[i].onDate < floor) DB.dutyChecks.splice(i, 1);
+  }
+}
+
+/* ---- floor: instance helpers ---- */
+function _bountyInstance(id) {
+  const inst = DB.bountyInstances.find(i => i.id === id);
+  if (!inst) throw new Error('bounty instance not found');
+  return inst;
+}
+/* Lazily opens the current period and closes out anything older. Instances are
+   never deleted and a missed one is never rewritten — the miss IS the record,
+   which is the whole reason a quarterly bounty cannot silently evaporate at
+   quarter end. claimedBy is dropped on a miss: a claim is not a commitment, so
+   failing to finish one must not leave a permanent mark with someone's name on
+   it. In production this is a nightly job, not a read. */
+function _ensureBountyInstance(bounty, at) {
+  const key = periodKeyFor(bounty.period, at || _now());
+  let inst = DB.bountyInstances.find(i => i.bountyId === bounty.id && i.periodKey === key);
+  if (!inst) {
+    DB.bountyInstances
+      .filter(i => i.bountyId === bounty.id && i.periodKey !== key && (i.state === 'open' || i.state === 'claimed'))
+      .forEach(i => { i.state = 'missed'; i.claimedBy = null; i.claimedAt = null; });
+    inst = { id: newId('bi'), bountyId: bounty.id, periodKey: key, state:'open',
+             claimedBy:null, claimedAt:null, completedBy:null, completedAt:null };
+    DB.bountyInstances.push(inst);
+  }
+  return inst;
+}
 /* ---- resources: visibility + shaping (server-side concerns in production) ---- */
 const RESOURCE_MAX_BYTES = 2 * 1024 * 1024;   /* prototype only: files live in memory as base64 */
 const RESOURCE_MIME = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'];
@@ -1543,10 +2265,12 @@ const CURRENT_USER = 'emp_jordan';                 // the signed-in employee (wo
 const state = { content: {}, team: [], meetings: [], slots: {}, employees: [], employeeMeetings: {}, me: { employee: null, meetings: [], checklist: [] },
   /* Two category lists, mirroring what two API calls with different auth return.
      The employee list is what a non-admin session would actually receive. */
-  resources: { categories: [], allCategories: [], sections: {}, figures: {}, docs: {}, allDocs: {} } };
+  resources: { categories: [], allCategories: [], sections: {}, figures: {}, docs: {}, allDocs: {} },
+  floor: { today: null, board: [], schedules: [], allBounties: [], coverage: {} } };
 let mode = 'employee', current = 's-home', rescheduleId = null, editId = null, uploadTargetId = null;
 let resOpen = null, resOpenAdmin = null, editCatId = null, docTargetCatId = null, docReplaceId = null;
 let viewerUrl = null, viewerDoc = null;
+let schOpen = null, schDay = 'default', editBountyId = null, sizeFilter = 0;
 
 const $ = s => document.querySelector(s);
 
@@ -1612,15 +2336,29 @@ async function refresh(){
     state.resources.allDocs[c.id]  = await Store.listResourceDocuments(c.id, true);
     state.resources.docs[c.id]     = await Store.listResourceDocuments(c.id, false);
   }
+  state.floor.schedules   = await Store.listDutySchedules();
+  state.floor.allBounties = await Store.listBounties(true);
+  /* The signed-in employee's role decides both reads. A role with no schedule
+     gets a real empty state rather than a blank screen — the demo user is an
+     Assistant Stylist, and hiding that case would hide the one that matters. */
+  const myRole = state.me.employee ? state.me.employee.role : null;
+  state.floor.today    = myRole ? await Store.getFloorDay(myRole, null, CURRENT_USER) : null;
+  state.floor.board    = myRole ? await Store.listBountyBoard(myRole) : [];
+  state.floor.coverage = {};
+  for (const s of state.floor.schedules) state.floor.coverage[s.id] = await Store.getDayCoverage(s.role);
   renderAll();
 }
-function renderAll(){ syncIdentity(); renderRail(); renderChecklist(); renderHome(); renderTeam(); renderAdminTeam(); renderRoster(); renderSlots(); renderContentForm(); renderTrainingScreen(); renderResources(); renderResourcesAdmin(); renderNav(); }
+function renderAll(){ syncIdentity(); renderRail(); renderChecklist(); renderHome(); renderTeam(); renderAdminTeam(); renderRoster(); renderSlots(); renderContentForm(); renderTrainingScreen(); renderResources(); renderResourcesAdmin(); renderFloorToday(); renderFloorAdmin(); renderNav(); }
 
 /* ---- navigation ---- */
 const NAV = {
+  /* Floor is its own header, not another Onboarding item. Onboarding is finite
+     and ends around Day 30; the hourly box applies to someone in year three.
+     Filing Today under Onboarding would be a lie about what it is. */
   employee:[{label:'Onboarding',header:true},{id:'s-home',label:'Home'},{id:'s-team',label:'Meet the shop'},{id:'s-checklist',label:'My checklist'},{id:'s-meetings',label:'Meetings'},{id:'s-training',label:'Training access'},
-            {label:'Reference',header:true},{id:'s-resources',label:'Resources'},{id:'s-help',label:'Questions'}],
-  admin:[{label:'Manage',header:true},{id:'a-overview',label:'Overview'},{id:'a-team',label:'Team & photos'},{id:'a-slots',label:'Meeting times'},{id:'a-content',label:'Content'},{id:'a-resources',label:'Resources'}]
+            {label:'Reference',header:true},{id:'s-resources',label:'Resources'},{id:'s-help',label:'Questions'},
+            {label:'Floor',header:true},{id:'s-floor',label:'Today'}],
+  admin:[{label:'Manage',header:true},{id:'a-overview',label:'Overview'},{id:'a-team',label:'Team & photos'},{id:'a-slots',label:'Meeting times'},{id:'a-content',label:'Content'},{id:'a-resources',label:'Resources'},{id:'a-floor',label:'Floor ops'}]
 };
 function renderNav(){
   $('#nav').innerHTML = NAV[mode].map(n=> n.header
@@ -2569,6 +3307,462 @@ async function deleteDoc(id){
 }
 
 /* ===================== init ==================================== */
+/* ===================== floor: hourly duties + bounties =================== */
+/* Everything an admin types lands in markup here, so it goes through esc(); ids
+   inside onclick attributes go through escArg(). Same rule as everywhere else. */
+
+function fmtHour(h){
+  const n = ((h % 24) + 24) % 24;
+  const ampm = n < 12 ? 'AM' : 'PM';
+  const twelve = n % 12 === 0 ? 12 : n % 12;
+  return twelve + ' ' + ampm;
+}
+function fmtSize(min){
+  if(min < 60) return min + ' min';
+  const h = Math.floor(min / 60), m = min % 60;
+  return m ? `${h} hr ${m} min` : `${h} hr`;
+}
+const SIZE_STEPS = [
+  { v:0,   label:'Any' },
+  { v:20,  label:'20 min or less' },
+  { v:45,  label:'45 min or less' },
+  { v:120, label:'2 hrs or less' }
+];
+
+/* ---- employee: Today ---- */
+function renderFloorToday(){
+  const host = $('#floorToday'); if(!host) return;
+  const t = state.floor.today;
+
+  if(!t || !t.schedule){
+    const role = state.me.employee ? state.me.employee.role : 'your role';
+    host.innerHTML = `<div style="margin-top:6px">
+      ${emptyCard(`No hourly schedule has been set up for ${role} yet. When the shop adds one it will appear here, hour by hour.`)}
+      ${bountyBoard()}</div>`;
+    return;
+  }
+
+  const overridden = t.source && t.source !== 'default';
+  const dayLine = t.closed
+    ? (t.reason === 'closed' ? `${esc(t.dayName)} — the shop is closed.` : `Nothing is scheduled for ${esc(t.dayName)} yet.`)
+    : `${esc(t.dayName)}${overridden ? ' · this day has its own schedule' : ''}`;
+
+  host.innerHTML = `<div style="margin-top:6px">
+    <div class="eyebrow">${esc(t.schedule.name)}</div>
+    <p class="fmeta" style="margin-bottom:4px">${dayLine}</p>
+    ${t.closed ? '' : progressLine(t)}
+    <div style="height:10px"></div>
+    ${t.closed ? emptyCard(t.reason === 'closed'
+        ? 'Enjoy it. Your next shift picks up where the schedule says.'
+        : 'Ask Charlie to fill this day in — an empty day is not the same as a day off.')
+      : currentHourCard(t)}
+    ${standingCard(t.standing)}
+    ${t.closed ? '' : dayChecklist(t)}
+    ${bountyBoard()}
+  </div>`;
+}
+
+/* A duty line you can tick. The hour still says what it is FOR — the tick is
+   an addition, not a replacement. */
+function dutyLine(d, opts){
+  const o = opts || {};
+  return `<li class="duty ${d.done?'done':''}">
+    <button class="tick ${d.done?'on':''}" role="checkbox" aria-checked="${d.done}"
+      onclick="tickDuty('${escArg(d.id)}', ${d.done ? 'false' : 'true'})"
+      aria-label="${d.done?'Undo':'Done'}: ${esc(d.text)}">${d.done?'✓':''}</button>
+    <span>${esc(d.text)}${o.hour !== undefined ? ` <span class="h">${esc(fmtHour(o.hour))}</span>` : ''}</span>
+  </li>`;
+}
+
+function progressLine(t){
+  if(!t.total) return '';
+  const left = t.total - t.done;
+  const pct = Math.round((t.done / t.total) * 100);
+  return `<div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin-top:4px">
+      <span class="fmeta">${t.done} of ${t.total} ticked${left ? ` · ${left} left` : ' · all clear'}</span>
+      <span class="bar" style="flex:1;min-width:120px"><i style="width:${pct}%"></i></span>
+    </div>`;
+}
+
+function currentHourCard(t){
+  if(t.position === 'before-open'){
+    const first = t.blocks[0];
+    return `<div class="card"><div class="eyebrow">Not started yet</div>
+      <h2 style="font-family:'Marcellus',serif;font-weight:400;font-size:23px;margin-top:4px">The day starts at ${esc(fmtHour(first.hour))}</h2>
+      <p class="sub" style="margin-top:6px">First up: ${esc(first.label)}.</p></div>`;
+  }
+  if(t.position === 'after-close'){
+    return `<div class="card"><div class="eyebrow">Day done</div>
+      <h2 style="font-family:'Marcellus',serif;font-weight:400;font-size:23px;margin-top:4px">That is the day.</h2>
+      <p class="sub" style="margin-top:6px">Anything unfinished goes in the note for the morning.</p></div>`;
+  }
+  const b = t.currentBlock;
+  if(!b) return '';
+  const next = t.nextBlock;
+  return `<div class="card">
+    <div class="eyebrow">Right now · ${esc(fmtHour(b.hour))}</div>
+    <h2 style="font-family:'Marcellus',serif;font-weight:400;font-size:26px;margin-top:4px">${esc(b.label)}</h2>
+    ${b.note ? `<p class="sub" style="margin-top:6px">${esc(b.note)}</p>` : ''}
+    ${(b.duties||[]).length ? `<ul class="dutylist" style="margin-top:10px">${b.duties.map(d=>dutyLine(d)).join('')}</ul>` : ''}
+    ${next ? `<p class="sub" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line)">Next, at ${esc(fmtHour(next.hour))} — ${esc(next.label)}.</p>` : ''}
+  </div>`;
+}
+
+/* Shown once, above the hour. Copying these into every block is how eight
+   copies of one duty drift apart. */
+function standingCard(standing){
+  if(!standing || !standing.length) return '';
+  return `<div class="card" style="margin-top:14px">
+    <h3>All shift, every shift</h3>
+    <p class="sub">True at 9 in the morning and at 6 at night. They are not part of any one hour.</p>
+    <ul class="topic-list" style="margin-top:8px">${standing.map(s=>`<li><span>
+      <strong>${esc(s.label)}</strong>${s.detail ? `<br><span class="sub">${esc(s.detail)}</span>` : ''}
+    </span></li>`).join('')}</ul></div>`;
+}
+
+/* The whole day, ticked or not. Not just the current hour: a 10am duty you
+   finish at 11 still counts, and the person closing needs to see what the
+   morning left outstanding. Outstanding items from earlier hours are surfaced
+   first, because that is the thing worth acting on. */
+function dayChecklist(t){
+  const past    = t.blocks.filter(b => b.hour <  t.hour);
+  const current = t.blocks.filter(b => b.hour === t.hour || (t.currentBlock && b.id === t.currentBlock.id));
+  const later   = t.blocks.filter(b => b.hour >  t.hour);
+  const behind  = past.filter(b => !current.some(c => c.id === b.id))
+                      .flatMap(b => (b.duties||[]).filter(d => !d.done).map(d => ({ d, hour:b.hour })));
+
+  const outstanding = behind.length
+    ? `<div class="card" style="margin-top:14px">
+        <h3>Still outstanding from earlier</h3>
+        <p class="sub">Not a telling-off — just what has not been ticked yet today.</p>
+        <ul class="dutylist" style="margin-top:8px">${behind.map(x=>dutyLine(x.d, { hour:x.hour })).join('')}</ul>
+      </div>`
+    : '';
+
+  const upcoming = later.length
+    ? `<div class="card" style="margin-top:14px"><h3>Still to come</h3>
+        ${later.map(b=>`<div style="padding:10px 0;border-bottom:1px solid var(--line)">
+          <div style="display:flex;gap:12px;align-items:baseline">
+            <span class="h" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--brass);min-width:58px">${esc(fmtHour(b.hour))}</span>
+            <strong style="font-size:14px">${esc(b.label)}</strong>
+          </div>
+          ${(b.duties||[]).length?`<ul class="dutylist" style="margin-top:6px;margin-left:70px">${b.duties.map(d=>dutyLine(d)).join('')}</ul>`:''}
+        </div>`).join('')}
+      </div>`
+    : '';
+
+  return outstanding + upcoming;
+}
+
+/* ---- employee: the bounty board ---- */
+function bountyBoard(){
+  const rows = state.floor.board || [];
+  const me = state.me.employee ? state.me.employee.id : null;
+  const filtered = sizeFilter ? rows.filter(b => b.sizeMin <= sizeFilter) : rows;
+
+  const filterStrip = `<div class="tabstrip" role="group" aria-label="Filter by time available">
+    ${SIZE_STEPS.map(s=>`<button ${s.v===sizeFilter?'aria-selected="true"':''} onclick="setSizeFilter(${s.v})">${esc(s.label)}</button>`).join('')}
+  </div>`;
+
+  const body = !rows.length
+    ? emptyCard('No bounties are open to your role right now.')
+    : (!filtered.length
+        ? emptyCard('Nothing that short is open at the moment. Try a longer window.')
+        : filtered.map(b => bountyRow(b, me)).join(''));
+
+  return `<div class="card" style="margin-top:20px">
+    <h3>Bounties</h3>
+    <p class="sub">Not tied to an hour. Pick one up when you have the time for it — and put it back if you do not, that costs nothing.</p>
+    ${filterStrip}
+    <div style="margin-top:4px">${body}</div>
+  </div>`;
+}
+
+function bountyRow(b, me){
+  const i = b.instance;
+  const mine = i.claimedBy === me;
+  const chip = i.state === 'done'    ? '<span class="chip complete">Done</span>'
+             : i.state === 'claimed' ? `<span class="chip scheduled">${mine ? 'Yours' : 'Taken'}</span>`
+             : '<span class="chip">Open</span>';
+  const who = i.state === 'done' ? nameOf(i.completedBy) : (i.state === 'claimed' ? nameOf(i.claimedBy) : '');
+
+  let actions = '';
+  if(i.state === 'open'){
+    actions = `<button class="btn small" onclick="claimB('${escArg(i.id)}')">Claim</button>
+               <button class="btn ghost small" onclick="finishB('${escArg(i.id)}')">Mark done</button>`;
+  } else if(i.state === 'claimed' && mine){
+    actions = `<button class="btn small" onclick="finishB('${escArg(i.id)}')">Mark done</button>
+               <button class="btn ghost small" onclick="dropB('${escArg(i.id)}')">Put it back</button>`;
+  }
+
+  return `<div style="padding:14px 0;border-bottom:1px solid var(--line)">
+    <div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap">
+      <strong>${esc(b.title)}</strong>${chip}
+      <span class="fmeta" style="margin-left:auto">${esc(b.periodLabel)} · ${esc(fmtSize(b.sizeMin))}</span>
+    </div>
+    ${b.detail ? `<p class="sub" style="margin-top:6px">${esc(b.detail)}</p>` : ''}
+    ${who ? `<p class="sub" style="margin-top:6px">${i.state==='done'?'Done by':'Held by'} ${esc(who)}.</p>` : ''}
+    ${actions ? `<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">${actions}</div>` : ''}
+  </div>`;
+}
+function nameOf(empId){
+  if(!empId) return '';
+  const e = state.employees.find(x => x.id === empId);
+  return e ? e.name : 'someone who has since left';
+}
+function setSizeFilter(v){ sizeFilter = Number(v) || 0; renderFloorToday(); }
+
+async function tickDuty(dutyItemId, done){
+  try { await Store.setDutyCheck(CURRENT_USER, dutyItemId, done); await refresh(); }
+  catch(err){ toast(err.message); }
+}
+
+async function claimB(id){
+  try { await Store.claimBounty(id, CURRENT_USER); toast('Yours — put it back any time'); await refresh(); }
+  catch(err){ toast(err.message); await refresh(); }
+}
+async function dropB(id){
+  try { await Store.releaseBounty(id, CURRENT_USER); toast('Back on the board'); await refresh(); }
+  catch(err){ toast(err.message); }
+}
+async function finishB(id){
+  try { await Store.completeBounty(id, CURRENT_USER); toast('Logged — thank you'); await refresh(); }
+  catch(err){ toast(err.message); await refresh(); }
+}
+
+/* ---- admin: schedules ---- */
+function renderFloorAdmin(){
+  const tabs = $('#schTabs'), panel = $('#schPanel');
+  if(!tabs || !panel) return;
+  const list = state.floor.schedules || [];
+  if(!list.length){ tabs.innerHTML = ''; panel.innerHTML = emptyCard('No role schedules yet.'); renderBountyAdmin(); return; }
+  if(!list.some(s => s.id === schOpen)){ schOpen = list[0].id; schDay = 'default'; }
+
+  tabs.innerHTML = list.map(s => `<button role="tab" data-sch="${esc(s.id)}" aria-selected="${s.id===schOpen}"
+      onclick="selectSchTab('${escArg(s.id)}')">${esc(s.role)}</button>`).join('');
+  panel.innerHTML = schedulePanel(list.find(s => s.id === schOpen));
+  renderBountyAdmin();
+}
+function selectSchTab(id){ schOpen = id; schDay = 'default'; renderFloorAdmin(); }
+function selectSchDay(day){ schDay = day; renderFloorAdmin(); }
+
+function schedulePanel(s){
+  if(!s) return emptyCard('That schedule is no longer available.');
+  const closed = _asList(s.closedDays);
+  const overrides = _asList(s.overrideDays);
+
+  const closedRow = DAY_KEYS.map(d => `<button class="btn ghost small" style="${closed.indexOf(d)>=0?'opacity:1;border-color:var(--brass)':'opacity:.55'}"
+      onclick="toggleClosed('${escArg(s.id)}','${escArg(d)}')">${esc(DAY_NAMES[d].slice(0,3))}${closed.indexOf(d)>=0?' · closed':''}</button>`).join('');
+
+  const dayTabs = ['default'].concat(DAY_KEYS.filter(d => closed.indexOf(d) < 0)).map(d => {
+    const isOverride = d !== 'default' && overrides.indexOf(d) >= 0;
+    const label = d === 'default' ? 'Most days' : DAY_NAMES[d];
+    return `<button role="tab" data-day="${esc(d)}" aria-selected="${d===schDay}" onclick="selectSchDay('${escArg(d)}')">
+      ${esc(label)}${isOverride ? ' <span class="n">own</span>' : ''}</button>`;
+  }).join('');
+
+  return `<div style="margin-top:6px">
+    ${coverageToday(s)}
+
+    <label class="field-label" style="margin-top:18px">Closed days</label>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">${closedRow}</div>
+
+    <label class="field-label" style="margin-top:18px">All shift, every shift</label>
+    <p class="sub">Shown once above the hour, never copied into the blocks.</p>
+    <div style="margin-top:8px">${standingEditor(s.id)}</div>
+
+    <label class="field-label" style="margin-top:18px">Hour by hour</label>
+    <div class="tabstrip" role="tablist" aria-label="Days">${dayTabs}</div>
+    ${dayEditor(s, schDay)}
+  </div>`;
+}
+
+/* Today's coverage for the role, counted across everyone who holds it.
+   Deliberately NOT broken down by person: the shop's question is "did the close
+   get done", and answering it by name turns a working checklist into a
+   scoreboard people start gaming. FLOOR-SCOPE.md section 4. */
+function coverageToday(s){
+  const cov = (state.floor.coverage || {})[s.id];
+  if(!cov) return '';
+  if(cov.closed) return `<div class="note"><strong>Closed today.</strong> Nothing to cover.</div>`;
+  const total = cov.blocks.reduce((n,b)=>n+b.total, 0);
+  const done  = cov.blocks.reduce((n,b)=>n+b.done, 0);
+  const pct   = total ? Math.round(done/total*100) : 0;
+  return `<div class="card" style="margin-top:4px">
+    <h3>Today, so far</h3>
+    <p class="sub">Ticked by anyone working this role today — not broken down by person, on purpose.</p>
+    <div style="display:flex;gap:10px;align-items:baseline;margin-top:8px;flex-wrap:wrap">
+      <span class="fmeta">${done} of ${total}</span>
+      <span class="bar" style="flex:1;min-width:140px"><i style="width:${pct}%"></i></span>
+    </div>
+    <ul class="hourlist" style="margin-top:10px">${cov.blocks.map(b=>`<li>
+      <span class="h">${esc(fmtHour(b.hour))}</span>
+      <span style="flex:1">${esc(b.label)}</span>
+      <span class="fmeta">${b.total ? `${b.done}/${b.total}` : '—'}</span>
+    </li>`).join('')}</ul>
+  </div>`;
+}
+
+function standingEditor(schId){
+  const rows = DB.dutyStanding.filter(x => x.scheduleId === schId).slice().sort(byOrder);
+  return `${rows.map(r => `<div style="display:flex;gap:10px;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--line)">
+      <span style="flex:1"><strong>${esc(r.label)}</strong>${r.detail?`<br><span class="sub">${esc(r.detail)}</span>`:''}</span>
+      <button class="btn ghost small" onclick="dropStanding('${escArg(r.id)}')">Remove</button>
+    </div>`).join('')}
+    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+      <input class="field" id="stdNew-${esc(schId)}" placeholder="Add a standing duty" style="flex:1;min-width:220px">
+      <button class="btn small" onclick="addStanding('${escArg(schId)}')">Add</button>
+    </div>`;
+}
+
+function dayEditor(s, dayKey){
+  const closed = _asList(s.closedDays);
+  if(dayKey !== 'default' && closed.indexOf(dayKey) >= 0){
+    return emptyCard(`${DAY_NAMES[dayKey]} is marked closed.`);
+  }
+  const own = DB.dutyBlocks.filter(b => b.scheduleId === s.id && b.dayKey === dayKey);
+  const usingDefault = dayKey !== 'default' && !own.length;
+
+  if(usingDefault){
+    return `<div style="margin-top:10px">
+      ${emptyCard(`${DAY_NAMES[dayKey]} follows the “most days” schedule.`)}
+      <p class="sub" style="margin-top:10px">Giving it its own schedule copies today's default as a starting point — a day that overrides is authored end to end, so nothing from the default leaks in.</p>
+      <div style="margin-top:10px"><button class="btn small" onclick="makeOverride('${escArg(s.id)}','${escArg(dayKey)}')">Give ${esc(DAY_NAMES[dayKey])} its own schedule</button></div>
+    </div>`;
+  }
+
+  const blocks = own.slice().sort((a,b) => a.hour - b.hour);
+  const used = blocks.map(b => b.hour);
+  const free = []; for(let h=5; h<=23; h++){ if(used.indexOf(h) < 0) free.push(h); }
+
+  return `<div style="margin-top:10px">
+    ${dayKey !== 'default' ? `<div style="margin-bottom:12px"><button class="btn ghost small" onclick="dropOverride('${escArg(s.id)}','${escArg(dayKey)}')">Drop this day's own schedule — follow “most days” again</button></div>` : ''}
+    ${blocks.length ? blocks.map(b => blockEditor(b)).join('') : emptyCard('No hours yet.')}
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center">
+      <select class="field" id="blkNewHour" style="max-width:140px">${free.map(h=>`<option value="${h}">${esc(fmtHour(h))}</option>`).join('')}</select>
+      <button class="btn small" onclick="addBlock('${escArg(s.id)}','${escArg(dayKey)}')">Add an hour</button>
+    </div>
+  </div>`;
+}
+
+function blockEditor(b){
+  return `<div class="card" style="margin-top:10px">
+    <div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap">
+      <strong>${esc(fmtHour(b.hour))}</strong>
+      <input class="field" id="blkLabel-${esc(b.id)}" value="${esc(b.label)}" style="flex:1;min-width:180px">
+      <button class="btn ghost small" onclick="dropBlock('${escArg(b.id)}')">Remove</button>
+    </div>
+    <label class="field-label" for="blkNote-${esc(b.id)}">Note <span style="text-transform:none;letter-spacing:0">(optional — why this hour is what it is)</span></label>
+    <input class="field" id="blkNote-${esc(b.id)}" value="${esc(b.note||'')}">
+    <label class="field-label" for="blkDuties-${esc(b.id)}">Duties, one per line <span style="text-transform:none;letter-spacing:0">(each one is tickable on the day)</span></label>
+    <textarea class="notes" id="blkDuties-${esc(b.id)}" rows="4">${esc(_itemsOf(b.id).map(d => d.text).join('\n'))}</textarea>
+    <div style="margin-top:10px"><button class="btn small" onclick="saveBlock('${escArg(b.id)}')">Save this hour</button></div>
+  </div>`;
+}
+
+async function saveBlock(id){
+  const label  = $('#blkLabel-' + id) ? $('#blkLabel-' + id).value : undefined;
+  const note   = $('#blkNote-' + id)  ? $('#blkNote-' + id).value  : undefined;
+  const duties = $('#blkDuties-' + id) ? $('#blkDuties-' + id).value.split('\n').map(s => s.trim()) : undefined;
+  await Store.updateDutyBlock(id, { label, note, duties });
+  toast('Hour saved'); await refresh();
+}
+async function addBlock(schId, dayKey){
+  const sel = $('#blkNewHour'); if(!sel) return;
+  try { await Store.addDutyBlock(schId, dayKey, Number(sel.value), { label:'New hour', duties:[] }); toast('Hour added'); await refresh(); }
+  catch(err){ toast(err.message); }
+}
+async function dropBlock(id){ await Store.deleteDutyBlock(id); toast('Hour removed'); await refresh(); }
+async function makeOverride(schId, dayKey){
+  try { await Store.createDayOverride(schId, dayKey); schDay = dayKey; toast(DAY_NAMES[dayKey] + ' now has its own schedule'); await refresh(); }
+  catch(err){ toast(err.message); }
+}
+async function dropOverride(schId, dayKey){
+  await Store.clearDayOverride(schId, dayKey); toast(DAY_NAMES[dayKey] + ' follows the default again'); await refresh();
+}
+async function toggleClosed(schId, day){
+  const s = state.floor.schedules.find(x => x.id === schId); if(!s) return;
+  const days = _asList(s.closedDays).slice();
+  const i = days.indexOf(day);
+  if(i >= 0) days.splice(i, 1); else days.push(day);
+  await Store.setScheduleClosedDays(schId, days);
+  if(schDay === day) schDay = 'default';
+  await refresh();
+}
+async function addStanding(schId){
+  const el = $('#stdNew-' + schId); if(!el) return;
+  try { await Store.addStandingDuty(schId, { label: el.value }); el.value = ''; toast('Added'); await refresh(); }
+  catch(err){ toast(err.message); }
+}
+async function dropStanding(id){ await Store.deleteStandingDuty(id); toast('Removed'); await refresh(); }
+
+/* ---- admin: bounties ---- */
+function renderBountyAdmin(){
+  const host = $('#btyAdmin'); if(!host) return;
+  const rows = state.floor.allBounties || [];
+  const sel = $('#btyRoles');
+  if(sel && sel.options.length <= 1){
+    const roles = Array.from(new Set(state.employees.map(e => e.role))).sort();
+    sel.innerHTML = '<option value="">Anyone on the floor</option>' +
+      roles.map(r => `<option value="${esc(r)}">${esc(r)} only</option>`).join('');
+  }
+  if(!rows.length){ host.innerHTML = emptyCard('No bounties yet.'); return; }
+
+  host.innerHTML = rows.map(b => {
+    const hist = DB.bountyInstances.filter(i => i.bountyId === b.id);
+    const done = hist.filter(i => i.state === 'done').length;
+    const missed = hist.filter(i => i.state === 'missed').length;
+    return `<div style="padding:14px 0;border-bottom:1px solid var(--line)">
+      <div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap">
+        <strong>${esc(b.title)}</strong>
+        ${b.status === 'archived' ? '<span class="chip draft">Archived</span>' : ''}
+        <span class="fmeta">${esc(PERIOD_LABEL[b.period])} · ${esc(fmtSize(b.sizeMin))} · ${_asList(b.roles).length ? esc(_asList(b.roles).join(', ')) : 'anyone'}</span>
+        <span style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn ghost small" onclick="openEditBounty('${escArg(b.id)}')">Edit</button>
+          <button class="btn ghost small" onclick="toggleBounty('${escArg(b.id)}')">${b.status === 'active' ? 'Archive' : 'Restore'}</button>
+        </span>
+      </div>
+      ${b.detail ? `<p class="sub" style="margin-top:6px">${esc(b.detail)}</p>` : ''}
+      <p class="sub" style="margin-top:6px">${done} done · ${missed} missed</p>
+    </div>`;
+  }).join('');
+}
+
+function openAddBounty(){
+  editBountyId = null;
+  $('#btyFormTitle').textContent = 'Add a bounty';
+  $('#btyTitle').value = ''; $('#btyDetail').value = '';
+  $('#btyPeriod').value = 'weekly'; $('#btySize').value = 30; $('#btyRoles').value = '';
+  $('#btyForm').style.display = '';
+}
+function openEditBounty(id){
+  const b = (state.floor.allBounties || []).find(x => x.id === id); if(!b) return;
+  editBountyId = id;
+  $('#btyFormTitle').textContent = 'Edit bounty';
+  $('#btyTitle').value = b.title; $('#btyDetail').value = b.detail || '';
+  $('#btyPeriod').value = b.period; $('#btySize').value = b.sizeMin;
+  $('#btyRoles').value = _asList(b.roles)[0] || '';
+  $('#btyForm').style.display = '';
+}
+function closeBountyForm(){ $('#btyForm').style.display = 'none'; editBountyId = null; }
+async function saveBounty(){
+  const data = {
+    title: $('#btyTitle').value, detail: $('#btyDetail').value,
+    period: $('#btyPeriod').value, sizeMin: Number($('#btySize').value),
+    roles: $('#btyRoles').value ? [$('#btyRoles').value] : []
+  };
+  try {
+    if(editBountyId) await Store.updateBounty(editBountyId, data);
+    else await Store.addBounty(data);
+    closeBountyForm(); toast('Bounty saved'); await refresh();
+  } catch(err){ toast(err.message); }
+}
+async function toggleBounty(id){
+  const b = (state.floor.allBounties || []).find(x => x.id === id); if(!b) return;
+  await Store.setBountyStatus(id, b.status === 'active' ? 'archived' : 'active');
+  toast(b.status === 'active' ? 'Archived' : 'Restored'); await refresh();
+}
+
 refresh().then(()=>go('s-home')).then(loadSelfTest);
 
 /* Self-test harness — opt-in and never loaded in normal use, so the shipped

@@ -32,6 +32,10 @@ Use the **Employee / Admin** toggle in the top-right to switch between them.
   **1099 Resources — New York**: first-principles material on tracking income, tracking
   expenses, and filing taxes. Optional reading; nothing here is assigned or tracked.
 - **Questions** — common onboarding FAQ.
+- **Today** — the hour-by-hour box for your role: what this hour is for, the duties that
+  are true all shift, what is still outstanding from earlier, what is coming next, and the
+  **bounties** you can pick up when you have time to spare. Each duty ticks off as you go
+  and resets overnight — see the note below.
 
 ### Admin (back of house)
 - **Overview** — roster of everyone currently onboarding with progress and next step.
@@ -46,6 +50,10 @@ Use the **Employee / Admin** toggle in the top-right to switch between them.
 - **Resources** — create the mini-tabs employees see, upload documents into them, edit
   the page text, and publish. New tabs and new uploads always start as drafts, and
   drafts are invisible to employees rather than greyed out.
+- **Floor ops** — author each role's hour-by-hour schedule: the duties that stand all
+  shift, what each hour is for, which days are closed, and which weekdays get their own
+  schedule. Plus the bounty pool — weekly, monthly and quarterly work with a size
+  estimate, scoped to a role or open to anyone.
 
 ---
 
@@ -102,13 +110,16 @@ Companion files:
 
 - **`schema.sql`** — PostgreSQL DDL for every table (content, meetings,
   meeting_slots, team_members + hosts, employees, employee_meetings, checklist
-  groups/items/state, resource categories/sections/documents/figures), with keys,
-  foreign keys, enums, and implementation notes.
+  groups/items/state, resource categories/sections/documents/figures, duty
+  schedules/standing/blocks, bounties + instances), with keys, foreign keys, enums,
+  and implementation notes.
 - **`API.md`** — the REST contract: one endpoint per `Store` method, with request
   and response shapes.
 - **`RESOURCES-SCOPE.md`** — the Resources feature scope: what was decided, what was
   deliberately left out, and why. Where two designs were reasonable, the one not taken
   is named so it doesn't get re-litigated.
+- **`FLOOR-SCOPE.md`** — the hourly-duty and bounty scope, in the same shape: the
+  decisions, the alternatives not taken, and the two things kept deliberately apart.
 - **`TESTING.md`** — how to run the self-test harness and how to add a suite.
 
 Derived values (onboarding progress, "next step," the auto-tracked meetings
@@ -122,3 +133,15 @@ checklist group) are computed rather than stored ad hoc, so the backend owns the
 - Uploaded headshots are held for the browser session only (base64 in memory); in
   production they upload to object storage — see the `photo` note in `API.md`.
 - Individual training modules are intentionally **not** managed here (see project scope).
+- **The hourly box is also a daily checklist.** Each duty ticks off, per person, and every
+  day starts clean — there is no carry-over, no streak, and nothing ever becomes "missed".
+  Ticks are kept for a rolling **14 days**, because the questions they answer ("what is
+  still outstanding", "did the opening get done today") do not need last March, and keeping
+  them forever turns a working tool into a permanent performance record. Admin sees a
+  **count for the role, never a name** — the shop's question is "did the close get done",
+  and answering it by person makes it a scoreboard that gets gamed. See `FLOOR-SCOPE.md` §4,
+  which also records that this reverses the original reference-only decision and why.
+- **An hourly schedule is evidence of control.** For W-2 staff that is ordinary
+  management. Pointed at workers engaged as 1099 contractors, the schedule itself becomes
+  an exhibit in a misclassification analysis — which is why schedules attach to roles, so
+  who has one stays a visible choice. See `FLOOR-SCOPE.md` §9.
