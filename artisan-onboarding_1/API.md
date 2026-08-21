@@ -295,6 +295,195 @@ Aggregate only. There is deliberately **no per-employee read receipt** — see
 
 ---
 
+## Floor — hourly duties
+
+The boundary, and it is load-bearing: **an hourly duty has no completion state.**
+There is no `duty_state` table and no endpoint to tick an hour off. The hour is the
+state. See `FLOOR-SCOPE.md` §4 before adding one.
+
+Schedules are keyed by **role**, not by person.
+
+### `GET /floor/schedules`
+Every role schedule, with a standing-duty count and the list of weekdays that have
+their own blocks. → `Store.listDutySchedules()`
+
+```json
+[{ "id":"sch_frontdesk","role":"Front Desk Concierge","name":"Front desk — the hour by hour",
+   "blurb":"…","closedDays":["mon","sun"],"sortOrder":1,
+   "standingCount":6,"overrideDays":["sat"] }]
+```
+
+`standingCount` and `overrideDays` are **derived**; the client never writes them.
+
+### `GET /floor/schedules/:role`
+One schedule, or `null`. → `Store.getDutySchedule(role)`
+
+### `PATCH /floor/schedules/:scheduleId`
+Body `{ closedDays }`. → `Store.setScheduleClosedDays(id, days)`
+
+Unknown weekday keys are **dropped, not stored** — an unrecognised day would silently
+never match and the schedule would look correct while behaving wrongly. Valid keys are
+`mon tue wed thu fri sat sun`.
+
+### `GET /floor/schedules/:scheduleId/standing`
+→ `Store.listStandingDuties(scheduleId)`
+
+### `POST /floor/schedules/:scheduleId/standing`
+Body `{ label, detail? }`. `label` is required and trimmed. → `Store.addStandingDuty(...)`
+
+### `DELETE /floor/standing/:standingId`
+→ `Store.deleteStandingDuty(id)`
+
+### `GET /floor/schedules/:scheduleId/blocks[?day=]`
+→ `Store.listDutyBlocks(scheduleId, dayKey?)`
+
+`dayKey` is `default` or a weekday. Omit it for every block in the schedule.
+
+### `POST /floor/schedules/:scheduleId/blocks`
+Body `{ dayKey, hour, label?, duties? }`. → `Store.addDutyBlock(...)`
+
+`400` when `hour` is not an integer `0..23`, and `409` when that `(schedule, day, hour)`
+already exists — **one block per hour per day**, or "what am I doing at 2pm" stops having
+one answer.
+
+### `PATCH /floor/blocks/:blockId`
+Body `{ label?, note?, duties? }`. → `Store.updateDutyBlock(id, patch)`
+
+`duties` is a string array; blank entries are dropped, so an empty line in the editor's
+textarea does not become an empty bullet.
+
+### `DELETE /floor/blocks/:blockId`
+→ `Store.deleteDutyBlock(id)`
+
+### `POST /floor/schedules/:scheduleId/days/:dayKey`
+Give a weekday its own schedule, seeded from a **copy** of the default day.
+→ `Store.createDayOverride(scheduleId, dayKey)`
+
+`409` if the day already has its own blocks. The copy is new rows — editing them must
+never touch the default day.
+
+### `DELETE /floor/schedules/:scheduleId/days/:dayKey`
+Drop the override; the day follows the default again.
+→ `Store.clearDayOverride(scheduleId, dayKey)`
+
+### `GET /floor/today?role=`
+The whole Today screen in one read. → `Store.getFloorDay(role, at?)`
+
+```json
+{ "role":"Front Desk Concierge","dayKey":"sat","dayName":"Saturday","hour":14,
+  "schedule":{ … },"closed":false,"reason":null,"source":"sat",
+  "standing":[ … ],"blocks":[ … ],
+  "currentBlock":{ "id":"blk_fd_sat_14","hour":14,"label":"Second wind","duties":[ … ] },
+  "nextBlock":{ "hour":15,"label":"Retail hour", … },
+  "position":"open" }
+```
+
+`position` is `before-open` | `open` | `after-close` | `closed`.
+`reason` explains a closed day: `closed` (a rostered day off), `no-blocks` (nothing
+authored yet) or `no-schedule` (this role has none). They are **three different
+situations** and the client says which.
+
+`source` is `default` or the weekday key, so the UI can tell someone that today runs on
+its own schedule.
+
+**Resolution is three rules in order.** Closed day → the day's own blocks → the default
+blocks. A weekday override replaces the day *entirely*; default blocks never leak into
+it. Standing duties are unaffected by an override.
+
+**A block governs from its hour until the next block's hour**, and the last block governs
+to the end of its own hour. That is what lets a sparse schedule (9, 11, 13) answer "what
+am I doing at noon".
+
+`at` is a prototype-only test seam. In production resolve "now" in the **shop's**
+timezone, stored on the shop record — never in the client's, or a travelling admin and a
+DST boundary both produce the wrong hour.
+
+---
+
+## Floor — bounties
+
+Weekly, monthly and quarterly work, picked up whenever someone has time.
+
+**"Bounty" is a name, not a reward.** No points, no ledger, no balance, no leaderboard.
+Adding one means a per-person ledger, reset rules and an approval step before a claim
+counts — none of which exists here.
+
+### `GET /floor/bounties[?include=all]`
+Definitions. `include=all` adds archived ones and is admin-only.
+→ `Store.listBounties(includeArchived)`
+
+### `POST /floor/bounties`
+Body `{ title, detail?, period, sizeMin, roles? }`. → `Store.addBounty(data)`
+
+`period` is `weekly` | `monthly` | `quarterly`. `sizeMin` is **required** and must be
+`1..480` — "whenever you have spare time" is unusable if nobody can tell which bounties
+fit the time they actually have. `roles` empty means anyone.
+
+### `PATCH /floor/bounties/:bountyId`
+→ `Store.updateBounty(id, patch)`
+
+### `PATCH /floor/bounties/:bountyId` `{ status }`
+`active` | `archived`. → `Store.setBountyStatus(id, status)`
+
+Archiving takes a bounty off the board and stops it opening new periods. It **does not**
+delete its history.
+
+### `GET /floor/bounties/board?role=`
+The current period's instances, joined to their definitions and filtered to the role.
+→ `Store.listBountyBoard(role, at?)`
+
+```json
+[{ "id":"bty_shelves","title":"Deep clean the retail shelves","period":"weekly",
+   "periodLabel":"This week","sizeMin":45,"roles":["Front Desk Concierge"],
+   "instance":{ "id":"bi_1042","periodKey":"2026-W34","state":"open",
+                "claimedBy":null,"claimedAt":null,"completedBy":null,"completedAt":null } }]
+```
+
+**This read has a side effect in the prototype**: it opens the current period and closes
+out anything older. In production make it a **nightly job** and keep this read pure —
+otherwise a bounty is only marked missed once somebody happens to look.
+
+`periodKey` is **derived, never accepted from the client**: `2026-W34` (ISO 8601 week —
+the week containing the first Thursday, so 1 January can belong to the previous ISO
+year), `2026-08`, `2026-Q3`.
+
+### `GET /floor/bounties/:bountyId/instances[?limit=]`
+Most recent periods first. → `Store.listBountyHistory(bountyId, limit)`
+
+### `POST /floor/bounties/instances/:instanceId/claim`
+→ `Store.claimBounty(instanceId, employeeId)`
+
+A **soft lock**: one claimant at a time. `409` when someone else holds it; re-claiming
+your own is idempotent. `409` when the instance is `done` or `missed`.
+
+### `POST /floor/bounties/instances/:instanceId/release`
+→ `Store.releaseBounty(instanceId, employeeId)`
+
+Returns it to `open` and clears the claim. **Nothing is recorded against the person.**
+`403` if the caller is not the holder.
+
+### `POST /floor/bounties/instances/:instanceId/complete`
+→ `Store.completeBounty(instanceId, employeeId)`
+
+Completing an unclaimed instance claims it on the way, because doing the thing without
+claiming it first is normal. `409` when someone else holds it.
+
+### Rollover
+
+When the period key moves on, an `open` or `claimed` instance becomes `missed` and a fresh
+`open` one is created. Instances are **never deleted and a missed one is never rewritten**
+— the miss is the record, which is the whole reason a quarterly bounty cannot silently
+evaporate at quarter end.
+
+A miss **drops its claimant**. A claim is not a commitment, and permanently recording
+"claimed this and did not finish" teaches people not to claim, which costs exactly the
+coordination the lock exists to provide.
+
+`claimedBy` / `completedBy` are `ON DELETE SET NULL`: offboarding preserves that a bounty
+was done while dropping who did it. The operational question is "was it done".
+
+---
+
 ## Notes for implementers
 
 - **Auth & scope.** Employee-facing screens act on the authenticated user; admin

@@ -219,7 +219,151 @@ CREATE INDEX idx_res_docs_cat ON resource_documents(category_id, sort_order);
 ALTER TABLE meetings
   ADD COLUMN resource_document_id TEXT REFERENCES resource_documents(id) ON DELETE SET NULL;
 
+-- ============================================================================
+-- Floor: hourly duties and bounties
+--
+-- THE BOUNDARY, and it is load-bearing: an hourly duty has NO completion state
+-- and there is deliberately no duty_state table. The hour IS the state — at 3pm
+-- you are doing the 3pm things, and at 4pm that question is moot. A checkbox per
+-- hour turns this into a per-employee minute-by-minute activity record, and
+-- creates a question with no good answer: what does an unchecked 2pm mean at
+-- 6pm? Bounties carry completion state, because "did the quarterly deep-clean
+-- happen" is a question someone genuinely needs answered. See FLOOR-SCOPE.md.
+--
+-- Schedules are keyed by ROLE, not by person. Two concierges do the same job.
+-- ============================================================================
+
+CREATE TYPE duty_day_key   AS ENUM ('default','mon','tue','wed','thu','fri','sat','sun');
+CREATE TYPE bounty_period  AS ENUM ('weekly', 'monthly', 'quarterly');
+CREATE TYPE bounty_status  AS ENUM ('active', 'archived');
+CREATE TYPE bounty_state   AS ENUM ('open', 'claimed', 'done', 'missed');
+
+-- ---- duty_schedules: one per role ---------------------------------------
+-- Open hours are NOT stored. A day's span is derived from the blocks that
+-- resolve for it, so authoring and opening hours cannot contradict each other.
+CREATE TABLE duty_schedules (
+  id           TEXT PRIMARY KEY,                 -- 'sch_frontdesk'
+  role         TEXT NOT NULL UNIQUE,             -- matches employees.role
+  name         TEXT NOT NULL,
+  blurb        TEXT NOT NULL DEFAULT '',
+  closed_days  JSONB NOT NULL DEFAULT '[]'::jsonb,  -- ['mon']
+  sort_order   INT  NOT NULL DEFAULT 0,
+  updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- ---- duty_standing: true for the whole shift, shown once -----------------
+CREATE TABLE duty_standing (
+  id           TEXT PRIMARY KEY,                 -- 'std_greet'
+  schedule_id  TEXT NOT NULL REFERENCES duty_schedules(id) ON DELETE CASCADE,
+  label        TEXT NOT NULL,
+  detail       TEXT NOT NULL DEFAULT '',
+  sort_order   INT  NOT NULL DEFAULT 0
+);
+CREATE INDEX idx_duty_standing_sch ON duty_standing(schedule_id, sort_order);
+
+-- ---- duty_blocks: what makes 10am different from 4pm --------------------
+-- day_key = 'default' is the day most days look like. A weekday key overrides
+-- that day ENTIRELY — default blocks do not leak into an overridden day. See
+-- FLOOR-SCOPE.md section 5 for why a per-hour merge was rejected.
+CREATE TABLE duty_blocks (
+  id           TEXT PRIMARY KEY,                 -- 'blk_fd_09'
+  schedule_id  TEXT NOT NULL REFERENCES duty_schedules(id) ON DELETE CASCADE,
+  day_key      duty_day_key NOT NULL DEFAULT 'default',
+  hour         INT  NOT NULL,                    -- 0..23, the hour this governs
+  label        TEXT NOT NULL,                    -- 'Open the desk'
+  duties       JSONB NOT NULL DEFAULT '[]'::jsonb,  -- string[]
+  note         TEXT NOT NULL DEFAULT '',
+  UNIQUE (schedule_id, day_key, hour),
+  CONSTRAINT duty_block_hour CHECK (hour >= 0 AND hour < 24)
+);
+CREATE INDEX idx_duty_blocks_day ON duty_blocks(schedule_id, day_key, hour);
+
+-- ---- bounties: the definition -------------------------------------------
+-- "Bounty" is a NAME, not a reward. No points, no ledger, no balance. Adding a
+-- reward means a per-person ledger, reset rules and an approval step; none of
+-- that is here and none of it should be inferred from the word.
+CREATE TABLE bounties (
+  id           TEXT PRIMARY KEY,                 -- 'bty_shelves'
+  title        TEXT NOT NULL,
+  detail       TEXT NOT NULL DEFAULT '',
+  period       bounty_period NOT NULL,
+  size_min     INT  NOT NULL,                    -- estimated minutes; required
+  roles        JSONB NOT NULL DEFAULT '[]'::jsonb,  -- [] = anyone may take it
+  status       bounty_status NOT NULL DEFAULT 'active',
+  sort_order   INT  NOT NULL DEFAULT 0,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT bounty_size CHECK (size_min > 0 AND size_min <= 480)
+);
+
+-- ---- bounty_instances: one per bounty per period ------------------------
+-- period_key is DERIVED, never free text: '2026-W31' (ISO 8601 week),
+-- '2026-08', '2026-Q3'. Instances are never deleted and a missed one is never
+-- rewritten — the miss is the record.
+CREATE TABLE bounty_instances (
+  id            TEXT PRIMARY KEY,                -- 'bi_1'
+  bounty_id     TEXT NOT NULL REFERENCES bounties(id) ON DELETE CASCADE,
+  period_key    TEXT NOT NULL,
+  state         bounty_state NOT NULL DEFAULT 'open',
+  claimed_by    TEXT REFERENCES employees(id) ON DELETE SET NULL,
+  claimed_at    TIMESTAMPTZ,
+  completed_by  TEXT REFERENCES employees(id) ON DELETE SET NULL,
+  completed_at  TIMESTAMPTZ,
+  UNIQUE (bounty_id, period_key),
+  CONSTRAINT bounty_instance_shape CHECK (
+    (state = 'open'    AND claimed_by IS NULL     AND completed_by IS NULL) OR
+    (state = 'claimed' AND claimed_by IS NOT NULL AND completed_by IS NULL) OR
+    (state = 'done'    AND completed_at IS NOT NULL) OR
+    -- claimed_by is dropped on a miss: a claim is not a commitment, so failing
+    -- to finish one must not leave a permanent mark with someone's name on it.
+    (state = 'missed'  AND claimed_by IS NULL AND completed_by IS NULL))
+);
+CREATE INDEX idx_bounty_inst ON bounty_instances(bounty_id, period_key);
+
 COMMIT;
+
+-- ============================================================================
+-- Floor implementation notes
+-- ----------------------------------------------------------------------------
+-- * THERE IS NO duty_state TABLE, and adding one is a product decision, not a
+--   schema gap. See the boundary note above and FLOOR-SCOPE.md section 4.
+--
+-- * DAY RESOLUTION is three rules in order, for a weekday W:
+--     1. W in duty_schedules.closed_days           -> closed
+--     2. any duty_blocks row with day_key = W      -> those blocks ARE the day
+--     3. otherwise                                 -> day_key = 'default' blocks
+--   Standing duties are unaffected by an override; they are standing.
+--
+-- * PERIOD KEYS are derived from a date, never stored as typed text. The weekly
+--   key is ISO 8601 — the week containing the first Thursday — so 1 January can
+--   legitimately belong to the previous year's final week. Getting this wrong
+--   silently splits one week's bounty across two keys.
+--
+-- * ROLLOVER should be a scheduled job in production. The prototype does it
+--   lazily on read, which is correct but means a bounty is only marked missed
+--   once someone looks. A nightly job that closes out the previous period is the
+--   v1 shape.
+--
+-- * claimed_by / completed_by are ON DELETE SET NULL, so offboarding a person
+--   preserves the fact that a bounty was done while dropping who did it. The
+--   operational question is "was it done"; the name is not worth retaining
+--   against a departed employee. This mirrors the Resources read-receipt
+--   reasoning in RESOURCES-SCOPE.md section 7.
+--
+-- * CLAIMS ARE A SOFT LOCK, not a commitment. Releasing a claim records nothing
+--   against the person. Treating a claim as a promise teaches people not to
+--   claim, which costs you the coordination the lock exists to provide.
+--
+-- * TIMEZONE. The prototype resolves "now" in the browser's local zone. A shop
+--   spanning a DST boundary or an admin travelling will both see the wrong hour.
+--   Production should resolve the current hour in the SHOP's zone, stored on the
+--   shop record, and never in the client's.
+--
+-- * THE CONTROL QUESTION. An hour-by-hour duty schedule is close to the
+--   strongest available evidence of control in a worker-misclassification
+--   analysis. Schedules attach to ROLES so that who has one stays an explicit,
+--   visible choice. See FLOOR-SCOPE.md section 9 and RESOURCES-SCOPE.md
+--   section 8.
+-- ============================================================================
 
 -- ============================================================================
 -- Resources implementation notes
